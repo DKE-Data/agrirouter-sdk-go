@@ -13,3 +13,6 @@
 
 # golangci-lint cache
 .lint-cache/
+
+# goreleaser build
+dist/
