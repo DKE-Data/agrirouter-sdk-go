@@ -1,4 +1,4 @@
-package agrirouter_test_sdk_test
+package agrirouter_test
 
 import (
 	"context"
