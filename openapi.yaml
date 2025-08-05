@@ -1,0 +1,259 @@
+openapi: "3.0.2"
+
+info:
+  contact:
+    email: info@dke-data.com
+    name: DKE Data
+    url: https://dke-data.com
+  title: Agrirouter API Gateway
+  version: "1.0"
+  description: |
+    This service provides access to endpoint data of Agrirouter via HTTP.
+servers:
+  - url: http://localhost:{port}
+    variables:
+      port:
+        default: "8081"
+  - url: https://api.qa.agrirouter.farm
+    description: QA Server
+  - url: https://api.prod.agrirouter.farm
+    description: Production Server
+
+paths:
+  /messages:
+    post:
+      operationId: sendMessage
+      summary: Send a message to Agrirouter inbox
+      description: |
+        This endpoint is used to send a message to the Agrirouter inbox.
+      parameters:
+        - name: applicationMessageId
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: chunkContextId
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: chunkIndex
+          in: header
+          required: false
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: Message successfully sent to inbox
+        '400':
+          description: Request is invalid
+        '401':
+          description: Authentication failed
+        '403':
+          description: Authorization failed
+        '500':
+          description: Server Side Error
+    get:
+      operationId: receiveMessages
+      summary: Receive messages from Agrirouter outbox
+      description: |
+        This endpoint is used to receive messages from the Agrirouter outbox.
+        The messages are retrieved from the outbox of the device with the given 
+        deviceAlternateId (aka endpoint id).
+      parameters:
+        - name: Accept
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Messages are retrieved from outbox
+          content:
+            text/event-stream:
+              schema:
+                type: object
+                properties:
+                  message_type:
+                    type: string
+                  senderEndpointId:
+                    type: string
+                  data:
+                    type: string
+                    format: binary
+        '400':
+          description: Request is invalid
+        '401':
+          description: Authentication failed
+        '403':
+          description: Authorization failed
+        '500':
+          description: Server Side Error
+
+  /endpoints/{externalId}:
+    put:
+      operationId: putEndpoint
+      summary: Create or update endpoint
+      description: This resource could be used to create new endpoint or reconfigure existing one.
+      security:
+        - agrirouterOauthQA: ["endpoints:manage"]
+        - agrirouterOauthPROD: ["endpoints:manage"]
+      parameters:
+        - $ref: "#/components/parameters/agrirouter-tenant-id"
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutEndpointRequest"
+      responses:
+        '200':
+          description: Endpoint was successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Endpoint"
+        '201':
+          description: Endpoint was successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Endpoint"
+        '400':
+          description: Request is invalid
+        '401':
+          description: Authentication failed
+        '403':
+          description: Authorization failed
+        '502':
+          description: Bad Gateway, upstream service has returned an error
+        '503':
+          description: Service Unavailable at the moment
+        '504':
+          description: Gateway Timeout, request took too long to process
+        '500':
+          description: Server Side Error
+
+security:
+  - agrirouterOauthQA: []
+  - agrirouterOauthPROD: []
+
+components:
+  securitySchemes:
+    agrirouterOauthQA:
+      type: oauth2
+      description: Agrirouter OAuth2 authentication for QA environment.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://oauth.qa.agrirouter.farm/authorize
+          tokenUrl: https://oauth.qa.agrirouter.farm/token
+          scopes:
+            endpoints:manage: Manage endpoints in the Agrirouter tenant.
+    agrirouterOauthPROD:
+      type: oauth2
+      description: Agrirouter OAuth2 authentication for PROD environment.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://oauth.prod.agrirouter.farm/authorize
+          tokenUrl: https://oauth.prod.agrirouter.farm/token
+          scopes:
+            endpoints:manage: Manage endpoints in the Agrirouter tenant.
+  parameters:
+    agrirouter-tenant-id:
+      name: agrirouter-tenant-id
+      in: header
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The farmer's tenant ID in relation to which communication is done.
+  schemas:
+    PutEndpointRequest:
+      type: object
+      required:
+        - application_id
+        - software_version_id
+        - capabilities
+        - endpoint_type
+      properties:
+        application_id:
+          type: string
+          format: uuid
+          description: The ID of the application that owns the endpoint
+        software_version_id:
+          type: string
+          format: uuid
+          description: The ID of the software version that owns the endpoint
+        capabilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/EndpointCapability"
+          description: The effective capabilities of the endpoint, must be subset of the capabilities of software version.
+        endpoint_type:
+          $ref: "#/components/schemas/EndpointType"
+    Endpoint:
+      type: object
+      required:
+        - id
+        - external_id
+        - endpoint_type
+        - tenant_id
+        - application_id
+        - software_version_id
+        - capabilities
+      properties:
+        id:
+          type: string
+          format: uuid
+        external_id:
+          type: string
+        application_id:
+          type: string
+          format: uuid
+        software_version_id:
+          type: string
+          format: uuid
+        endpoint_type:
+          $ref: "#/components/schemas/EndpointType"
+        tenant_id:
+          type: string
+          description: The tenant ID of the endpoint
+        capabilities:
+          type: array
+          items:
+            $ref: "#/components/schemas/EndpointCapability"
+    EndpointCapability:
+      type: object
+      properties:
+        messageType:
+          type: string
+          example: "iso:11783:-10:taskdata:zip"
+          description: |
+            The message type that the endpoint can send or receive.
+            See available types here:
+            https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
+        direction:
+          type: string
+          enum:
+            - "SEND"
+            - "RECEIVE"
+            - "SEND_RECEIVE"
+    EndpointType:
+      type: string
+      enum:
+        - farming_software
+        - telemetry_platform
+        - communication_unit
+        - virtual_communication_unit

@@ -1,0 +1,6 @@
+# This is for testcontainers build that is used for integration test
+
+*
+!go.mod
+!go.sum
+!./internal/tests

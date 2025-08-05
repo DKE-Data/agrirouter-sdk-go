@@ -1,0 +1,10 @@
+#!/bin/bash
+
+. $(dirname -- "${BASH_SOURCE[0]}")/../tools/golang_ci_lint.sh
+
+set -e
+
+. $(dirname -- "${BASH_SOURCE[0]}")/../tools/oapi/generate.sh
+git add internal/oapi
+
+echo "✅ ... pre commit hook done"

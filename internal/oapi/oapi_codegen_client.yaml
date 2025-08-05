@@ -1,0 +1,9 @@
+package: oapi
+generate:
+  client: true
+output: internal/oapi/oapi.client.go
+# This additional import is needed so that we could have
+# models generated to different package and then import them here.
+additional-imports:
+  - alias: .
+    package: "github.com/DKE-Data/agrirouter-go-sdk/internal/oapi/models"

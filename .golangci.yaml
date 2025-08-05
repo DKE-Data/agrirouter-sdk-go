@@ -1,0 +1,75 @@
+version: "2"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+
+linters:
+  default: none
+  # disable-all: true
+  enable:
+    - bodyclose
+    - copyloopvar
+    - dogsled
+    - dupl
+    - errcheck
+    - funlen
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    # - gofmt
+    # - goimports
+    - mnd
+    - goprintffuncname
+    - gosec
+    # - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - noctx
+    - nolintlint
+    - revive
+    - staticcheck
+    # - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+    - err113
+  settings:
+    lll:
+      line-length: 140
+    misspell:
+      locale: US
+    nolintlint:
+      allow-unused: true # report any unused nolint directives
+      require-explanation: true # require an explanation for nolint directives
+      require-specific: true
+  exclusions:
+    paths:
+      - "internal/oapi"
+
+
+# linters-settings:
+#   lll:
+#     line-length: 140
+#   misspell:
+#     locale: US
+#   nolintlint:
+#     allow-unused: true # report any unused nolint directives
+#     require-explanation: true # require an explanation for nolint directives
+#     require-specific: true
+
+
+# issues:
+#   exclude-dirs:
+#     - internal/oapi
+
+run:
+  timeout: 5m

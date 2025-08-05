@@ -1,0 +1,4 @@
+package: models
+generate:
+  models: true
+output: internal/oapi/models/oapi.models.go
