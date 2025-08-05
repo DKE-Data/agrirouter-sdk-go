@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/DKE-Data/agrirouter-go-sdk/internal/oapi"
@@ -70,6 +71,26 @@ func (c *Client) PutEndpoint(
 	}
 
 	return nil, putEndpointError(ErrFailedStatusCode, httpResponseToErr(res.HTTPResponse, res.Body))
+}
+
+// SendMessage sends a message to the agrirouter API.
+//
+// The body of the request must be a valid payload of agrirouter message.
+func (c *Client) SendMessage(
+	ctx context.Context,
+	params *SendMessageParams,
+	body io.Reader,
+) error {
+	res, err := c.oapiClient.SendMessageWithBodyWithResponse(ctx, params, "application/octet-stream", body)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrAPICallFailed, err)
+	}
+
+	if res.StatusCode() == http.StatusOK || res.StatusCode() == http.StatusAccepted {
+		return nil
+	}
+
+	return fmt.Errorf("%w: unexpected status code %d", ErrFailedStatusCode, res.StatusCode())
 }
 
 func httpResponseToErr(res *http.Response, body []byte) error {
