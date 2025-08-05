@@ -1,0 +1,44 @@
+name: Trigger Renovate for services
+
+# This Github workflow would trigger github workflow in file "renovate.yaml" 
+# for DKE-Data/agrirouter-deere-service whenever there is a new release in this repository.
+
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  trigger-renovate:
+    runs-on: linux-arm64-selfhosted
+    steps:
+      - name: Read github app credentials
+        id: get_github_app_creds
+        run: |
+          PEM=$(cat /mnt/secrets/renovate-creds/github_app_private_key)
+          pem_escaped=${PEM//$'\n'/\\n}
+          echo "::add-mask::$pem_escaped"
+          echo "GITHUB_APP_PRIVATE_KEY=$pem_escaped" >> "$GITHUB_OUTPUT"
+          echo "GITHUB_APP_ID=$(cat /mnt/secrets/renovate-creds/github_app_id)" >> "$GITHUB_OUTPUT"
+
+      - name: Get token
+        id: get_token
+        uses: actions/create-github-app-token@v1
+        with:
+          private-key: ${{ steps.get_github_app_creds.outputs.GITHUB_APP_PRIVATE_KEY }}
+          app-id: ${{ steps.get_github_app_creds.outputs.GITHUB_APP_ID }}
+          owner: ${{ github.repository_owner }}
+          repositories: 'agrirouter-deere-service'
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          repository: DKE-Data/agrirouter-deere-service
+          token: ${{ steps.get_token.outputs.token }}
+
+      - name: Trigger Renovate
+        run: |
+          gh workflow run renovate.yaml --ref main
+        env:
+          GITHUB_TOKEN: ${{ steps.get_token.outputs.token }}
