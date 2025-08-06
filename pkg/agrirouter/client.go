@@ -24,7 +24,6 @@ var (
 
 // Client is the structure that allows interaction with the agrirouter API.
 type Client struct {
-	ServerURL  string
 	oapiClient *oapi.ClientWithResponses
 }
 
@@ -37,7 +36,6 @@ func NewClient(serverURL string) (*Client, error) {
 	}
 
 	return &Client{
-		ServerURL:  serverURL,
 		oapiClient: client,
 	}, nil
 }
