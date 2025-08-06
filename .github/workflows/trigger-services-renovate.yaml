@@ -36,6 +36,10 @@ jobs:
         with:
           repository: DKE-Data/agrirouter-deere-service
           token: ${{ steps.get_token.outputs.token }}
+      
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get install gh -y
 
       - name: Trigger Renovate
         run: |
