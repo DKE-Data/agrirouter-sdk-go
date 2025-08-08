@@ -69,25 +69,32 @@ type PutEndpointRequest struct {
 	SoftwareVersionId openapi_types.UUID `json:"software_version_id"`
 }
 
-// AgrirouterTenantId defines model for agrirouter-tenant-id.
-type AgrirouterTenantId = openapi_types.UUID
+// XAgrirouterTenantId defines model for x-agrirouter-tenant-id.
+type XAgrirouterTenantId = openapi_types.UUID
 
 // PutEndpointParams defines parameters for PutEndpoint.
 type PutEndpointParams struct {
-	// AgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
-	AgrirouterTenantId AgrirouterTenantId `json:"agrirouter-tenant-id"`
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
 }
 
-// ReceiveMessagesParams defines parameters for ReceiveMessages.
-type ReceiveMessagesParams struct {
-	Accept *string `json:"Accept,omitempty"`
-}
+// SendMessagesParams defines parameters for SendMessages.
+type SendMessagesParams struct {
+	// XAgrirouterMessageType Message type of the sent data. See available types here:
+	// https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
+	XAgrirouterMessageType string `json:"x-agrirouter-message-type"`
 
-// SendMessageParams defines parameters for SendMessage.
-type SendMessageParams struct {
-	ApplicationMessageId string  `json:"applicationMessageId"`
-	ChunkContextId       *string `json:"chunkContextId,omitempty"`
-	ChunkIndex           *int    `json:"chunkIndex,omitempty"`
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterContextId Application side identifier of the sent data.
+	// agrirouter will use this to generate application message id
+	// and also will pass it on as chunk context id in case if the payload
+	// had to be split into several messages.
+	XAgrirouterContextId string `json:"x-agrirouter-context-id"`
+
+	// XAgrirouterFilename Optional name of the file that is attached to messages as metadata.
+	XAgrirouterFilename *string `json:"x-agrirouter-filename,omitempty"`
 }
 
 // PutEndpointJSONRequestBody defines body for PutEndpoint for application/json ContentType.

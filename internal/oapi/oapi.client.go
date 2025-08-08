@@ -96,10 +96,10 @@ type ClientInterface interface {
 	PutEndpoint(ctx context.Context, externalId string, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ReceiveMessages request
-	ReceiveMessages(ctx context.Context, params *ReceiveMessagesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ReceiveMessages(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SendMessageWithBody request with any body
-	SendMessageWithBody(ctx context.Context, params *SendMessageParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// SendMessagesWithBody request with any body
+	SendMessagesWithBody(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) PutEndpointWithBody(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -126,8 +126,8 @@ func (c *Client) PutEndpoint(ctx context.Context, externalId string, params *Put
 	return c.Client.Do(req)
 }
 
-func (c *Client) ReceiveMessages(ctx context.Context, params *ReceiveMessagesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewReceiveMessagesRequest(c.Server, params)
+func (c *Client) ReceiveMessages(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReceiveMessagesRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -138,8 +138,8 @@ func (c *Client) ReceiveMessages(ctx context.Context, params *ReceiveMessagesPar
 	return c.Client.Do(req)
 }
 
-func (c *Client) SendMessageWithBody(ctx context.Context, params *SendMessageParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSendMessageRequestWithBody(c.Server, params, contentType, body)
+func (c *Client) SendMessagesWithBody(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSendMessagesRequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -198,12 +198,12 @@ func NewPutEndpointRequestWithBody(server string, externalId string, params *Put
 
 		var headerParam0 string
 
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "agrirouter-tenant-id", runtime.ParamLocationHeader, params.AgrirouterTenantId)
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
 		if err != nil {
 			return nil, err
 		}
 
-		req.Header.Set("agrirouter-tenant-id", headerParam0)
+		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
 
 	}
 
@@ -211,7 +211,7 @@ func NewPutEndpointRequestWithBody(server string, externalId string, params *Put
 }
 
 // NewReceiveMessagesRequest generates requests for ReceiveMessages
-func NewReceiveMessagesRequest(server string, params *ReceiveMessagesParams) (*http.Request, error) {
+func NewReceiveMessagesRequest(server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -234,26 +234,11 @@ func NewReceiveMessagesRequest(server string, params *ReceiveMessagesParams) (*h
 		return nil, err
 	}
 
-	if params != nil {
-
-		if params.Accept != nil {
-			var headerParam0 string
-
-			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Accept", runtime.ParamLocationHeader, *params.Accept)
-			if err != nil {
-				return nil, err
-			}
-
-			req.Header.Set("Accept", headerParam0)
-		}
-
-	}
-
 	return req, nil
 }
 
-// NewSendMessageRequestWithBody generates requests for SendMessage with any type of body
-func NewSendMessageRequestWithBody(server string, params *SendMessageParams, contentType string, body io.Reader) (*http.Request, error) {
+// NewSendMessagesRequestWithBody generates requests for SendMessages with any type of body
+func NewSendMessagesRequestWithBody(server string, params *SendMessagesParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -282,33 +267,40 @@ func NewSendMessageRequestWithBody(server string, params *SendMessageParams, con
 
 		var headerParam0 string
 
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "applicationMessageId", runtime.ParamLocationHeader, params.ApplicationMessageId)
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-message-type", runtime.ParamLocationHeader, params.XAgrirouterMessageType)
 		if err != nil {
 			return nil, err
 		}
 
-		req.Header.Set("applicationMessageId", headerParam0)
+		req.Header.Set("x-agrirouter-message-type", headerParam0)
 
-		if params.ChunkContextId != nil {
-			var headerParam1 string
+		var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithLocation("simple", false, "chunkContextId", runtime.ParamLocationHeader, *params.ChunkContextId)
-			if err != nil {
-				return nil, err
-			}
-
-			req.Header.Set("chunkContextId", headerParam1)
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
 		}
 
-		if params.ChunkIndex != nil {
-			var headerParam2 string
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
 
-			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "chunkIndex", runtime.ParamLocationHeader, *params.ChunkIndex)
+		var headerParam2 string
+
+		headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-context-id", runtime.ParamLocationHeader, params.XAgrirouterContextId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-context-id", headerParam2)
+
+		if params.XAgrirouterFilename != nil {
+			var headerParam3 string
+
+			headerParam3, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-filename", runtime.ParamLocationHeader, *params.XAgrirouterFilename)
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("chunkIndex", headerParam2)
+			req.Header.Set("x-agrirouter-filename", headerParam3)
 		}
 
 	}
@@ -365,10 +357,10 @@ type ClientWithResponsesInterface interface {
 	PutEndpointWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error)
 
 	// ReceiveMessagesWithResponse request
-	ReceiveMessagesWithResponse(ctx context.Context, params *ReceiveMessagesParams, reqEditors ...RequestEditorFn) (*ReceiveMessagesResponse, error)
+	ReceiveMessagesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ReceiveMessagesResponse, error)
 
-	// SendMessageWithBodyWithResponse request with any body
-	SendMessageWithBodyWithResponse(ctx context.Context, params *SendMessageParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendMessageResponse, error)
+	// SendMessagesWithBodyWithResponse request with any body
+	SendMessagesWithBodyWithResponse(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendMessagesResponse, error)
 }
 
 type PutEndpointResponse struct {
@@ -415,13 +407,13 @@ func (r ReceiveMessagesResponse) StatusCode() int {
 	return 0
 }
 
-type SendMessageResponse struct {
+type SendMessagesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r SendMessageResponse) Status() string {
+func (r SendMessagesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -429,7 +421,7 @@ func (r SendMessageResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r SendMessageResponse) StatusCode() int {
+func (r SendMessagesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -454,21 +446,21 @@ func (c *ClientWithResponses) PutEndpointWithResponse(ctx context.Context, exter
 }
 
 // ReceiveMessagesWithResponse request returning *ReceiveMessagesResponse
-func (c *ClientWithResponses) ReceiveMessagesWithResponse(ctx context.Context, params *ReceiveMessagesParams, reqEditors ...RequestEditorFn) (*ReceiveMessagesResponse, error) {
-	rsp, err := c.ReceiveMessages(ctx, params, reqEditors...)
+func (c *ClientWithResponses) ReceiveMessagesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ReceiveMessagesResponse, error) {
+	rsp, err := c.ReceiveMessages(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseReceiveMessagesResponse(rsp)
 }
 
-// SendMessageWithBodyWithResponse request with arbitrary body returning *SendMessageResponse
-func (c *ClientWithResponses) SendMessageWithBodyWithResponse(ctx context.Context, params *SendMessageParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendMessageResponse, error) {
-	rsp, err := c.SendMessageWithBody(ctx, params, contentType, body, reqEditors...)
+// SendMessagesWithBodyWithResponse request with arbitrary body returning *SendMessagesResponse
+func (c *ClientWithResponses) SendMessagesWithBodyWithResponse(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendMessagesResponse, error) {
+	rsp, err := c.SendMessagesWithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseSendMessageResponse(rsp)
+	return ParseSendMessagesResponse(rsp)
 }
 
 // ParsePutEndpointResponse parses an HTTP response from a PutEndpointWithResponse call
@@ -520,15 +512,15 @@ func ParseReceiveMessagesResponse(rsp *http.Response) (*ReceiveMessagesResponse,
 	return response, nil
 }
 
-// ParseSendMessageResponse parses an HTTP response from a SendMessageWithResponse call
-func ParseSendMessageResponse(rsp *http.Response) (*SendMessageResponse, error) {
+// ParseSendMessagesResponse parses an HTTP response from a SendMessagesWithResponse call
+func ParseSendMessagesResponse(rsp *http.Response) (*SendMessagesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &SendMessageResponse{
+	response := &SendMessagesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
