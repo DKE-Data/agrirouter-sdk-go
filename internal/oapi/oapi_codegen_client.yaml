@@ -6,4 +6,4 @@ output: internal/oapi/oapi.client.go
 # models generated to different package and then import them here.
 additional-imports:
   - alias: .
-    package: "github.com/DKE-Data/agrirouter-go-sdk/internal/oapi/models"
+    package: "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"

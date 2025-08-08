@@ -13,7 +13,7 @@ import (
 	"net/url"
 	"strings"
 
-	. "github.com/DKE-Data/agrirouter-go-sdk/internal/oapi/models"
+	. "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
 	"github.com/oapi-codegen/runtime"
 )
 

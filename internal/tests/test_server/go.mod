@@ -1,11 +1,11 @@
-module github.com/DKE-Data/agrirouter-go-sdk/internal/tests/test_server
+module github.com/DKE-Data/agrirouter-sdk-go/internal/tests/test_server
 
 go 1.23.11
 
-replace github.com/DKE-Data/agrirouter-go-sdk => ../../..
+replace github.com/DKE-Data/agrirouter-sdk-go => ../../..
 
 require (
-	github.com/DKE-Data/agrirouter-go-sdk v0.0.0-00010101000000-000000000000
+	github.com/DKE-Data/agrirouter-sdk-go v0.0.0-00010101000000-000000000000
 	github.com/oapi-codegen/runtime v1.1.1
 	github.com/tmaxmax/go-sse v0.11.0
 )

@@ -1,4 +1,4 @@
-module github.com/DKE-Data/agrirouter-go-sdk
+module github.com/DKE-Data/agrirouter-sdk-go
 
 go 1.23.11
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/DKE-Data/agrirouter-go-sdk/internal/tests/agriroutertestcontainer"
+	"github.com/DKE-Data/agrirouter-sdk-go/internal/tests/agriroutertestcontainer"
 )
 
 var _ StrictServerInterface = (*Server)(nil)

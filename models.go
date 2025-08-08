@@ -1,12 +1,12 @@
 package agrirouter
 
 import (
-	internal_models "github.com/DKE-Data/agrirouter-go-sdk/internal/oapi/models"
+	internal_models "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
 )
 
 // Re-exporting models for convenience
 // This allows users to access models directly from the agrirouter package.
-// Users can import "github.com/DKE-Data/agrirouter-go-sdk/pkg/agrirouter"
+// Users can import "github.com/DKE-Data/agrirouter-sdk-go/pkg/agrirouter"
 // and use models like agrirouter.Endpoint, agrirouter.PutEndpointRequest.
 
 // PutEndpointRequest is the request structure for creating or updating an endpoint.

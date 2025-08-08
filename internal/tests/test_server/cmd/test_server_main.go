@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/DKE-Data/agrirouter-go-sdk/internal/tests/test_server"
+	"github.com/DKE-Data/agrirouter-sdk-go/internal/tests/test_server"
 	"github.com/tmaxmax/go-sse"
 )
 

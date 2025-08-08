@@ -8,7 +8,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/DKE-Data/agrirouter-go-sdk/internal/oapi"
+	"github.com/DKE-Data/agrirouter-sdk-go/internal/oapi"
 )
 
 var (

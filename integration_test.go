@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DKE-Data/agrirouter-go-sdk"
-	"github.com/DKE-Data/agrirouter-go-sdk/internal/tests/agriroutertestcontainer"
+	"github.com/DKE-Data/agrirouter-sdk-go"
+	"github.com/DKE-Data/agrirouter-sdk-go/internal/tests/agriroutertestcontainer"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
