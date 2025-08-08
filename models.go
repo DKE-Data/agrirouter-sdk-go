@@ -22,4 +22,4 @@ type EndpointCapability = internal_models.EndpointCapability
 type PutEndpointParams = internal_models.PutEndpointParams
 
 // SendMessageParams contains parameters to send a message.
-type SendMessageParams = internal_models.SendMessageParams
+type SendMessageParams = internal_models.SendMessagesParams

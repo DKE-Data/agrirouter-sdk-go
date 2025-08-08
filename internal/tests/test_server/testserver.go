@@ -21,8 +21,8 @@ func (s *Server) ReceiveMessages(ctx context.Context, request ReceiveMessagesReq
 	panic("unimplemented")
 }
 
-// SendMessage implements StrictServerInterface.
-func (s *Server) SendMessage(ctx context.Context, request SendMessageRequestObject) (SendMessageResponseObject, error) {
+// SendMessages implements StrictServerInterface.
+func (s *Server) SendMessages(ctx context.Context, request SendMessagesRequestObject) (SendMessagesResponseObject, error) {
 	panic("unimplemented")
 }
 

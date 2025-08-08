@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/DKE-Data/agrirouter-go-sdk"
 	"github.com/DKE-Data/agrirouter-go-sdk/internal/tests/agriroutertestcontainer"
-	"github.com/DKE-Data/agrirouter-go-sdk/pkg/agrirouter"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -56,7 +56,7 @@ func TestIntegration(t *testing.T) {
 		}
 
 		resp, err := client.PutEndpoint(context.Background(), externalID, &agrirouter.PutEndpointParams{
-			AgrirouterTenantId: uuid.New(),
+			XAgrirouterTenantId: uuid.New(),
 		}, req)
 		require.NoError(t, err, "Failed to put endpoint")
 		require.NotNil(t, resp, "Response should not be nil")

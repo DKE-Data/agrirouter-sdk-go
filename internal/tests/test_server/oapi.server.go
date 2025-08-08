@@ -79,25 +79,32 @@ type PutEndpointRequest struct {
 	SoftwareVersionId openapi_types.UUID `json:"software_version_id"`
 }
 
-// AgrirouterTenantId defines model for agrirouter-tenant-id.
-type AgrirouterTenantId = openapi_types.UUID
+// XAgrirouterTenantId defines model for x-agrirouter-tenant-id.
+type XAgrirouterTenantId = openapi_types.UUID
 
 // PutEndpointParams defines parameters for PutEndpoint.
 type PutEndpointParams struct {
-	// AgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
-	AgrirouterTenantId AgrirouterTenantId `json:"agrirouter-tenant-id"`
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
 }
 
-// ReceiveMessagesParams defines parameters for ReceiveMessages.
-type ReceiveMessagesParams struct {
-	Accept *string `json:"Accept,omitempty"`
-}
+// SendMessagesParams defines parameters for SendMessages.
+type SendMessagesParams struct {
+	// XAgrirouterMessageType Message type of the sent data. See available types here:
+	// https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
+	XAgrirouterMessageType string `json:"x-agrirouter-message-type"`
 
-// SendMessageParams defines parameters for SendMessage.
-type SendMessageParams struct {
-	ApplicationMessageId string  `json:"applicationMessageId"`
-	ChunkContextId       *string `json:"chunkContextId,omitempty"`
-	ChunkIndex           *int    `json:"chunkIndex,omitempty"`
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterContextId Application side identifier of the sent data.
+	// agrirouter will use this to generate application message id
+	// and also will pass it on as chunk context id in case if the payload
+	// had to be split into several messages.
+	XAgrirouterContextId string `json:"x-agrirouter-context-id"`
+
+	// XAgrirouterFilename Optional name of the file that is attached to messages as metadata.
+	XAgrirouterFilename *string `json:"x-agrirouter-filename,omitempty"`
 }
 
 // PutEndpointJSONRequestBody defines body for PutEndpoint for application/json ContentType.
@@ -108,12 +115,12 @@ type ServerInterface interface {
 	// Create or update endpoint
 	// (PUT /endpoints/{externalId})
 	PutEndpoint(w http.ResponseWriter, r *http.Request, externalId string, params PutEndpointParams)
-	// Receive messages from Agrirouter outbox
+	// Receive messages from agrirouter outbox
 	// (GET /messages)
-	ReceiveMessages(w http.ResponseWriter, r *http.Request, params ReceiveMessagesParams)
-	// Send a message to Agrirouter inbox
+	ReceiveMessages(w http.ResponseWriter, r *http.Request)
+	// Send one or several messages to agrirouter inbox
 	// (POST /messages)
-	SendMessage(w http.ResponseWriter, r *http.Request, params SendMessageParams)
+	SendMessages(w http.ResponseWriter, r *http.Request, params SendMessagesParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -152,26 +159,26 @@ func (siw *ServerInterfaceWrapper) PutEndpoint(w http.ResponseWriter, r *http.Re
 
 	headers := r.Header
 
-	// ------------- Required header parameter "agrirouter-tenant-id" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("agrirouter-tenant-id")]; found {
-		var AgrirouterTenantId AgrirouterTenantId
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
 		n := len(valueList)
 		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "agrirouter-tenant-id", Count: n})
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "x-agrirouter-tenant-id", Count: n})
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "agrirouter-tenant-id", valueList[0], &AgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
 		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "agrirouter-tenant-id", Err: err})
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "x-agrirouter-tenant-id", Err: err})
 			return
 		}
 
-		params.AgrirouterTenantId = AgrirouterTenantId
+		params.XAgrirouterTenantId = XAgrirouterTenantId
 
 	} else {
-		err := fmt.Errorf("Header parameter agrirouter-tenant-id is required, but not found")
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "agrirouter-tenant-id", Err: err})
+		err := fmt.Errorf("Header parameter x-agrirouter-tenant-id is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "x-agrirouter-tenant-id", Err: err})
 		return
 	}
 
@@ -189,8 +196,6 @@ func (siw *ServerInterfaceWrapper) PutEndpoint(w http.ResponseWriter, r *http.Re
 // ReceiveMessages operation middleware
 func (siw *ServerInterfaceWrapper) ReceiveMessages(w http.ResponseWriter, r *http.Request) {
 
-	var err error
-
 	ctx := r.Context()
 
 	ctx = context.WithValue(ctx, AgrirouterOauthQAScopes, []string{})
@@ -199,32 +204,8 @@ func (siw *ServerInterfaceWrapper) ReceiveMessages(w http.ResponseWriter, r *htt
 
 	r = r.WithContext(ctx)
 
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ReceiveMessagesParams
-
-	headers := r.Header
-
-	// ------------- Optional header parameter "Accept" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("Accept")]; found {
-		var Accept string
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "Accept", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithOptions("simple", "Accept", valueList[0], &Accept, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "Accept", Err: err})
-			return
-		}
-
-		params.Accept = &Accept
-
-	}
-
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ReceiveMessages(w, r, params)
+		siw.Handler.ReceiveMessages(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -234,8 +215,8 @@ func (siw *ServerInterfaceWrapper) ReceiveMessages(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
-// SendMessage operation middleware
-func (siw *ServerInterfaceWrapper) SendMessage(w http.ResponseWriter, r *http.Request) {
+// SendMessages operation middleware
+func (siw *ServerInterfaceWrapper) SendMessages(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
@@ -248,73 +229,100 @@ func (siw *ServerInterfaceWrapper) SendMessage(w http.ResponseWriter, r *http.Re
 	r = r.WithContext(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
-	var params SendMessageParams
+	var params SendMessagesParams
 
 	headers := r.Header
 
-	// ------------- Required header parameter "applicationMessageId" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("applicationMessageId")]; found {
-		var ApplicationMessageId string
+	// ------------- Required header parameter "x-agrirouter-message-type" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-message-type")]; found {
+		var XAgrirouterMessageType string
 		n := len(valueList)
 		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "applicationMessageId", Count: n})
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "x-agrirouter-message-type", Count: n})
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "applicationMessageId", valueList[0], &ApplicationMessageId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-message-type", valueList[0], &XAgrirouterMessageType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
 		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "applicationMessageId", Err: err})
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "x-agrirouter-message-type", Err: err})
 			return
 		}
 
-		params.ApplicationMessageId = ApplicationMessageId
+		params.XAgrirouterMessageType = XAgrirouterMessageType
 
 	} else {
-		err := fmt.Errorf("Header parameter applicationMessageId is required, but not found")
-		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "applicationMessageId", Err: err})
+		err := fmt.Errorf("Header parameter x-agrirouter-message-type is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "x-agrirouter-message-type", Err: err})
 		return
 	}
 
-	// ------------- Optional header parameter "chunkContextId" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("chunkContextId")]; found {
-		var ChunkContextId string
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
 		n := len(valueList)
 		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "chunkContextId", Count: n})
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "x-agrirouter-tenant-id", Count: n})
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "chunkContextId", valueList[0], &ChunkContextId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
 		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "chunkContextId", Err: err})
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "x-agrirouter-tenant-id", Err: err})
 			return
 		}
 
-		params.ChunkContextId = &ChunkContextId
+		params.XAgrirouterTenantId = XAgrirouterTenantId
 
+	} else {
+		err := fmt.Errorf("Header parameter x-agrirouter-tenant-id is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "x-agrirouter-tenant-id", Err: err})
+		return
 	}
 
-	// ------------- Optional header parameter "chunkIndex" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("chunkIndex")]; found {
-		var ChunkIndex int
+	// ------------- Required header parameter "x-agrirouter-context-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-context-id")]; found {
+		var XAgrirouterContextId string
 		n := len(valueList)
 		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "chunkIndex", Count: n})
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "x-agrirouter-context-id", Count: n})
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "chunkIndex", valueList[0], &ChunkIndex, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-context-id", valueList[0], &XAgrirouterContextId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
 		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "chunkIndex", Err: err})
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "x-agrirouter-context-id", Err: err})
 			return
 		}
 
-		params.ChunkIndex = &ChunkIndex
+		params.XAgrirouterContextId = XAgrirouterContextId
+
+	} else {
+		err := fmt.Errorf("Header parameter x-agrirouter-context-id is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "x-agrirouter-context-id", Err: err})
+		return
+	}
+
+	// ------------- Optional header parameter "x-agrirouter-filename" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-filename")]; found {
+		var XAgrirouterFilename string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "x-agrirouter-filename", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-filename", valueList[0], &XAgrirouterFilename, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "x-agrirouter-filename", Err: err})
+			return
+		}
+
+		params.XAgrirouterFilename = &XAgrirouterFilename
 
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.SendMessage(w, r, params)
+		siw.Handler.SendMessages(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -446,7 +454,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 	m.HandleFunc("PUT "+options.BaseURL+"/endpoints/{externalId}", wrapper.PutEndpoint)
 	m.HandleFunc("GET "+options.BaseURL+"/messages", wrapper.ReceiveMessages)
-	m.HandleFunc("POST "+options.BaseURL+"/messages", wrapper.SendMessage)
+	m.HandleFunc("POST "+options.BaseURL+"/messages", wrapper.SendMessages)
 
 	return m
 }
@@ -536,7 +544,6 @@ func (response PutEndpoint504Response) VisitPutEndpointResponse(w http.ResponseW
 }
 
 type ReceiveMessagesRequestObject struct {
-	Params ReceiveMessagesParams
 }
 
 type ReceiveMessagesResponseObject interface {
@@ -594,51 +601,51 @@ func (response ReceiveMessages500Response) VisitReceiveMessagesResponse(w http.R
 	return nil
 }
 
-type SendMessageRequestObject struct {
-	Params SendMessageParams
+type SendMessagesRequestObject struct {
+	Params SendMessagesParams
 	Body   io.Reader
 }
 
-type SendMessageResponseObject interface {
-	VisitSendMessageResponse(w http.ResponseWriter) error
+type SendMessagesResponseObject interface {
+	VisitSendMessagesResponse(w http.ResponseWriter) error
 }
 
-type SendMessage200Response struct {
+type SendMessages200Response struct {
 }
 
-func (response SendMessage200Response) VisitSendMessageResponse(w http.ResponseWriter) error {
+func (response SendMessages200Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(200)
 	return nil
 }
 
-type SendMessage400Response struct {
+type SendMessages400Response struct {
 }
 
-func (response SendMessage400Response) VisitSendMessageResponse(w http.ResponseWriter) error {
+func (response SendMessages400Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(400)
 	return nil
 }
 
-type SendMessage401Response struct {
+type SendMessages401Response struct {
 }
 
-func (response SendMessage401Response) VisitSendMessageResponse(w http.ResponseWriter) error {
+func (response SendMessages401Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(401)
 	return nil
 }
 
-type SendMessage403Response struct {
+type SendMessages403Response struct {
 }
 
-func (response SendMessage403Response) VisitSendMessageResponse(w http.ResponseWriter) error {
+func (response SendMessages403Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(403)
 	return nil
 }
 
-type SendMessage500Response struct {
+type SendMessages500Response struct {
 }
 
-func (response SendMessage500Response) VisitSendMessageResponse(w http.ResponseWriter) error {
+func (response SendMessages500Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(500)
 	return nil
 }
@@ -648,12 +655,12 @@ type StrictServerInterface interface {
 	// Create or update endpoint
 	// (PUT /endpoints/{externalId})
 	PutEndpoint(ctx context.Context, request PutEndpointRequestObject) (PutEndpointResponseObject, error)
-	// Receive messages from Agrirouter outbox
+	// Receive messages from agrirouter outbox
 	// (GET /messages)
 	ReceiveMessages(ctx context.Context, request ReceiveMessagesRequestObject) (ReceiveMessagesResponseObject, error)
-	// Send a message to Agrirouter inbox
+	// Send one or several messages to agrirouter inbox
 	// (POST /messages)
-	SendMessage(ctx context.Context, request SendMessageRequestObject) (SendMessageResponseObject, error)
+	SendMessages(ctx context.Context, request SendMessagesRequestObject) (SendMessagesResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -720,10 +727,8 @@ func (sh *strictHandler) PutEndpoint(w http.ResponseWriter, r *http.Request, ext
 }
 
 // ReceiveMessages operation middleware
-func (sh *strictHandler) ReceiveMessages(w http.ResponseWriter, r *http.Request, params ReceiveMessagesParams) {
+func (sh *strictHandler) ReceiveMessages(w http.ResponseWriter, r *http.Request) {
 	var request ReceiveMessagesRequestObject
-
-	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ReceiveMessages(ctx, request.(ReceiveMessagesRequestObject))
@@ -745,27 +750,27 @@ func (sh *strictHandler) ReceiveMessages(w http.ResponseWriter, r *http.Request,
 	}
 }
 
-// SendMessage operation middleware
-func (sh *strictHandler) SendMessage(w http.ResponseWriter, r *http.Request, params SendMessageParams) {
-	var request SendMessageRequestObject
+// SendMessages operation middleware
+func (sh *strictHandler) SendMessages(w http.ResponseWriter, r *http.Request, params SendMessagesParams) {
+	var request SendMessagesRequestObject
 
 	request.Params = params
 
 	request.Body = r.Body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.SendMessage(ctx, request.(SendMessageRequestObject))
+		return sh.ssi.SendMessages(ctx, request.(SendMessagesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "SendMessage")
+		handler = middleware(handler, "SendMessages")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(SendMessageResponseObject); ok {
-		if err := validResponse.VisitSendMessageResponse(w); err != nil {
+	} else if validResponse, ok := response.(SendMessagesResponseObject); ok {
+		if err := validResponse.VisitSendMessagesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

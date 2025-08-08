@@ -79,7 +79,7 @@ func (c *Client) SendMessage(
 	params *SendMessageParams,
 	body io.Reader,
 ) error {
-	res, err := c.oapiClient.SendMessageWithBodyWithResponse(ctx, params, "application/octet-stream", body)
+	res, err := c.oapiClient.SendMessagesWithBodyWithResponse(ctx, params, "application/octet-stream", body)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrAPICallFailed, err)
 	}

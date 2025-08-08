@@ -5,10 +5,10 @@ info:
     email: info@dke-data.com
     name: DKE Data
     url: https://dke-data.com
-  title: Agrirouter API Gateway
+  title: agrirouter Edition 2025 API
   version: "1.0"
   description: |
-    This service provides access to endpoint data of Agrirouter via HTTP.
+    This service provides access to endpoint data of agrirouter via HTTP.
 servers:
   - url: http://localhost:{port}
     variables:
@@ -22,26 +22,52 @@ servers:
 paths:
   /messages:
     post:
-      operationId: sendMessage
-      summary: Send a message to Agrirouter inbox
+      operationId: sendMessages
+      summary: Send one or several messages to agrirouter inbox
       description: |
-        This endpoint is used to send a message to the Agrirouter inbox.
+        Send one or several messages via agrirouter to other endpoints.
+        The payload is sent as a binary stream in the request body.
+        If the payload is too large, it would be split into several messages
+        by agrirouter itself, client does not need to care about doing that.
+        Depending on size of the payload, result could be a single message
+        or several messages in the target endpoint outboxes.
       parameters:
-        - name: applicationMessageId
+        - name: x-agrirouter-message-type
           in: header
           required: true
           schema:
             type: string
-        - name: chunkContextId
+            maxLength: 100
+          description: |
+            Message type of the sent data. See available types here:
+            https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
+          examples:
+            iso11783DeviceDescriptionProtobuf:
+              summary: Device Description
+              value: "iso:11783:-10:device_description:protobuf"
+            iso11783TaskDataZip:
+              summary: ISO11783 Task Data Zip
+              value: "iso:11783:-10:taskdata:zip"
+        - $ref: "#/components/parameters/x-agrirouter-tenant-id"
+        - name: x-agrirouter-context-id
+          in: header
+          required: true
+          schema:
+            type: string
+            maxLength: 50
+          description: |
+            Application side identifier of the sent data.
+            agrirouter will use this to generate application message id
+            and also will pass it on as chunk context id in case if the payload
+            had to be split into several messages.
+        - name: x-agrirouter-filename
           in: header
           required: false
           schema:
             type: string
-        - name: chunkIndex
-          in: header
-          required: false
-          schema:
-            type: integer
+            maxLength: 100
+          description: |
+            Optional name of the file that is attached to messages as metadata.
       requestBody:
         required: true
         content:
@@ -62,20 +88,14 @@ paths:
           description: Server Side Error
     get:
       operationId: receiveMessages
-      summary: Receive messages from Agrirouter outbox
+      summary: Receive messages from agrirouter outbox
       description: |
-        This endpoint is used to receive messages from the Agrirouter outbox.
-        The messages are retrieved from the outbox of the device with the given 
-        deviceAlternateId (aka endpoint id).
-      parameters:
-        - name: Accept
-          in: header
-          required: false
-          schema:
-            type: string
+        Receive stream of messages from the agrirouter outbox.
+        The messages are retrieved from the outboxes of all endpoints that 
+        application owns in the agrirouter.
       responses:
         '200':
-          description: Messages are retrieved from outbox
+          description: Stream of messages from agrirouter
           content:
             text/event-stream:
               schema:
@@ -106,7 +126,7 @@ paths:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
       parameters:
-        - $ref: "#/components/parameters/agrirouter-tenant-id"
+        - $ref: "#/components/parameters/x-agrirouter-tenant-id"
         - name: externalId
           in: path
           required: true
@@ -171,8 +191,8 @@ components:
           scopes:
             endpoints:manage: Manage endpoints in the Agrirouter tenant.
   parameters:
-    agrirouter-tenant-id:
-      name: agrirouter-tenant-id
+    x-agrirouter-tenant-id:
+      name: x-agrirouter-tenant-id
       in: header
       required: true
       schema:
