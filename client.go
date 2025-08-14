@@ -29,8 +29,8 @@ type Client struct {
 
 // NewClient creates a new agrirouter client with the given server URL.
 // The server URL should be the base URL of the agrirouter API, e.g. "https://api.qa.agrirouter.farm".
-func NewClient(serverURL string) (*Client, error) {
-	client, err := oapi.NewClientWithResponses(serverURL)
+func NewClient(serverURL string, opts ...ClientOption) (*Client, error) {
+	client, err := oapi.NewClientWithResponses(serverURL, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -109,4 +109,17 @@ func putEndpointError(err error, err2 error) error {
 		return fmt.Errorf("%w: %w", ErrPutEndpointFailed, err)
 	}
 	return fmt.Errorf("%w: %w: %w", ErrPutEndpointFailed, err, err2)
+}
+
+// HTTPRequestDoer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
+type HTTPRequestDoer = oapi.HttpRequestDoer
+
+// ClientOption is a type for options that can be passed to the agrirouter client.
+type ClientOption = oapi.ClientOption
+
+// WithHTTPClient allows to set a custom HTTP client for the agrirouter client.
+func WithHTTPClient(doer HTTPRequestDoer) ClientOption {
+	return oapi.WithHTTPClient(doer)
 }

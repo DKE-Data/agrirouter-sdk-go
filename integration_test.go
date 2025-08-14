@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -45,7 +46,10 @@ func testMain(m *testing.M) int {
 }
 
 func TestIntegration(t *testing.T) {
-	client, err := agrirouter.NewClient(testContainer.BaseURL)
+	client, err := agrirouter.NewClient(
+		testContainer.BaseURL,
+		agrirouter.WithHTTPClient(http.DefaultClient),
+	)
 	require.NoError(t, err, "Failed to create agrirouter client")
 
 	t.Run("PutEndpoint", func(t *testing.T) {
