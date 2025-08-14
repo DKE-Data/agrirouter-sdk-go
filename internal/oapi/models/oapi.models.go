@@ -42,16 +42,24 @@ type Endpoint struct {
 
 // EndpointCapability defines model for EndpointCapability.
 type EndpointCapability struct {
-	Direction *EndpointCapabilityDirection `json:"direction,omitempty"`
+	Direction EndpointCapabilityDirection `json:"direction"`
 
 	// MessageType The message type that the endpoint can send or receive.
 	// See available types here:
 	// https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
-	MessageType *string `json:"messageType,omitempty"`
+	MessageType string `json:"message_type"`
 }
 
 // EndpointCapabilityDirection defines model for EndpointCapability.Direction.
 type EndpointCapabilityDirection string
+
+// EndpointSubscription defines model for EndpointSubscription.
+type EndpointSubscription struct {
+	// MessageType The message type that the endpoint is subscribed to.
+	// See available types here:
+	// https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
+	MessageType string `json:"message_type"`
+}
 
 // EndpointType defines model for EndpointType.
 type EndpointType string
@@ -66,7 +74,8 @@ type PutEndpointRequest struct {
 	EndpointType EndpointType         `json:"endpoint_type"`
 
 	// SoftwareVersionId The ID of the software version that owns the endpoint
-	SoftwareVersionId openapi_types.UUID `json:"software_version_id"`
+	SoftwareVersionId openapi_types.UUID     `json:"software_version_id"`
+	Subscriptions     []EndpointSubscription `json:"subscriptions"`
 }
 
 // XAgrirouterTenantId defines model for x-agrirouter-tenant-id.

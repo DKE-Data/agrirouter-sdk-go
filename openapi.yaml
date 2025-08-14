@@ -206,6 +206,7 @@ components:
         - application_id
         - software_version_id
         - capabilities
+        - subscriptions
         - endpoint_type
       properties:
         application_id:
@@ -221,6 +222,10 @@ components:
           items:
             $ref: "#/components/schemas/EndpointCapability"
           description: The effective capabilities of the endpoint, must be subset of the capabilities of software version.
+        subscriptions:
+          type: array
+          items:
+            $ref: "#/components/schemas/EndpointSubscription"
         endpoint_type:
           $ref: "#/components/schemas/EndpointType"
     Endpoint:
@@ -254,10 +259,25 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/EndpointCapability"
+    EndpointSubscription:
+      type: object
+      required:
+        - message_type
+      properties:
+        message_type:
+          type: string
+          example: "iso:11783:-10:taskdata:zip"
+          description: |
+            The message type that the endpoint is subscribed to.
+            See available types here:
+            https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
     EndpointCapability:
       type: object
+      required:
+        - message_type
+        - direction
       properties:
-        messageType:
+        message_type:
           type: string
           example: "iso:11783:-10:taskdata:zip"
           description: |
