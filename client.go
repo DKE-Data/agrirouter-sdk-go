@@ -123,3 +123,11 @@ type ClientOption = oapi.ClientOption
 func WithHTTPClient(doer HTTPRequestDoer) ClientOption {
 	return oapi.WithHTTPClient(doer)
 }
+
+// RequestEditorFn is a function that can modify the request before it is sent.
+type RequestEditorFn = oapi.RequestEditorFn
+
+// WithRequestEditorFn allows to set a custom request editor function to modify request before sending it.
+func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
+	return oapi.WithRequestEditorFn(fn)
+}
