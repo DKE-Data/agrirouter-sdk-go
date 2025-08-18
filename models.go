@@ -23,3 +23,12 @@ type PutEndpointParams = internal_models.PutEndpointParams
 
 // SendMessageParams contains parameters to send a message.
 type SendMessageParams = internal_models.SendMessagesParams
+
+// CapabilityDirectionSend indicates capability of endpoint to send messages.
+const CapabilityDirectionSend = internal_models.SEND
+
+// CapabilityDirectionReceive indicates capability of endpoint to receive messages.
+const CapabilityDirectionReceive = internal_models.RECEIVE
+
+// CapabilityDirectionSendReceive indicates capability of endpoint to both send and receive messages.
+const CapabilityDirectionSendReceive = internal_models.SENDRECEIVE
