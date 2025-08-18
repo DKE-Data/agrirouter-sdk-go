@@ -16,7 +16,17 @@ type PutEndpointRequest = internal_models.PutEndpointRequest
 type Endpoint = internal_models.Endpoint
 
 // EndpointCapability is the structure representing an endpoint's capability.
+//
+// It defines what endpoint can do, such as sending or receiving messages of
+// specific types.
 type EndpointCapability = internal_models.EndpointCapability
+
+// EndpointSubscription is the structure representing an endpoint's subscription.
+//
+// It defines which message types the endpoint is subscribed to,
+// meaning it can receive messages of those types in case if sending endpoint
+// has published them.
+type EndpointSubscription = internal_models.EndpointSubscription
 
 // PutEndpointParams contains parameters to create or update an endpoint.
 type PutEndpointParams = internal_models.PutEndpointParams
