@@ -4,6 +4,8 @@ Go SDK for agrirouter is a library that provides a shared interface to access fu
 
 🚧🚧🚧 **Currently this is ONLY intended to be used internally by agrirouter outbound integrations!** 🚧🚧🚧
 
+🚧🚧🚧 **External use is NOT SUPPORTED** 🚧🚧🚧
+
 ## Development
 
 Following instructions are for developers working on this SDK.
