@@ -2,3 +2,9 @@ version: 2
 
 builds:
 - skip: true
+
+changelog:
+  filters:
+    include:
+      - "^feat:"
+      - "^fix:"
