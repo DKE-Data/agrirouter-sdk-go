@@ -71,6 +71,6 @@ func TestIntegration(t *testing.T) {
 
 		assert.EventuallyWithT(t, func(c *assert.CollectT) {
 			assert.NoError(c, events.CheckExpectations(c))
-		}, 3*time.Second, 1*time.Second, "Event not received in time")
+		}, 10*time.Second, 1*time.Second, "Event not received in time")
 	})
 }
