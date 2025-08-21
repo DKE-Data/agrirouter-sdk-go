@@ -2,9 +2,11 @@
 
 Go SDK for agrirouter is a library that provides a shared interface to access functionality common for agrirouter applications.
 
-Currently it is only intended to be used internally by outbound integrations built on top of agrirouter's 2025 edition API.
+🚧🚧🚧 **Currently this is ONLY intended to be used internally by agrirouter outbound integrations!** 🚧🚧🚧
 
 ## Development
+
+Following instructions are for developers working on this SDK.
 
 ### Prerequisites
 
