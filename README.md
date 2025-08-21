@@ -1,4 +1,4 @@
-# Agrirouter Go SDK
+# agrirouter Go SDK
 
 Go SDK for agrirouter is a library that provides a shared interface to access functionality common for agrirouter applications.
 
