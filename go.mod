@@ -1,6 +1,6 @@
 module github.com/DKE-Data/agrirouter-sdk-go
 
-go 1.23.11
+go 1.23.12
 
 require (
 	github.com/google/uuid v1.6.0
