@@ -1,8 +1,7 @@
 name: Trigger Renovate for services
 
 # This Github workflow would trigger github workflow in file "renovate.yaml" 
-# for DKE-Data/agrirouter-deere-service whenever there is a new release in this repository.
-
+# for dependant services whenever there is a new release in this repository.
 
 on:
   release:
@@ -29,19 +28,31 @@ jobs:
           private-key: ${{ steps.get_github_app_creds.outputs.GITHUB_APP_PRIVATE_KEY }}
           app-id: ${{ steps.get_github_app_creds.outputs.GITHUB_APP_ID }}
           owner: ${{ github.repository_owner }}
-          repositories: 'agrirouter-deere-service'
-
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          repository: DKE-Data/agrirouter-deere-service
-          token: ${{ steps.get_token.outputs.token }}
+          repositories: 'agrirouter-deere-service,agrirouter-agin-service'
       
       - name: Install GitHub CLI
         run: |
           sudo apt-get install gh -y
 
-      - name: Trigger Renovate
+      - name: Checkout deere repository
+        uses: actions/checkout@v3
+        with:
+          repository: DKE-Data/agrirouter-deere-service
+          token: ${{ steps.get_token.outputs.token }}
+
+      - name: Trigger Renovate in deere repository
+        run: |
+          gh workflow run renovate.yaml --ref main
+        env:
+          GITHUB_TOKEN: ${{ steps.get_token.outputs.token }}
+      
+      - name: Checkout agin repository
+        uses: actions/checkout@v3
+        with:
+          repository: DKE-Data/agrirouter-agin-service
+          token: ${{ steps.get_token.outputs.token }}
+
+      - name: Trigger Renovate in agin repository
         run: |
           gh workflow run renovate.yaml --ref main
         env:
