@@ -32,6 +32,65 @@ paths:
         Depending on size of the payload, result could be a single message
         or several messages in the target endpoint outboxes.
       parameters:
+        - name: content-length
+          in: header
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: |
+            The size of the complete payload in bytes.
+            This is used to determine if the payload needs to be 
+            split into chunks and how.
+        - name: x-agrirouter-is-publish
+          in: header
+          required: true
+          schema:
+            type: boolean
+          description: |
+            If set to true, the message will be sent as a published message
+            and any endpoints that are subscribed to the message type
+            would be able to receive it, provided other conditions for routing are met.
+        - name: x-agrirouter-direct-recipients
+          in: header
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          description: |
+            Comma-separated list of agrirouter endpoint IDs of the direct recipients.
+            Allows specifying direct recipients of the message, which
+            could receive it even if they are not subscribed to the message type.
+        - name: x-agrirouter-sent-timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: |
+            Client side timestamp of sending the data.
+        - name: x-agrirouter-endpoint-id
+          in: header
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: |
+            The agrirouter endpoint ID of the sender.
+            This is the ID of the endpoint that is sending the message.
+        - name: x-agrirouter-teamset-context-id
+          in: header
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+          description: |
+            A teamset is a set of connected machines that work and move together 
+            and are connected to the same (virtual) communication unit. 
+            The machines in the teamset are typically connected physically and 
+            informationally (for example via ISOBUS).
         - name: x-agrirouter-message-type
           in: header
           required: true
@@ -176,6 +235,10 @@ components:
       type: oauth2
       description: Agrirouter OAuth2 authentication for QA environment.
       flows:
+        clientCredentials:
+          tokenUrl: https://oauth.qa.agrirouter.farm/token
+          scopes:
+            endpoints:manage: Manage endpoints in the Agrirouter tenant.
         authorizationCode:
           authorizationUrl: https://oauth.qa.agrirouter.farm/authorize
           tokenUrl: https://oauth.qa.agrirouter.farm/token
@@ -185,6 +248,10 @@ components:
       type: oauth2
       description: Agrirouter OAuth2 authentication for PROD environment.
       flows:
+        clientCredentials:
+          tokenUrl: https://oauth.prod.agrirouter.farm/token
+          scopes:
+            endpoints:manage: Manage endpoints in the Agrirouter tenant.
         authorizationCode:
           authorizationUrl: https://oauth.prod.agrirouter.farm/authorize
           tokenUrl: https://oauth.prod.agrirouter.farm/token

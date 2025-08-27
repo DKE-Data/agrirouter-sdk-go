@@ -23,7 +23,15 @@ func (s *Server) ReceiveMessages(ctx context.Context, request ReceiveMessagesReq
 
 // SendMessages implements StrictServerInterface.
 func (s *Server) SendMessages(ctx context.Context, request SendMessagesRequestObject) (SendMessagesResponseObject, error) {
-	panic("unimplemented")
+	s.events <- struct {
+		Data      string
+		EventType string
+	}{
+		Data:      fmt.Sprintf(`{"endpointId": "%s"}`, request.Params.XAgrirouterEndpointId),
+		EventType: agriroutertestcontainer.SendMessagesTestEvent,
+	}
+
+	return SendMessages200Response{}, nil
 }
 
 func (s *Server) PutEndpoint(ctx context.Context, request PutEndpointRequestObject) (PutEndpointResponseObject, error) {

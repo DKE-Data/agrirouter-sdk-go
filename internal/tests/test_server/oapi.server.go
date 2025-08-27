@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/oapi-codegen/runtime"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
@@ -99,6 +100,34 @@ type PutEndpointParams struct {
 
 // SendMessagesParams defines parameters for SendMessages.
 type SendMessagesParams struct {
+	// ContentLength The size of the complete payload in bytes.
+	// This is used to determine if the payload needs to be
+	// split into chunks and how.
+	ContentLength int64 `json:"content-length"`
+
+	// XAgrirouterIsPublish If set to true, the message will be sent as a published message
+	// and any endpoints that are subscribed to the message type
+	// would be able to receive it, provided other conditions for routing are met.
+	XAgrirouterIsPublish bool `json:"x-agrirouter-is-publish"`
+
+	// XAgrirouterDirectRecipients Comma-separated list of agrirouter endpoint IDs of the direct recipients.
+	// Allows specifying direct recipients of the message, which
+	// could receive it even if they are not subscribed to the message type.
+	XAgrirouterDirectRecipients *[]openapi_types.UUID `json:"x-agrirouter-direct-recipients,omitempty"`
+
+	// XAgrirouterSentTimestamp Client side timestamp of sending the data.
+	XAgrirouterSentTimestamp time.Time `json:"x-agrirouter-sent-timestamp"`
+
+	// XAgrirouterEndpointId The agrirouter endpoint ID of the sender.
+	// This is the ID of the endpoint that is sending the message.
+	XAgrirouterEndpointId openapi_types.UUID `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTeamsetContextId A teamset is a set of connected machines that work and move together
+	// and are connected to the same (virtual) communication unit.
+	// The machines in the teamset are typically connected physically and
+	// informationally (for example via ISOBUS).
+	XAgrirouterTeamsetContextId *string `json:"x-agrirouter-teamset-context-id,omitempty"`
+
 	// XAgrirouterMessageType Message type of the sent data. See available types here:
 	// https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
 	XAgrirouterMessageType string `json:"x-agrirouter-message-type"`
@@ -241,6 +270,136 @@ func (siw *ServerInterfaceWrapper) SendMessages(w http.ResponseWriter, r *http.R
 	var params SendMessagesParams
 
 	headers := r.Header
+
+	// ------------- Required header parameter "content-length" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("content-length")]; found {
+		var ContentLength int64
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "content-length", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "content-length", valueList[0], &ContentLength, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "content-length", Err: err})
+			return
+		}
+
+		params.ContentLength = ContentLength
+
+	} else {
+		err := fmt.Errorf("Header parameter content-length is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "content-length", Err: err})
+		return
+	}
+
+	// ------------- Required header parameter "x-agrirouter-is-publish" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-is-publish")]; found {
+		var XAgrirouterIsPublish bool
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "x-agrirouter-is-publish", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-is-publish", valueList[0], &XAgrirouterIsPublish, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "x-agrirouter-is-publish", Err: err})
+			return
+		}
+
+		params.XAgrirouterIsPublish = XAgrirouterIsPublish
+
+	} else {
+		err := fmt.Errorf("Header parameter x-agrirouter-is-publish is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "x-agrirouter-is-publish", Err: err})
+		return
+	}
+
+	// ------------- Optional header parameter "x-agrirouter-direct-recipients" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-direct-recipients")]; found {
+		var XAgrirouterDirectRecipients []openapi_types.UUID
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "x-agrirouter-direct-recipients", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-direct-recipients", valueList[0], &XAgrirouterDirectRecipients, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "x-agrirouter-direct-recipients", Err: err})
+			return
+		}
+
+		params.XAgrirouterDirectRecipients = &XAgrirouterDirectRecipients
+
+	}
+
+	// ------------- Required header parameter "x-agrirouter-sent-timestamp" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-sent-timestamp")]; found {
+		var XAgrirouterSentTimestamp time.Time
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "x-agrirouter-sent-timestamp", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-sent-timestamp", valueList[0], &XAgrirouterSentTimestamp, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "x-agrirouter-sent-timestamp", Err: err})
+			return
+		}
+
+		params.XAgrirouterSentTimestamp = XAgrirouterSentTimestamp
+
+	} else {
+		err := fmt.Errorf("Header parameter x-agrirouter-sent-timestamp is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "x-agrirouter-sent-timestamp", Err: err})
+		return
+	}
+
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId openapi_types.UUID
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "x-agrirouter-endpoint-id", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "x-agrirouter-endpoint-id", Err: err})
+			return
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+
+	} else {
+		err := fmt.Errorf("Header parameter x-agrirouter-endpoint-id is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "x-agrirouter-endpoint-id", Err: err})
+		return
+	}
+
+	// ------------- Optional header parameter "x-agrirouter-teamset-context-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-teamset-context-id")]; found {
+		var XAgrirouterTeamsetContextId string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "x-agrirouter-teamset-context-id", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-teamset-context-id", valueList[0], &XAgrirouterTeamsetContextId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "x-agrirouter-teamset-context-id", Err: err})
+			return
+		}
+
+		params.XAgrirouterTeamsetContextId = &XAgrirouterTeamsetContextId
+
+	}
 
 	// ------------- Required header parameter "x-agrirouter-message-type" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-message-type")]; found {

@@ -31,8 +31,8 @@ type EndpointSubscription = internal_models.EndpointSubscription
 // PutEndpointParams contains parameters to create or update an endpoint.
 type PutEndpointParams = internal_models.PutEndpointParams
 
-// SendMessageParams contains parameters to send a message.
-type SendMessageParams = internal_models.SendMessagesParams
+// SendMessagesParams contains parameters to send a message.
+type SendMessagesParams = internal_models.SendMessagesParams
 
 // CapabilityDirectionSend indicates capability of endpoint to send messages.
 const CapabilityDirectionSend = internal_models.SEND

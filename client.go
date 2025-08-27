@@ -71,12 +71,12 @@ func (c *Client) PutEndpoint(
 	return nil, putEndpointError(ErrFailedStatusCode, httpResponseToErr(res.HTTPResponse, res.Body))
 }
 
-// SendMessage sends a message to the agrirouter API.
+// SendMessages sends a message to the agrirouter API.
 //
 // The body of the request must be a valid payload of agrirouter message.
-func (c *Client) SendMessage(
+func (c *Client) SendMessages(
 	ctx context.Context,
-	params *SendMessageParams,
+	params *SendMessagesParams,
 	body io.Reader,
 ) error {
 	res, err := c.oapiClient.SendMessagesWithBodyWithResponse(ctx, params, "application/octet-stream", body)

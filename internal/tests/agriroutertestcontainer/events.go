@@ -16,6 +16,9 @@ type TestedEndpointPutData struct {
 const (
 	// PutEndpointTestEvent happens when an endpoint is put in the test container.
 	PutEndpointTestEvent = "putEndpoint"
+
+	// SendMessagesTestEvent happens when messages are sent in the test container.
+	SendMessagesTestEvent = "sendMessages"
 )
 
 // TestEvent represents a single event happened in test container.
@@ -79,6 +82,7 @@ func (e *TestEvents) CheckExpectations(t assert.TestingT) error {
 			return err
 		}
 	}
+	e.list = nil
 	e.expectations = nil
 	e.expectationIndex = 0
 	return nil

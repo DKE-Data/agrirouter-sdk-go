@@ -267,40 +267,98 @@ func NewSendMessagesRequestWithBody(server string, params *SendMessagesParams, c
 
 		var headerParam0 string
 
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-message-type", runtime.ParamLocationHeader, params.XAgrirouterMessageType)
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "content-length", runtime.ParamLocationHeader, params.ContentLength)
 		if err != nil {
 			return nil, err
 		}
 
-		req.Header.Set("x-agrirouter-message-type", headerParam0)
+		req.Header.Set("content-length", headerParam0)
 
 		var headerParam1 string
 
-		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-is-publish", runtime.ParamLocationHeader, params.XAgrirouterIsPublish)
 		if err != nil {
 			return nil, err
 		}
 
-		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+		req.Header.Set("x-agrirouter-is-publish", headerParam1)
 
-		var headerParam2 string
+		if params.XAgrirouterDirectRecipients != nil {
+			var headerParam2 string
 
-		headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-context-id", runtime.ParamLocationHeader, params.XAgrirouterContextId)
-		if err != nil {
-			return nil, err
-		}
-
-		req.Header.Set("x-agrirouter-context-id", headerParam2)
-
-		if params.XAgrirouterFilename != nil {
-			var headerParam3 string
-
-			headerParam3, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-filename", runtime.ParamLocationHeader, *params.XAgrirouterFilename)
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-direct-recipients", runtime.ParamLocationHeader, *params.XAgrirouterDirectRecipients)
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("x-agrirouter-filename", headerParam3)
+			req.Header.Set("x-agrirouter-direct-recipients", headerParam2)
+		}
+
+		var headerParam3 string
+
+		headerParam3, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-sent-timestamp", runtime.ParamLocationHeader, params.XAgrirouterSentTimestamp)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-sent-timestamp", headerParam3)
+
+		var headerParam4 string
+
+		headerParam4, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam4)
+
+		if params.XAgrirouterTeamsetContextId != nil {
+			var headerParam5 string
+
+			headerParam5, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-teamset-context-id", runtime.ParamLocationHeader, *params.XAgrirouterTeamsetContextId)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-teamset-context-id", headerParam5)
+		}
+
+		var headerParam6 string
+
+		headerParam6, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-message-type", runtime.ParamLocationHeader, params.XAgrirouterMessageType)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-message-type", headerParam6)
+
+		var headerParam7 string
+
+		headerParam7, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam7)
+
+		var headerParam8 string
+
+		headerParam8, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-context-id", runtime.ParamLocationHeader, params.XAgrirouterContextId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-context-id", headerParam8)
+
+		if params.XAgrirouterFilename != nil {
+			var headerParam9 string
+
+			headerParam9, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-filename", runtime.ParamLocationHeader, *params.XAgrirouterFilename)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-filename", headerParam9)
 		}
 
 	}

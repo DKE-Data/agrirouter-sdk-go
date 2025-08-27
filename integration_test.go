@@ -1,6 +1,7 @@
 package agrirouter_test
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"log"
@@ -45,7 +46,7 @@ func testMain(m *testing.M) int {
 	return exitCode
 }
 
-func TestIntegration(t *testing.T) {
+func TestPutEndpoint(t *testing.T) {
 	client, err := agrirouter.NewClient(
 		testContainer.BaseURL,
 		agrirouter.WithHTTPClient(http.DefaultClient),
@@ -73,4 +74,38 @@ func TestIntegration(t *testing.T) {
 			assert.NoError(c, events.CheckExpectations(c))
 		}, 10*time.Second, 1*time.Second, "Event not received in time")
 	})
+}
+
+func TestSendMessages(t *testing.T) {
+	client, err := agrirouter.NewClient(
+		testContainer.BaseURL,
+		agrirouter.WithHTTPClient(http.DefaultClient),
+	)
+	require.NoError(t, err, "Failed to create agrirouter client")
+
+	endpointID := uuid.New()
+	params := &agrirouter.SendMessagesParams{
+		XAgrirouterIsPublish:     true,
+		XAgrirouterEndpointId:    endpointID,
+		ContentLength:            100,
+		XAgrirouterSentTimestamp: time.Now(),
+		XAgrirouterMessageType:   "img:png",
+		XAgrirouterTenantId:      uuid.New(),
+		XAgrirouterContextId:     "test-context",
+	}
+
+	bytes100 := make([]byte, 100)
+	for i := range bytes100 {
+		bytes100[i] = byte(i % 256)
+	}
+
+	err = client.SendMessages(context.Background(), params, bytes.NewReader(bytes100))
+	require.NoError(t, err, "Failed to put endpoint")
+	events := testContainer.Events
+
+	events.Expect("sendMessages", `{"endpointId":"`+endpointID.String()+`"}`)
+
+	assert.EventuallyWithT(t, func(c *assert.CollectT) {
+		assert.NoError(c, events.CheckExpectations(c))
+	}, 10*time.Second, 1*time.Second, "Event not received in time")
 }

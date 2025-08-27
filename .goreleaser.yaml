@@ -7,4 +7,6 @@ changelog:
   filters:
     include:
       - "^feat:"
+      - "^feat!:"
       - "^fix:"
+      - "^fix!:"

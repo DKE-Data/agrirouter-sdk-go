@@ -4,6 +4,8 @@
 package models
 
 import (
+	"time"
+
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -89,6 +91,34 @@ type PutEndpointParams struct {
 
 // SendMessagesParams defines parameters for SendMessages.
 type SendMessagesParams struct {
+	// ContentLength The size of the complete payload in bytes.
+	// This is used to determine if the payload needs to be
+	// split into chunks and how.
+	ContentLength int64 `json:"content-length"`
+
+	// XAgrirouterIsPublish If set to true, the message will be sent as a published message
+	// and any endpoints that are subscribed to the message type
+	// would be able to receive it, provided other conditions for routing are met.
+	XAgrirouterIsPublish bool `json:"x-agrirouter-is-publish"`
+
+	// XAgrirouterDirectRecipients Comma-separated list of agrirouter endpoint IDs of the direct recipients.
+	// Allows specifying direct recipients of the message, which
+	// could receive it even if they are not subscribed to the message type.
+	XAgrirouterDirectRecipients *[]openapi_types.UUID `json:"x-agrirouter-direct-recipients,omitempty"`
+
+	// XAgrirouterSentTimestamp Client side timestamp of sending the data.
+	XAgrirouterSentTimestamp time.Time `json:"x-agrirouter-sent-timestamp"`
+
+	// XAgrirouterEndpointId The agrirouter endpoint ID of the sender.
+	// This is the ID of the endpoint that is sending the message.
+	XAgrirouterEndpointId openapi_types.UUID `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTeamsetContextId A teamset is a set of connected machines that work and move together
+	// and are connected to the same (virtual) communication unit.
+	// The machines in the teamset are typically connected physically and
+	// informationally (for example via ISOBUS).
+	XAgrirouterTeamsetContextId *string `json:"x-agrirouter-teamset-context-id,omitempty"`
+
 	// XAgrirouterMessageType Message type of the sent data. See available types here:
 	// https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
 	XAgrirouterMessageType string `json:"x-agrirouter-message-type"`
