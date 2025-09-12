@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/oapi"
 )
@@ -20,16 +21,24 @@ var (
 
 	// ErrAPICallFailed is returned when an API call fails due to network or server issues.
 	ErrAPICallFailed = errors.New("API call failed")
+
+	// ErrURLIsInvalid is returned when the provided URL is invalid.
+	ErrURLIsInvalid = errors.New("provided URL is invalid")
 )
 
 // Client is the structure that allows interaction with the agrirouter API.
 type Client struct {
 	oapiClient *oapi.ClientWithResponses
+	serverURL  *url.URL
 }
 
 // NewClient creates a new agrirouter client with the given server URL.
 // The server URL should be the base URL of the agrirouter API, e.g. "https://api.qa.agrirouter.farm".
 func NewClient(serverURL string, opts ...ClientOption) (*Client, error) {
+	parsedURL, err := url.Parse(serverURL)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to parse server URL: %w", ErrURLIsInvalid, err)
+	}
 	client, err := oapi.NewClientWithResponses(serverURL, opts...)
 	if err != nil {
 		return nil, err
@@ -37,6 +46,7 @@ func NewClient(serverURL string, opts ...ClientOption) (*Client, error) {
 
 	return &Client{
 		oapiClient: client,
+		serverURL:  parsedURL,
 	}, nil
 }
 

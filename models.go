@@ -62,3 +62,10 @@ const VirtualCommunicationUnit = internal_models.VirtualCommunicationUnit
 // and they are typically cloud deployed applications that manage agricultural data
 // and provide farmers with their own typically web-based user interface.
 const FarmingSoftware = internal_models.FarmingSoftware
+
+// MessageReceivedEventData represents the data received in a MessageReceived event.
+//
+// It contains information about the received message, including its type and payload URI.
+// This event would typically be followed by fetching the actual message payload from the provided URI
+// and processing it accordingly (e.g. decoding, storing, or acting upon the message content).
+type MessageReceivedEventData = internal_models.MessageReceivedEventData

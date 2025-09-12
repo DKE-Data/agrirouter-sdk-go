@@ -1,6 +1,6 @@
 package: test_server
 generate:
-  std-http-server: true
+  echo-server: true
   models: true
   strict-server: true
 output: internal/tests/test_server/oapi.server.go
