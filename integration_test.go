@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
@@ -18,28 +17,36 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testContainer *agriroutertestcontainer.AgrirouterContainer
-
-func TestMain(m *testing.M) {
-	os.Exit(testMain(m))
+type testEnvironment struct {
+	testContainer *agriroutertestcontainer.AgrirouterContainer
+	client        *agrirouter.Client
 }
 
-func testMain(m *testing.M) int {
+func setupTestEnvironment(t *testing.T) *testEnvironment {
 	container, err := agriroutertestcontainer.Run(context.Background())
-	if err != nil {
-		panic(err)
+	require.NoError(t, err, "Failed to start agrirouter test container")
+
+	t.Cleanup(func() {
+		if t.Failed() {
+			streamContainerLogs(container)
+		}
+		container.TerminateOrLog()
+	})
+
+	client, err := agrirouter.NewClient(
+		container.BaseURL,
+		agrirouter.WithHTTPClient(http.DefaultClient),
+	)
+	require.NoError(t, err, "Failed to create agrirouter client")
+
+	return &testEnvironment{
+		client:        client,
+		testContainer: container,
 	}
-	defer container.TerminateOrLog()
-	testContainer = container
-	exitCode := m.Run()
-	if exitCode != 0 {
-		streamContainerLogs()
-	}
-	return exitCode
 }
 
-func streamContainerLogs() {
-	logReader, err := testContainer.Logs(context.Background())
+func streamContainerLogs(container *agriroutertestcontainer.AgrirouterContainer) {
+	logReader, err := container.Logs(context.Background())
 	if err != nil {
 		log.Printf("Failed to get logs from test container: %v", err)
 	}
@@ -52,11 +59,9 @@ func streamContainerLogs() {
 }
 
 func TestPutEndpoint(t *testing.T) {
-	client, err := agrirouter.NewClient(
-		testContainer.BaseURL,
-		agrirouter.WithHTTPClient(http.DefaultClient),
-	)
-	require.NoError(t, err, "Failed to create agrirouter client")
+	env := setupTestEnvironment(t)
+	client := env.client
+	testContainer := env.testContainer
 
 	t.Run("PutEndpoint", func(t *testing.T) {
 		externalID := "test-endpoint"
@@ -99,11 +104,9 @@ func newTestPayload(size int) *testPayload {
 }
 
 func TestSendMessages(t *testing.T) {
-	client, err := agrirouter.NewClient(
-		testContainer.BaseURL,
-		agrirouter.WithHTTPClient(http.DefaultClient),
-	)
-	require.NoError(t, err, "Failed to create agrirouter client")
+	env := setupTestEnvironment(t)
+	client := env.client
+	testContainer := env.testContainer
 
 	endpointID := uuid.New()
 	params := &agrirouter.SendMessagesParams{
@@ -117,7 +120,7 @@ func TestSendMessages(t *testing.T) {
 	}
 
 	payload := newTestPayload(100)
-	err = client.SendMessages(context.Background(), params, bytes.NewReader(payload.bytes))
+	err := client.SendMessages(context.Background(), params, bytes.NewReader(payload.bytes))
 	require.NoError(t, err, "Failed to send messages")
 	events := testContainer.Events
 
@@ -136,11 +139,9 @@ func TestSendMessages(t *testing.T) {
 }
 
 func TestSendAndReceiveMessages(t *testing.T) {
-	client, err := agrirouter.NewClient(
-		testContainer.BaseURL,
-		agrirouter.WithHTTPClient(http.DefaultClient),
-	)
-	require.NoError(t, err, "Failed to create agrirouter client")
+	env := setupTestEnvironment(t)
+	client := env.client
+	testContainer := env.testContainer
 
 	receivingContext, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -174,7 +175,7 @@ func TestSendAndReceiveMessages(t *testing.T) {
 		XAgrirouterContextId:     "test-context",
 	}
 	payload := newTestPayload(100)
-	err = client.SendMessages(context.Background(), params, bytes.NewReader(payload.bytes))
+	err := client.SendMessages(context.Background(), params, bytes.NewReader(payload.bytes))
 	require.NoError(t, err, "Failed to put endpoint")
 	events := testContainer.Events
 	events.Expect("sendMessages",
@@ -197,11 +198,8 @@ func TestSendAndReceiveMessages(t *testing.T) {
 }
 
 func TestReceiveMessagesFor2SecondsAndStop(t *testing.T) {
-	client, err := agrirouter.NewClient(
-		testContainer.BaseURL,
-		agrirouter.WithHTTPClient(http.DefaultClient),
-	)
-	require.NoError(t, err, "Failed to create agrirouter client")
+	env := setupTestEnvironment(t)
+	client := env.client
 
 	twoSecondsContext, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
