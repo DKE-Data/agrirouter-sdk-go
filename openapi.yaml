@@ -1,4 +1,4 @@
-openapi: "3.0.2"
+openapi: "3.1.0"
 
 info:
   contact:
@@ -145,28 +145,65 @@ paths:
           description: Authorization failed
         '500':
           description: Server Side Error
+  /events:
     get:
-      operationId: receiveMessages
-      summary: Receive messages from agrirouter outbox
+      operationId: receiveEvents
+      summary: Receive events from agrirouter outbox
+      parameters:
+        - name: types
+          in: query
+          required: false
+          description: |
+            Events type filter, if provided would limit the events returned to only those of the specified types.
+            If not provided, all supported events will be streamed.
+          example: ["MESSAGE_RECEIVED", "FILE_RECEIVED"]
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MESSAGE_RECEIVED
+                - FILE_RECEIVED
       description: |
-        Receive stream of messages from the agrirouter outbox.
-        The messages are retrieved from the outboxes of all endpoints that 
-        application owns in the agrirouter.
+        Receive stream of events from the agrirouter outbox.
+        The events are retrieved for every endpoint of an
+        authorized application.
+
+        These are possible event types:
+        - MESSAGE_RECEIVED - when one message is received
+        - FILE_RECEIVED - when chunked payload has been completely received
+
+        These events are sent as Server-Sent Events (SSE), where one line
+        prefixed "event:" would define event type and another line
+        prefixed "data:" would contain the actual event data.
+
+        For example:
+        
+        ```
+        event: MESSAGE_RECEIVED
+        data: {"messageId":"12345","timestamp":"2023-01-01T12:00:00Z"}
+        ```
+
+        In this API, `data` would always be JSON encoded object, every
+        event data schema is defined in the `#/components/schemas`, with
+        schema name always ending with `EventData`. 
+
+        Here is a table:
+
+        | Event Type          | Schema                                                                    |
+        |---------------------|---------------------------------------------------------------------------|
+        | MESSAGE_RECEIVED    | [MessageReceivedEventData](#/components/schemas/MessageReceivedEventData) |
+        | FILE_RECEIVED       | [FileReceivedEventData](#/components/schemas/FileReceivedEventData)       |
+
+      # As there is no yet accepted way of defining schema for SSE data,
+      # it would have to be only described in description for now.
       responses:
         '200':
-          description: Stream of messages from agrirouter
+          description: Stream of events from agrirouter
           content:
             text/event-stream:
               schema:
-                type: object
-                properties:
-                  message_type:
-                    type: string
-                  senderEndpointId:
-                    type: string
-                  data:
-                    type: string
-                    format: binary
+                $ref: "#/components/schemas/GenericEventData"
         '400':
           description: Request is invalid
         '401':
@@ -237,8 +274,7 @@ components:
       flows:
         clientCredentials:
           tokenUrl: https://oauth.qa.agrirouter.farm/token
-          scopes:
-            endpoints:manage: Manage endpoints in the Agrirouter tenant.
+          scopes: {}
         authorizationCode:
           authorizationUrl: https://oauth.qa.agrirouter.farm/authorize
           tokenUrl: https://oauth.qa.agrirouter.farm/token
@@ -250,8 +286,7 @@ components:
       flows:
         clientCredentials:
           tokenUrl: https://oauth.prod.agrirouter.farm/token
-          scopes:
-            endpoints:manage: Manage endpoints in the Agrirouter tenant.
+          scopes: {}
         authorizationCode:
           authorizationUrl: https://oauth.prod.agrirouter.farm/authorize
           tokenUrl: https://oauth.prod.agrirouter.farm/token
@@ -267,6 +302,72 @@ components:
         format: uuid
       description: The farmer's tenant ID in relation to which communication is done.
   schemas:
+    GenericEventData:
+      oneOf:
+        - $ref: "#/components/schemas/MessageReceivedEventData"
+        - $ref: "#/components/schemas/FileReceivedEventData"
+      discriminator:
+        propertyName: event_type
+    PayloadURI:
+      type: string
+      format: uri
+      description: |
+        The URI to access the payload, scheme is always `ar2`, like this: `ar2:///<path>`,
+        where `<path>` is a path relative to the base URL of agrirouter API server. For example
+        when calling https://api.qa.agrirouter.farm/events , with event pointing to uri
+        `ar2:///m/123`, path "/m/123" would need to be appended to the base URL to download
+        payload, i.e https://api.qa.agrirouter.farm/m/123
+    MessageReceivedEventData:
+      type: object
+      description: |
+        Data structure for MESSAGE_RECEIVED events. This event would arrive whenever application
+        got a message routed to one of its endpoints.
+      required:
+        - id
+        - message_type
+        - app_message_id
+        - sent_at
+        - payload_uri
+        - event_type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The agrirouter message ID of the received message, generated by agrirouter.
+        app_message_id:
+          type: string
+          description: The application message ID of the received message, generated based on application input.
+        message_type:
+          type: string
+          example: "iso:11783:-10:taskdata:zip"
+          description: |
+            The message type of the received message.
+            See available types here:
+            https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
+        sent_at:
+          type: string
+          format: date-time
+          description: The timestamp when the message was sent.
+        payload_uri:
+          $ref: "#/components/schemas/PayloadURI"
+        event_type:
+          type: string
+          const: MESSAGE_RECEIVED
+    FileReceivedEventData:
+      type: object
+      description: |
+        Data structure for FILE_RECEIVED events. This event shall arrive whenever a big file transfer
+        has completed in its entirety, i.e when big payload was sent as several message chunks, this
+        event would be sent last when the complete payload is received.
+      required:
+        - payload_uri
+        - event_type
+      properties:
+        payload_uri:
+          $ref: "#/components/schemas/PayloadURI"
+        event_type:
+          type: string
+          const: FILE_RECEIVED
     PutEndpointRequest:
       type: object
       required:

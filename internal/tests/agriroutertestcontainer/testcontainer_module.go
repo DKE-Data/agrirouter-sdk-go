@@ -91,7 +91,7 @@ func Run(ctx context.Context) (*AgrirouterContainer, error) {
 }
 
 func listenForEvents(ctx context.Context, baseURL string, events *TestEvents) {
-	eventsURL := baseURL + "/_events"
+	eventsURL := baseURL + "/_testEvents"
 	log.Printf("Connecting to test events at %s", eventsURL)
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, eventsURL, nil)
@@ -99,7 +99,7 @@ func listenForEvents(ctx context.Context, baseURL string, events *TestEvents) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("Failed to connect to events: %v", err)
+		log.Printf("Failed to connect to test events: %v", err)
 		return
 	}
 	defer func() {

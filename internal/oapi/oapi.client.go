@@ -95,8 +95,8 @@ type ClientInterface interface {
 
 	PutEndpoint(ctx context.Context, externalId string, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ReceiveMessages request
-	ReceiveMessages(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ReceiveEvents request
+	ReceiveEvents(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// SendMessagesWithBody request with any body
 	SendMessagesWithBody(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -126,8 +126,8 @@ func (c *Client) PutEndpoint(ctx context.Context, externalId string, params *Put
 	return c.Client.Do(req)
 }
 
-func (c *Client) ReceiveMessages(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewReceiveMessagesRequest(c.Server)
+func (c *Client) ReceiveEvents(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReceiveEventsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -210,8 +210,8 @@ func NewPutEndpointRequestWithBody(server string, externalId string, params *Put
 	return req, nil
 }
 
-// NewReceiveMessagesRequest generates requests for ReceiveMessages
-func NewReceiveMessagesRequest(server string) (*http.Request, error) {
+// NewReceiveEventsRequest generates requests for ReceiveEvents
+func NewReceiveEventsRequest(server string, params *ReceiveEventsParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -219,7 +219,7 @@ func NewReceiveMessagesRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/messages")
+	operationPath := fmt.Sprintf("/events")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -227,6 +227,28 @@ func NewReceiveMessagesRequest(server string) (*http.Request, error) {
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Types != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "types", runtime.ParamLocationQuery, *params.Types); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -414,8 +436,8 @@ type ClientWithResponsesInterface interface {
 
 	PutEndpointWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error)
 
-	// ReceiveMessagesWithResponse request
-	ReceiveMessagesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ReceiveMessagesResponse, error)
+	// ReceiveEventsWithResponse request
+	ReceiveEventsWithResponse(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*ReceiveEventsResponse, error)
 
 	// SendMessagesWithBodyWithResponse request with any body
 	SendMessagesWithBodyWithResponse(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendMessagesResponse, error)
@@ -444,13 +466,13 @@ func (r PutEndpointResponse) StatusCode() int {
 	return 0
 }
 
-type ReceiveMessagesResponse struct {
+type ReceiveEventsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r ReceiveMessagesResponse) Status() string {
+func (r ReceiveEventsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -458,7 +480,7 @@ func (r ReceiveMessagesResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ReceiveMessagesResponse) StatusCode() int {
+func (r ReceiveEventsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -503,13 +525,13 @@ func (c *ClientWithResponses) PutEndpointWithResponse(ctx context.Context, exter
 	return ParsePutEndpointResponse(rsp)
 }
 
-// ReceiveMessagesWithResponse request returning *ReceiveMessagesResponse
-func (c *ClientWithResponses) ReceiveMessagesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ReceiveMessagesResponse, error) {
-	rsp, err := c.ReceiveMessages(ctx, reqEditors...)
+// ReceiveEventsWithResponse request returning *ReceiveEventsResponse
+func (c *ClientWithResponses) ReceiveEventsWithResponse(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*ReceiveEventsResponse, error) {
+	rsp, err := c.ReceiveEvents(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseReceiveMessagesResponse(rsp)
+	return ParseReceiveEventsResponse(rsp)
 }
 
 // SendMessagesWithBodyWithResponse request with arbitrary body returning *SendMessagesResponse
@@ -554,15 +576,15 @@ func ParsePutEndpointResponse(rsp *http.Response) (*PutEndpointResponse, error) 
 	return response, nil
 }
 
-// ParseReceiveMessagesResponse parses an HTTP response from a ReceiveMessagesWithResponse call
-func ParseReceiveMessagesResponse(rsp *http.Response) (*ReceiveMessagesResponse, error) {
+// ParseReceiveEventsResponse parses an HTTP response from a ReceiveEventsWithResponse call
+func ParseReceiveEventsResponse(rsp *http.Response) (*ReceiveEventsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ReceiveMessagesResponse{
+	response := &ReceiveEventsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

@@ -2,9 +2,17 @@ package test_server
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/tests/agriroutertestcontainer"
+	"github.com/DKE-Data/agrirouter-sdk-go/internal/tests/test_server/echo_context"
+	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
+	"github.com/tmaxmax/go-sse"
 )
 
 var _ StrictServerInterface = (*Server)(nil)
@@ -14,20 +22,94 @@ type Server struct {
 		Data      string
 		EventType string
 	}
+	sentMessagesTestEvents chan *SendMessagesTestEventData
 }
 
-// ReceiveMessages implements StrictServerInterface.
-func (s *Server) ReceiveMessages(ctx context.Context, request ReceiveMessagesRequestObject) (ReceiveMessagesResponseObject, error) {
-	panic("unimplemented")
+type SendMessagesTestEventData struct {
+	EndpointID   uuid.UUID `json:"endpointId"`
+	Payload      string    `json:"payload"` // base64-encoded payload
+	MessageType  string    `json:"messageType"`
+	AppMessageId string    `json:"appMessageId"`
 }
 
-// SendMessages implements StrictServerInterface.
+func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequestObject) (ReceiveEventsResponseObject, error) {
+	sseServer := &sse.Server{}
+	eCtx := echo_context.GetFromGoContext(ctx)
+	receivedMessageType, err := sse.NewType(string(MESSAGERECEIVED))
+	if err != nil {
+		return nil, err
+	}
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				slog.Info("Context done, stopping receiving events")
+				return
+			case messageSentTestEvent := <-s.sentMessagesTestEvents:
+				sseMessage := &sse.Message{
+					Type: receivedMessageType,
+				}
+				messageId := uuid.New()
+				eCtx.Echo().GET(fmt.Sprintf("/_testPayloads/%s", messageId.String()), func(c echo.Context) error {
+					payloadBytes, err := base64.StdEncoding.DecodeString(messageSentTestEvent.Payload)
+					if err != nil {
+						slog.Error("Error decoding base64 payload", "error", err)
+						return c.NoContent(500)
+					}
+					return c.Blob(200, "application/octet-stream", payloadBytes)
+				})
+				eventData := MessageReceivedEventData{
+					AppMessageId: messageSentTestEvent.AppMessageId,
+					EventType:    string(MESSAGERECEIVED),
+					PayloadUri:   fmt.Sprintf("/_testPayloads/%s", messageId.String()),
+					MessageType:  messageSentTestEvent.MessageType,
+					Id:           messageId,
+				}
+				marshalledEventData, err := json.Marshal(eventData)
+				if err != nil {
+					slog.Error("Error marshaling MessageReceivedEventData", "error", err)
+					continue
+				}
+				sseMessage.AppendData(string(marshalledEventData))
+				publishErr := sseServer.Publish(sseMessage)
+				if publishErr != nil {
+					slog.Error("Error publishing SSE message", "error", publishErr)
+				} else {
+					slog.Info("Server sent MessageReceived event", "data", string(marshalledEventData))
+				}
+			}
+		}
+	}()
+
+	slog.Info("Client connected to receive events")
+
+	sseServer.ServeHTTP(eCtx.Response(), eCtx.Request())
+	return nil, nil
+}
+
 func (s *Server) SendMessages(ctx context.Context, request SendMessagesRequestObject) (SendMessagesResponseObject, error) {
+	bodyBytes, err := io.ReadAll(request.Body)
+	if err != nil {
+		return nil, err
+	}
+	bodyBase64 := base64.StdEncoding.EncodeToString(bodyBytes)
+	var data SendMessagesTestEventData = SendMessagesTestEventData{
+		EndpointID:   request.Params.XAgrirouterEndpointId,
+		Payload:      bodyBase64,
+		MessageType:  request.Params.XAgrirouterMessageType,
+		AppMessageId: request.Params.XAgrirouterContextId + "-0",
+	}
+	s.sentMessagesTestEvents <- &data
+
+	dataBytes, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
 	s.events <- struct {
 		Data      string
 		EventType string
 	}{
-		Data:      fmt.Sprintf(`{"endpointId": "%s"}`, request.Params.XAgrirouterEndpointId),
+		Data:      string(dataBytes),
 		EventType: agriroutertestcontainer.SendMessagesTestEvent,
 	}
 
@@ -61,5 +143,6 @@ func NewServer() *Server {
 			Data      string
 			EventType string
 		}),
+		sentMessagesTestEvents: make(chan *SendMessagesTestEventData, 100),
 	}
 }
