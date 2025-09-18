@@ -50,7 +50,7 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 					Type: receivedMessageType,
 				}
 				messageId := uuid.New()
-				eCtx.Echo().GET(fmt.Sprintf("/_testPayloads/%s", messageId.String()), func(c echo.Context) error {
+				eCtx.Echo().GET(fmt.Sprintf("/_testPayloads/%s/2025-09-18", messageId.String()), func(c echo.Context) error {
 					payloadBytes, err := base64.StdEncoding.DecodeString(messageSentTestEvent.Payload)
 					if err != nil {
 						slog.Error("Error decoding base64 payload", "error", err)
@@ -61,7 +61,7 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 				eventData := MessageReceivedEventData{
 					AppMessageId: messageSentTestEvent.AppMessageId,
 					EventType:    string(MESSAGERECEIVED),
-					PayloadUri:   fmt.Sprintf("/_testPayloads/%s", messageId.String()),
+					PayloadUri:   fmt.Sprintf("/_testPayloads/%s/2025-09-18", messageId.String()),
 					MessageType:  messageSentTestEvent.MessageType,
 					Id:           messageId,
 				}
