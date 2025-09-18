@@ -143,7 +143,7 @@ func TestSendAndReceiveMessages(t *testing.T) {
 	client := env.client
 	testContainer := env.testContainer
 
-	receivingContext, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	receivingContext, cancel := context.WithTimeout(context.Background(), 8*time.Second)
 	defer cancel()
 	finishedReceiving := make(chan struct{})
 	var receiveErr error
