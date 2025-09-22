@@ -27,6 +27,9 @@ var ErrFailedToReadPayload = errors.New("failed to read payload")
 // ErrToCloseResponseBody is returned when closing the response body fails.
 var ErrToCloseResponseBody = errors.New("failed to close response body")
 
+// ErrMissingPayload is returned when agrirouter returned no embedded payload with message nor a payload URI.
+var ErrMissingPayload = errors.New("missing payload: no embedded payload and no payload URI")
+
 // Message represents a message received from agrirouter.
 type Message struct {
 	MessageType  string
@@ -55,48 +58,62 @@ func (c *Client) ReceiveMessages(
 			errorHandler(err)
 			return
 		}
-		payloadURI, err := url.Parse(messageReceivedEvent.PayloadUri)
-		if err != nil {
-			errorHandler(err)
-			return
-		}
-		payloadPath := payloadURI.Path
-		urlToFetch := url.URL{
-			Scheme: c.serverURL.Scheme,
-			Host:   c.serverURL.Host,
-			Path:   payloadPath,
-		}
-
-		httpClient := c.oapiClient.ClientInterface.(*oapi.Client).Client
-		req := &http.Request{Method: http.MethodGet, URL: &urlToFetch}
-		resp, err := httpClient.Do(req.WithContext(ctx))
-		if err != nil {
-			errorHandler(fmt.Errorf("%w: %v", ErrFailedToFetchPayload, err))
-			return
-		}
-		defer func() {
-			closeErr := resp.Body.Close()
-			if closeErr != nil {
-				errorHandler(fmt.Errorf("%w: %v", ErrToCloseResponseBody, closeErr))
-			}
-		}()
-		if resp.StatusCode != http.StatusOK {
-			errorHandler(fmt.Errorf("%w: received status code was: %d", ErrUnexpectedStatusCodeWhenFetchingPayload, resp.StatusCode))
-			return
-		}
-		payload, err := io.ReadAll(resp.Body)
-		if err != nil {
-			errorHandler(fmt.Errorf("%w: %v", ErrFailedToReadPayload, err))
-			return
-		}
-		message := Message{
+		message := &Message{
 			MessageType:  messageReceivedEvent.MessageType,
-			Payload:      payload,
 			AppMessageID: messageReceivedEvent.AppMessageId,
 		}
+		if messageReceivedEvent.PayloadUri == nil {
+			if messageReceivedEvent.Payload == nil {
+				errorHandler(ErrMissingPayload)
+				return
+			}
+			// payload is embedded in the event
+			message.Payload = *messageReceivedEvent.Payload
+		} else {
+			// payload needs to be fetched remotely
+			payloadURI := *messageReceivedEvent.PayloadUri
+			payload, err := c.fetchRemotePayload(ctx, payloadURI, errorHandler)
+			if err != nil {
+				errorHandler(err)
+				return
+			}
+			message.Payload = payload
+		}
 
-		messageHandler(&message)
+		messageHandler(message)
 	}, errorHandler)
+}
+
+func (c *Client) fetchRemotePayload(
+	ctx context.Context,
+	payloadURIStr string,
+	errorHandler func(err error),
+) ([]byte, error) {
+	payloadURI, err := url.Parse(payloadURIStr)
+	if err != nil {
+		return nil, err
+	}
+	httpClient := c.oapiClient.ClientInterface.(*oapi.Client).Client
+	req := &http.Request{Method: http.MethodGet, URL: payloadURI}
+	resp, err := httpClient.Do(req.WithContext(ctx))
+	if err != nil {
+		err = fmt.Errorf("%w: %v", ErrFailedToFetchPayload, err)
+		return nil, err
+	}
+	defer func() {
+		closeErr := resp.Body.Close()
+		if closeErr != nil {
+			errorHandler(fmt.Errorf("%w: %v", ErrToCloseResponseBody, closeErr))
+		}
+	}()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%w: received status code was: %d", ErrUnexpectedStatusCodeWhenFetchingPayload, resp.StatusCode)
+	}
+	payload, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrFailedToReadPayload, err)
+	}
+	return payload, nil
 }
 
 func (c *Client) receiveAndHandleEvents(

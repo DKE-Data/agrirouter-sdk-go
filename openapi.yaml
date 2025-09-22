@@ -312,11 +312,10 @@ components:
       type: string
       format: uri
       description: |
-        The URI to access the payload, scheme is always `ar2`, like this: `ar2:///<path>`,
-        where `<path>` is a path relative to the base URL of agrirouter API server. For example
-        when calling https://api.qa.agrirouter.farm/events , with event pointing to uri
-        `ar2:///m/123`, path "/m/123" would need to be appended to the base URL to download
-        payload, i.e https://api.qa.agrirouter.farm/m/123
+        The URI to access the payload. May have hostname that is different from
+        the API server, as payloads may be served from a different server or CDN.
+        Clients MUST use provided URI as is without any modifications.
+        If event embeds payload directly, this field would be absent.
     MessageReceivedEventData:
       type: object
       description: |
@@ -327,7 +326,6 @@ components:
         - message_type
         - app_message_id
         - sent_at
-        - payload_uri
         - event_type
       properties:
         id:
@@ -347,7 +345,15 @@ components:
         sent_at:
           type: string
           format: date-time
-          description: The timestamp when the message was sent.
+          description: The timestamp when the message was sent by sending application.
+        received_at:
+          type: string
+          format: date-time
+          description: The timestamp when the message was received by agrirouter.
+        payload:
+          type: string
+          format: byte
+          description: The payload of the message, base64 encoded. Only one of `payload` or `payload_uri` would be present.
         payload_uri:
           $ref: "#/components/schemas/PayloadURI"
         event_type:
@@ -360,11 +366,14 @@ components:
         has completed in its entirety, i.e when big payload was sent as several message chunks, this
         event would be sent last when the complete payload is received.
       required:
-        - payload_uri
         - event_type
       properties:
         payload_uri:
           $ref: "#/components/schemas/PayloadURI"
+        payload:
+          type: string
+          format: byte
+          description: The payload of the file, base64 encoded. Only one of `payload` or `payload_uri` would be present.
         event_type:
           type: string
           const: FILE_RECEIVED

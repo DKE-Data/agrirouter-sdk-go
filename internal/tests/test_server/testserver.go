@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/url"
 
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/tests/agriroutertestcontainer"
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/tests/test_server/echo_context"
@@ -50,7 +51,9 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 					Type: receivedMessageType,
 				}
 				messageId := uuid.New()
-				eCtx.Echo().GET(fmt.Sprintf("/_testPayloads/%s/2025-09-18", messageId.String()), func(c echo.Context) error {
+				payloadPath := fmt.Sprintf("/_testPayloads/%s/2025-09-18", messageId.String())
+
+				eCtx.Echo().GET(payloadPath, func(c echo.Context) error {
 					payloadBytes, err := base64.StdEncoding.DecodeString(messageSentTestEvent.Payload)
 					if err != nil {
 						slog.Error("Error decoding base64 payload", "error", err)
@@ -58,10 +61,19 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 					}
 					return c.Blob(200, "application/octet-stream", payloadBytes)
 				})
+
+				payloadUri := url.URL{
+					Scheme: eCtx.Scheme(),
+					Host:   eCtx.Request().Host,
+					Path:   payloadPath,
+				}
+
+				payloadUriStr := payloadUri.String()
+
 				eventData := MessageReceivedEventData{
 					AppMessageId: messageSentTestEvent.AppMessageId,
 					EventType:    string(MESSAGERECEIVED),
-					PayloadUri:   fmt.Sprintf("/_testPayloads/%s/2025-09-18", messageId.String()),
+					PayloadUri:   &payloadUriStr,
 					MessageType:  messageSentTestEvent.MessageType,
 					Id:           messageId,
 				}

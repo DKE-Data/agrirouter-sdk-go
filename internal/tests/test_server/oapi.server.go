@@ -87,12 +87,14 @@ type EndpointType string
 type FileReceivedEventData struct {
 	EventType string `json:"event_type"`
 
-	// PayloadUri The URI to access the payload, scheme is always `ar2`, like this: `ar2:///<path>`,
-	// where `<path>` is a path relative to the base URL of agrirouter API server. For example
-	// when calling https://api.qa.agrirouter.farm/events , with event pointing to uri
-	// `ar2:///m/123`, path "/m/123" would need to be appended to the base URL to download
-	// payload, i.e https://api.qa.agrirouter.farm/m/123
-	PayloadUri PayloadURI `json:"payload_uri"`
+	// Payload The payload of the file, base64 encoded. Only one of `payload` or `payload_uri` would be present.
+	Payload *[]byte `json:"payload,omitempty"`
+
+	// PayloadUri The URI to access the payload. May have hostname that is different from
+	// the API server, as payloads may be served from a different server or CDN.
+	// Clients MUST use provided URI as is without any modifications.
+	// If event embeds payload directly, this field would be absent.
+	PayloadUri *PayloadURI `json:"payload_uri,omitempty"`
 }
 
 // GenericEventData defines model for GenericEventData.
@@ -115,22 +117,26 @@ type MessageReceivedEventData struct {
 	// https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
 	MessageType string `json:"message_type"`
 
-	// PayloadUri The URI to access the payload, scheme is always `ar2`, like this: `ar2:///<path>`,
-	// where `<path>` is a path relative to the base URL of agrirouter API server. For example
-	// when calling https://api.qa.agrirouter.farm/events , with event pointing to uri
-	// `ar2:///m/123`, path "/m/123" would need to be appended to the base URL to download
-	// payload, i.e https://api.qa.agrirouter.farm/m/123
-	PayloadUri PayloadURI `json:"payload_uri"`
+	// Payload The payload of the message, base64 encoded. Only one of `payload` or `payload_uri` would be present.
+	Payload *[]byte `json:"payload,omitempty"`
 
-	// SentAt The timestamp when the message was sent.
+	// PayloadUri The URI to access the payload. May have hostname that is different from
+	// the API server, as payloads may be served from a different server or CDN.
+	// Clients MUST use provided URI as is without any modifications.
+	// If event embeds payload directly, this field would be absent.
+	PayloadUri *PayloadURI `json:"payload_uri,omitempty"`
+
+	// ReceivedAt The timestamp when the message was received by agrirouter.
+	ReceivedAt *time.Time `json:"received_at,omitempty"`
+
+	// SentAt The timestamp when the message was sent by sending application.
 	SentAt time.Time `json:"sent_at"`
 }
 
-// PayloadURI The URI to access the payload, scheme is always `ar2`, like this: `ar2:///<path>`,
-// where `<path>` is a path relative to the base URL of agrirouter API server. For example
-// when calling https://api.qa.agrirouter.farm/events , with event pointing to uri
-// `ar2:///m/123`, path "/m/123" would need to be appended to the base URL to download
-// payload, i.e https://api.qa.agrirouter.farm/m/123
+// PayloadURI The URI to access the payload. May have hostname that is different from
+// the API server, as payloads may be served from a different server or CDN.
+// Clients MUST use provided URI as is without any modifications.
+// If event embeds payload directly, this field would be absent.
 type PayloadURI = string
 
 // PutEndpointRequest defines model for PutEndpointRequest.
