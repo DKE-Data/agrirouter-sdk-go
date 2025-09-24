@@ -86,6 +86,13 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 					PayloadUri:   &payloadUriStr,
 					MessageType:  messageSentTestEvent.MessageType,
 					Id:           messageId,
+
+					// TODO: see if we can make here something more realistic
+					// ATM this is just the same endpoint id that has sent the message
+					// , but agrirouter does not work like that, it would be some other endpoint id
+					// that is subscribed to the message type and receives the message or that
+					// was explicitly addressed via directRecipients
+					ReceivingEndpointId: messageSentTestEvent.EndpointID,
 				}
 				marshalledEventData, err := json.Marshal(eventData)
 				if err != nil {

@@ -193,6 +193,7 @@ func TestSendAndReceiveMessages(t *testing.T) {
 			assert.Equal(c, "img:png", receivedMessages[0].MessageType, "Message type should match")
 			assert.Equal(c, payload.bytes, receivedMessages[0].Payload, "Payload should match")
 			assert.Equal(c, "test-context-0", receivedMessages[0].AppMessageID, "AppMessageId should match")
+			assert.Equal(c, endpointID, receivedMessages[0].ReceivingEndpointID, "ReceivingEndpointID should match")
 		}
 	}, 10*time.Second, 1*time.Second)
 }

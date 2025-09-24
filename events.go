@@ -11,6 +11,7 @@ import (
 
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/oapi"
 	internal_models "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
+	"github.com/google/uuid"
 	"github.com/tmaxmax/go-sse"
 )
 
@@ -32,9 +33,10 @@ var ErrMissingPayload = errors.New("missing payload: no embedded payload and no 
 
 // Message represents a message received from agrirouter.
 type Message struct {
-	MessageType  string
-	Payload      []byte
-	AppMessageID string
+	MessageType         string
+	Payload             []byte
+	AppMessageID        string
+	ReceivingEndpointID uuid.UUID
 }
 
 // MessageHandler is a function that handles a received message.
@@ -59,8 +61,9 @@ func (c *Client) ReceiveMessages(
 			return
 		}
 		message := &Message{
-			MessageType:  messageReceivedEvent.MessageType,
-			AppMessageID: messageReceivedEvent.AppMessageId,
+			MessageType:         messageReceivedEvent.MessageType,
+			AppMessageID:        messageReceivedEvent.AppMessageId,
+			ReceivingEndpointID: messageReceivedEvent.ReceivingEndpointId,
 		}
 		if messageReceivedEvent.PayloadUri == nil {
 			if messageReceivedEvent.Payload == nil {
