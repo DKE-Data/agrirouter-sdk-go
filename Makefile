@@ -43,3 +43,7 @@ lint-all:
 .PHONY: generate
 generate:
 	tools/oapi/generate.sh
+
+.PHONY: gorelease
+gorelease:
+	goreleaser release --clean
