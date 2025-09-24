@@ -16,3 +16,7 @@
 
 # goreleaser build
 dist/
+
+# IDEs and editors
+.vscode/
+.idea/
