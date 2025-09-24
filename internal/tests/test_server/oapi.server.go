@@ -129,6 +129,9 @@ type MessageReceivedEventData struct {
 	// ReceivedAt The timestamp when the message was received by agrirouter.
 	ReceivedAt *time.Time `json:"received_at,omitempty"`
 
+	// ReceivingEndpointId Internally-generated agrirouter ID of the receiving endpoint.
+	ReceivingEndpointId openapi_types.UUID `json:"receiving_endpoint_id"`
+
 	// SentAt The timestamp when the message was sent by sending application.
 	SentAt time.Time `json:"sent_at"`
 }

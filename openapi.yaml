@@ -374,6 +374,7 @@ components:
         - app_message_id
         - sent_at
         - event_type
+        - receiving_endpoint_id
       properties:
         id:
           type: string
@@ -406,6 +407,10 @@ components:
         event_type:
           type: string
           const: MESSAGE_RECEIVED
+        receiving_endpoint_id:
+          type: string
+          format: uuid
+          description: Internally-generated agrirouter ID of the receiving endpoint.
     FileReceivedEventData:
       type: object
       description: |
