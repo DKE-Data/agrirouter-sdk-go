@@ -26,6 +26,16 @@ type Server struct {
 	sentMessagesTestEvents chan *SendMessagesTestEventData
 }
 
+func (s *Server) GetMessagePayload(
+	ctx context.Context,
+	request GetMessagePayloadRequestObject,
+) (GetMessagePayloadResponseObject, error) {
+	// even though this is part of the spec, test server does not need to implement this
+	// because it uses _testPayloads routes to serve payloads and correctly behaving clients
+	// are expected to use uris provided in events, rather than calling this resource
+	panic("should not be implemented")
+}
+
 type SendMessagesTestEventData struct {
 	EndpointID   uuid.UUID `json:"endpointId"`
 	Payload      string    `json:"payload"` // base64-encoded payload

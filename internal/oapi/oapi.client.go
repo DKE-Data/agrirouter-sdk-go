@@ -12,9 +12,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	. "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -100,6 +102,9 @@ type ClientInterface interface {
 
 	// SendMessagesWithBody request with any body
 	SendMessagesWithBody(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetMessagePayload request
+	GetMessagePayload(ctx context.Context, messageId openapi_types.UUID, messageReceivedAt time.Time, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) PutEndpointWithBody(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -140,6 +145,18 @@ func (c *Client) ReceiveEvents(ctx context.Context, params *ReceiveEventsParams,
 
 func (c *Client) SendMessagesWithBody(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSendMessagesRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetMessagePayload(ctx context.Context, messageId openapi_types.UUID, messageReceivedAt time.Time, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetMessagePayloadRequest(c.Server, messageId, messageReceivedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -388,6 +405,47 @@ func NewSendMessagesRequestWithBody(server string, params *SendMessagesParams, c
 	return req, nil
 }
 
+// NewGetMessagePayloadRequest generates requests for GetMessagePayload
+func NewGetMessagePayloadRequest(server string, messageId openapi_types.UUID, messageReceivedAt time.Time) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "messageId", runtime.ParamLocationPath, messageId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "messageReceivedAt", runtime.ParamLocationPath, messageReceivedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/payloads/%s/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -441,6 +499,9 @@ type ClientWithResponsesInterface interface {
 
 	// SendMessagesWithBodyWithResponse request with any body
 	SendMessagesWithBodyWithResponse(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendMessagesResponse, error)
+
+	// GetMessagePayloadWithResponse request
+	GetMessagePayloadWithResponse(ctx context.Context, messageId openapi_types.UUID, messageReceivedAt time.Time, reqEditors ...RequestEditorFn) (*GetMessagePayloadResponse, error)
 }
 
 type PutEndpointResponse struct {
@@ -508,6 +569,27 @@ func (r SendMessagesResponse) StatusCode() int {
 	return 0
 }
 
+type GetMessagePayloadResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetMessagePayloadResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetMessagePayloadResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // PutEndpointWithBodyWithResponse request with arbitrary body returning *PutEndpointResponse
 func (c *ClientWithResponses) PutEndpointWithBodyWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error) {
 	rsp, err := c.PutEndpointWithBody(ctx, externalId, params, contentType, body, reqEditors...)
@@ -541,6 +623,15 @@ func (c *ClientWithResponses) SendMessagesWithBodyWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParseSendMessagesResponse(rsp)
+}
+
+// GetMessagePayloadWithResponse request returning *GetMessagePayloadResponse
+func (c *ClientWithResponses) GetMessagePayloadWithResponse(ctx context.Context, messageId openapi_types.UUID, messageReceivedAt time.Time, reqEditors ...RequestEditorFn) (*GetMessagePayloadResponse, error) {
+	rsp, err := c.GetMessagePayload(ctx, messageId, messageReceivedAt, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMessagePayloadResponse(rsp)
 }
 
 // ParsePutEndpointResponse parses an HTTP response from a PutEndpointWithResponse call
@@ -601,6 +692,22 @@ func ParseSendMessagesResponse(rsp *http.Response) (*SendMessagesResponse, error
 	}
 
 	response := &SendMessagesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetMessagePayloadResponse parses an HTTP response from a GetMessagePayloadWithResponse call
+func ParseGetMessagePayloadResponse(rsp *http.Response) (*GetMessagePayloadResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMessagePayloadResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
