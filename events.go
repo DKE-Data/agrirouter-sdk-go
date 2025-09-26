@@ -40,7 +40,7 @@ type Message struct {
 }
 
 // MessageHandler is a function that handles a received message.
-type MessageHandler func(message *Message)
+type MessageHandler func(ctx context.Context, message *Message)
 
 // ReceiveMessages listens for incoming messages from the agrirouter API and
 // calls the provided handler for each received message.
@@ -83,7 +83,7 @@ func (c *Client) ReceiveMessages(
 			message.Payload = payload
 		}
 
-		messageHandler(message)
+		messageHandler(ctx, message)
 	}, errorHandler)
 }
 

@@ -155,7 +155,7 @@ func TestSendAndReceiveMessages(t *testing.T) {
 	}()
 
 	go func() {
-		connectErr := client.ReceiveMessages(receivingContext, func(message *agrirouter.Message) {
+		connectErr := client.ReceiveMessages(receivingContext, func(_ context.Context, message *agrirouter.Message) {
 			receivedMessages = append(receivedMessages, message)
 		}, func(err error) {
 			receiveErr = err
@@ -210,7 +210,7 @@ func TestReceiveMessagesFor2SecondsAndStop(t *testing.T) {
 	done := make(chan struct{})
 	var receivedMessages []*agrirouter.Message
 	go func() {
-		connectErr = client.ReceiveMessages(twoSecondsContext, func(message *agrirouter.Message) {
+		connectErr = client.ReceiveMessages(twoSecondsContext, func(_ context.Context, message *agrirouter.Message) {
 			receivedMessages = append(receivedMessages, message)
 		}, func(err error) {
 			receiveErr = err
