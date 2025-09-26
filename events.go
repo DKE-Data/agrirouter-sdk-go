@@ -132,7 +132,19 @@ func (c *Client) receiveAndHandleEvents(
 		return fmt.Errorf("%w: %v", ErrAPICallFailed, err)
 	}
 	req = req.WithContext(ctx)
-	conn := sse.DefaultClient.NewConnection(req)
+	client := sse.DefaultClient
+	client.ResponseValidator = func(r *http.Response) error {
+		err := sse.DefaultValidator(r)
+		if err != nil {
+			// include body in the error for easier debugging
+			body, _ := io.ReadAll(r.Body)
+			return fmt.Errorf("%w: %v", err, string(body))
+		}
+		return nil
+	}
+	httpClient := c.oapiClient.ClientInterface.(*oapi.Client).Client
+	client.HTTPClient = httpClient.(*http.Client)
+	conn := client.NewConnection(req)
 	unsubscribe := conn.SubscribeToAll(func(event sse.Event) {
 		var genericEvent internal_models.GenericEventData
 		jsonErr := json.Unmarshal([]byte(event.Data), &genericEvent)

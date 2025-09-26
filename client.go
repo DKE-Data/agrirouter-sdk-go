@@ -121,17 +121,12 @@ func putEndpointError(err error, err2 error) error {
 	return fmt.Errorf("%w: %w: %w", ErrPutEndpointFailed, err, err2)
 }
 
-// HTTPRequestDoer performs HTTP requests.
-//
-// The standard http.Client implements this interface.
-type HTTPRequestDoer = oapi.HttpRequestDoer
-
 // ClientOption is a type for options that can be passed to the agrirouter client.
 type ClientOption = oapi.ClientOption
 
 // WithHTTPClient allows to set a custom HTTP client for the agrirouter client.
-func WithHTTPClient(doer HTTPRequestDoer) ClientOption {
-	return oapi.WithHTTPClient(doer)
+func WithHTTPClient(httpClient *http.Client) ClientOption {
+	return oapi.WithHTTPClient(httpClient)
 }
 
 // RequestEditorFn is a function that can modify the request before it is sent.
