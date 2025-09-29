@@ -2,6 +2,8 @@ package agriroutertestcontainer
 
 import (
 	"context"
+	"errors"
+	"io"
 	"net/http"
 
 	"github.com/testcontainers/testcontainers-go"
@@ -110,7 +112,11 @@ func listenForEvents(ctx context.Context, baseURL string, events *TestEvents) {
 
 	for ev, err := range sse.Read(res.Body, nil) {
 		if err != nil {
-			log.Printf("Error reading events: %v", err)
+			if errors.Is(err, io.EOF) {
+				log.Printf("End of event stream reached")
+			} else {
+				log.Printf("Error reading events: %v", err)
+			}
 			break
 		}
 		events.add(ev.Type, ev.Data)
