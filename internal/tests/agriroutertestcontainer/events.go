@@ -3,6 +3,7 @@ package agriroutertestcontainer
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -54,6 +55,7 @@ func (e *TestEvents) Expect(
 	e.expectationIndex++
 
 	e.expectations = append(e.expectations, func(t assert.TestingT) error {
+		log.Printf("Checking expectation %d: event type %s with data %s, have %d events", index, evType, data, len(e.list))
 		if index >= len(e.list) {
 			return fmt.Errorf(
 				"%w: expected event %s with data %s, but no more events are available",
