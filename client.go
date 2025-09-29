@@ -98,7 +98,7 @@ func (c *Client) SendMessages(
 		return nil
 	}
 
-	return fmt.Errorf("%w: unexpected status code %d", ErrFailedStatusCode, res.StatusCode())
+	return fmt.Errorf("%w: unexpected status code %d, body: %s", ErrFailedStatusCode, res.StatusCode(), string(res.Body))
 }
 
 func httpResponseToErr(res *http.Response, body []byte) error {
