@@ -4,6 +4,7 @@ package agriroutertestcontainer
 import (
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -34,9 +35,14 @@ type TestEvents struct {
 
 	expectationIndex int
 	expectations     []func(t assert.TestingT) error
+
+	mu sync.Mutex
 }
 
 func (e *TestEvents) add(evType string, data string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	e.list = append(e.list, TestEvent{
 		Data:      data,
 		EventType: evType,
@@ -79,6 +85,9 @@ func (e *TestEvents) Expect(
 
 // CheckExpectations checks if all expected events were received and resets the expectations.
 func (e *TestEvents) CheckExpectations(t assert.TestingT) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	for _, expectation := range e.expectations {
 		if err := expectation(t); err != nil {
 			return err
