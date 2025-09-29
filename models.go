@@ -21,6 +21,11 @@ type Endpoint = internal_models.Endpoint
 // specific types.
 type EndpointCapability = internal_models.EndpointCapability
 
+// EndpointCapabilityDirection represents the direction of an endpoint's capability.
+//
+// It indicates whether the endpoint can send, receive, or both send and receive messages of a specific type.
+type EndpointCapabilityDirection = internal_models.EndpointCapabilityDirection
+
 // EndpointSubscription is the structure representing an endpoint's subscription.
 //
 // It defines which message types the endpoint is subscribed to,
@@ -69,3 +74,11 @@ const FarmingSoftware = internal_models.FarmingSoftware
 // This event would typically be followed by fetching the actual message payload from the provided URI
 // and processing it accordingly (e.g. decoding, storing, or acting upon the message content).
 type MessageReceivedEventData = internal_models.MessageReceivedEventData
+
+// EndpointType represents the type of an agrirouter endpoint.
+//
+// There are three main types of endpoints:
+// 1. communication_unit: Represents devices installed inside vehicles or machines.
+// 2. virtual_communication_unit: Represents virtual devices communicating via their own cloud services.
+// 3. farming_software: Represents farming software applications, typically cloud-based.
+type EndpointType = internal_models.EndpointType
