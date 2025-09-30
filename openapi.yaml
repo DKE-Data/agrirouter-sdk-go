@@ -224,6 +224,9 @@ paths:
         prefixed "event:" would define event type and another line
         prefixed "data:" would contain the actual event data.
 
+        See Server-Sent Events specification here:
+        https://html.spec.whatwg.org/multipage/server-sent-events.html#server-sent-events
+
         For example:
         
         ```
