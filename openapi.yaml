@@ -16,7 +16,7 @@ servers:
         default: "8081"
   - url: https://api.qa.agrirouter.farm
     description: QA Server
-  - url: https://api.prod.agrirouter.farm
+  - url: https://api.agrirouter.com
     description: Production Server
 
 paths:
