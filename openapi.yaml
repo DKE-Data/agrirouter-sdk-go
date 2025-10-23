@@ -5,7 +5,7 @@ info:
     email: info@dke-data.com
     name: DKE Data
     url: https://dke-data.com
-  title: agrirouter Edition 2025 API
+  title: agrirouter G4 API
   version: "1.0"
   description: |
     This service provides access to endpoint data of agrirouter via HTTP.
