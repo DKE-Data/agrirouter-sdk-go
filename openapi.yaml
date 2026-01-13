@@ -8,7 +8,7 @@ info:
   title: agrirouter G4 API
   version: "1.0"
   description: |
-    This service provides access to endpoint data of agrirouter via HTTP.
+    This service provides access to agrirouter API through modern RESTful interface called G4 (for gateway id = 4).
 servers:
   - url: http://localhost:{port}
     variables:
@@ -335,11 +335,11 @@ components:
       description: Agrirouter OAuth2 authentication for PROD environment.
       flows:
         clientCredentials:
-          tokenUrl: https://oauth.prod.agrirouter.farm/token
+          tokenUrl: https://api-oauth.agrirouter.com/token
           scopes: {}
         authorizationCode:
-          authorizationUrl: https://oauth.prod.agrirouter.farm/authorize
-          tokenUrl: https://oauth.prod.agrirouter.farm/token
+          authorizationUrl: https://api-oauth.agrirouter.com/authorize
+          tokenUrl: https://api-oauth.agrirouter.com/token
           scopes:
             endpoints:manage: Manage endpoints in the Agrirouter tenant.
   parameters:
