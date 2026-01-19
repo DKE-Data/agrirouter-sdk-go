@@ -33,10 +33,11 @@ var ErrMissingPayload = errors.New("missing payload: no embedded payload and no 
 
 // Message represents a message received from agrirouter.
 type Message struct {
-	MessageType         string
-	Payload             []byte
-	AppMessageID        string
-	ReceivingEndpointID uuid.UUID
+	MessageType         string    // MessageType is the URN type of the message
+	Payload             []byte    // Payload is the raw message payload
+	AppMessageID        string    // AppMessageID is the ID assigned by the sending endpoint
+	ReceivingEndpointID uuid.UUID // ReceivingEndpointID is the UUID of the endpoint that received the message
+	Filename            *string   // Filename is optional as sent by sender endpoint
 }
 
 // MessageHandler is a function that handles a received message.
@@ -64,6 +65,7 @@ func (c *Client) ReceiveMessages(
 			MessageType:         messageReceivedEvent.MessageType,
 			AppMessageID:        messageReceivedEvent.AppMessageId,
 			ReceivingEndpointID: messageReceivedEvent.ReceivingEndpointId,
+			Filename:            messageReceivedEvent.Filename,
 		}
 		if messageReceivedEvent.PayloadUri == nil {
 			if messageReceivedEvent.Payload == nil {
