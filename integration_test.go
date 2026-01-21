@@ -39,6 +39,11 @@ func setupTestEnvironment(t *testing.T) *testEnvironment {
 	)
 	require.NoError(t, err, "Failed to create agrirouter client")
 
+	// Wait for the test events stream to be ready
+	assert.EventuallyWithT(t, func(c *assert.CollectT) {
+		assert.True(c, container.Events.IsReady())
+	}, 5*time.Second, 100*time.Millisecond, "Test events stream not ready")
+
 	return &testEnvironment{
 		client:        client,
 		testContainer: container,

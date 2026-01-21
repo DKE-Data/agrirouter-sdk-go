@@ -21,6 +21,9 @@ const (
 
 	// SendMessagesTestEvent happens when messages are sent in the test container.
 	SendMessagesTestEvent = "sendMessages"
+
+	// ReadyTestEvent indicates that the test events stream is ready.
+	ReadyTestEvent = "ready"
 )
 
 // TestEvent represents a single event happened in test container.
@@ -36,12 +39,19 @@ type TestEvents struct {
 	expectationIndex int
 	expectations     []func(t assert.TestingT) error
 
+	ready bool
+
 	mu sync.Mutex
 }
 
 func (e *TestEvents) add(evType string, data string) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+
+	if evType == ReadyTestEvent {
+		e.ready = true
+		return
+	}
 
 	e.list = append(e.list, TestEvent{
 		Data:      data,
@@ -97,4 +107,11 @@ func (e *TestEvents) CheckExpectations(t assert.TestingT) error {
 	e.expectations = nil
 	e.expectationIndex = 0
 	return nil
+}
+
+// IsReady returns true if the ready event has been received.
+func (e *TestEvents) IsReady() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.ready
 }

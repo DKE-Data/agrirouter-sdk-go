@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/tests/test_server"
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/tests/test_server/echo_context"
@@ -67,7 +68,27 @@ func main() {
 		},
 	}))
 
-	e.GET("/_testEvents", echo.WrapHandler(sseServer))
+	e.GET("/_testEvents", func(c echo.Context) error {
+		slog.Info("Client connected to /_testEvents, starting SSE server")
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			eventType, err := sse.NewType("ready")
+			if err != nil {
+				slog.Error("Error creating ready event type", "error", err)
+				return
+			}
+			m := &sse.Message{Type: eventType}
+			m.AppendData(`"ready"`)
+			err = sseServer.Publish(m)
+			if err != nil {
+				slog.Error("Error publishing ready event", "error", err)
+			} else {
+				slog.Info("Published ready event")
+			}
+		}()
+		sseServer.ServeHTTP(c.Response(), c.Request())
+		return nil
+	})
 	test_server.RegisterHandlers(e, strict)
 
 	err := e.Start(":8080")
