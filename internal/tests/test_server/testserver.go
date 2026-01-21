@@ -41,12 +41,17 @@ type SendMessagesTestEventData struct {
 	Payload      string    `json:"payload"` // base64-encoded payload
 	MessageType  string    `json:"messageType"`
 	AppMessageId string    `json:"appMessageId"`
+	Filename     *string   `json:"filename,omitempty"`
 }
 
 func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequestObject) (ReceiveEventsResponseObject, error) {
 	sseServer := &sse.Server{}
 	eCtx := echo_context.GetFromGoContext(ctx)
 	receivedMessageType, err := sse.NewType(string(MESSAGERECEIVED))
+	if err != nil {
+		return nil, err
+	}
+	fileReceivedType, err := sse.NewType(string(FILERECEIVED))
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +62,6 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 				slog.Info("Context done, stopping receiving events")
 				return
 			case messageSentTestEvent := <-s.sentMessagesTestEvents:
-				sseMessage := &sse.Message{
-					Type: receivedMessageType,
-				}
 				messageId := uuid.New()
 				payloadPath := fmt.Sprintf("/_testPayloads/%s/2025-09-18", messageId.String())
 
@@ -80,31 +82,52 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 
 				payloadUriStr := payloadUri.String()
 
-				eventData := MessageReceivedEventData{
-					AppMessageId: messageSentTestEvent.AppMessageId,
-					EventType:    string(MESSAGERECEIVED),
-					PayloadUri:   &payloadUriStr,
-					MessageType:  messageSentTestEvent.MessageType,
-					Id:           messageId,
-
-					// TODO: see if we can make here something more realistic
-					// ATM this is just the same endpoint id that has sent the message
-					// , but agrirouter does not work like that, it would be some other endpoint id
-					// that is subscribed to the message type and receives the message or that
-					// was explicitly addressed via directRecipients
-					ReceivingEndpointId: messageSentTestEvent.EndpointID,
-				}
-				marshalledEventData, err := json.Marshal(eventData)
-				if err != nil {
-					slog.Error("Error marshaling MessageReceivedEventData", "error", err)
-					continue
-				}
-				sseMessage.AppendData(string(marshalledEventData))
-				publishErr := sseServer.Publish(sseMessage)
-				if publishErr != nil {
-					slog.Error("Error publishing SSE message", "error", publishErr)
+				if isFileMessageType(messageSentTestEvent.MessageType) {
+					sseMessage := &sse.Message{
+						Type: fileReceivedType,
+					}
+					eventData := FileReceivedEventData{
+						EventType:           string(FILERECEIVED),
+						ReceivingEndpointId: messageSentTestEvent.EndpointID,
+						PayloadUri:          &payloadUriStr,
+						Filename:            messageSentTestEvent.Filename,
+					}
+					marshalledEventData, err := json.Marshal(eventData)
+					if err != nil {
+						slog.Error("Error marshaling FileReceivedEventData", "error", err)
+						continue
+					}
+					sseMessage.AppendData(string(marshalledEventData))
+					publishErr := sseServer.Publish(sseMessage)
+					if publishErr != nil {
+						slog.Error("Error publishing SSE message", "error", publishErr)
+					} else {
+						slog.Info("Server sent FileReceived event", "data", string(marshalledEventData))
+					}
 				} else {
-					slog.Info("Server sent MessageReceived event", "data", string(marshalledEventData))
+					sseMessage := &sse.Message{
+						Type: receivedMessageType,
+					}
+					eventData := MessageReceivedEventData{
+						AppMessageId:        messageSentTestEvent.AppMessageId,
+						EventType:           string(MESSAGERECEIVED),
+						PayloadUri:          &payloadUriStr,
+						MessageType:         messageSentTestEvent.MessageType,
+						Id:                  messageId,
+						ReceivingEndpointId: messageSentTestEvent.EndpointID,
+					}
+					marshalledEventData, err := json.Marshal(eventData)
+					if err != nil {
+						slog.Error("Error marshaling MessageReceivedEventData", "error", err)
+						continue
+					}
+					sseMessage.AppendData(string(marshalledEventData))
+					publishErr := sseServer.Publish(sseMessage)
+					if publishErr != nil {
+						slog.Error("Error publishing SSE message", "error", publishErr)
+					} else {
+						slog.Info("Server sent MessageReceived event", "data", string(marshalledEventData))
+					}
 				}
 			}
 		}
@@ -127,6 +150,7 @@ func (s *Server) SendMessages(ctx context.Context, request SendMessagesRequestOb
 		Payload:      bodyBase64,
 		MessageType:  request.Params.XAgrirouterMessageType,
 		AppMessageId: request.Params.XAgrirouterContextId + "-0",
+		Filename:     request.Params.XAgrirouterFilename,
 	}
 	s.sentMessagesTestEvents <- &data
 
@@ -157,6 +181,30 @@ func (s *Server) PutEndpoint(ctx context.Context, request PutEndpointRequestObje
 	return PutEndpoint200JSONResponse{
 		ExternalId: request.ExternalId,
 	}, nil
+}
+
+func isFileMessageType(messageType string) bool {
+	switch messageType {
+	case "iso:11783:-10:taskdata:zip":
+		return true
+	case "shp:shape:zip":
+		return true
+	case "doc:pdf":
+		return true
+	case "img:jpeg":
+		return true
+	case "img:png":
+		return true
+	case "img:bmp":
+		return true
+	case "vid:avi":
+		return true
+	case "vid:mp4":
+		return true
+	case "vid:wmv":
+		return true
+	}
+	return false
 }
 
 func (s *Server) GetTestEvents() <-chan struct {

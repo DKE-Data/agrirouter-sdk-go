@@ -77,7 +77,7 @@ func (c *Client) ReceiveMessages(
 		} else {
 			// payload needs to be fetched remotely
 			payloadURI := *messageReceivedEvent.PayloadUri
-			payload, err := c.fetchRemotePayload(ctx, payloadURI, errorHandler)
+			payload, err := c.fetchMessagePayload(ctx, payloadURI, errorHandler)
 			if err != nil {
 				errorHandler(err)
 				return
@@ -89,7 +89,7 @@ func (c *Client) ReceiveMessages(
 	}, errorHandler)
 }
 
-func (c *Client) fetchRemotePayload(
+func (c *Client) fetchMessagePayload(
 	ctx context.Context,
 	payloadURIStr string,
 	errorHandler func(err error),
@@ -98,9 +98,8 @@ func (c *Client) fetchRemotePayload(
 	if err != nil {
 		return nil, err
 	}
-	httpClient := c.oapiClient.ClientInterface.(*oapi.Client).Client
 	req := &http.Request{Method: http.MethodGet, URL: payloadURI}
-	resp, err := httpClient.Do(req.WithContext(ctx))
+	resp, err := c.payloadsClient.Do(req.WithContext(ctx))
 	if err != nil {
 		err = fmt.Errorf("%w: %v", ErrFailedToFetchPayload, err)
 		return nil, err
@@ -158,4 +157,79 @@ func (c *Client) receiveAndHandleEvents(
 	})
 	defer unsubscribe()
 	return conn.Connect()
+}
+
+// File represents a file received from agrirouter.
+//
+// Typically files would have larger payloads than messages,
+// so the payload is provided as an io.Reader to allow streaming.
+type File struct {
+	ReceivingEndpointID uuid.UUID // ReceivingEndpointID is the UUID of the endpoint that received the file
+	Payload             io.Reader // Payload is the file payload as a stream
+	Filename            *string   // Filename is optional as sent by sender endpoint
+}
+
+// ReceiveFiles listens for incoming files from the agrirouter API and
+// calls the provided handler for each received file.
+//
+// This function blocks until the context is canceled or an error occurs.
+// It is recommended to run this function in a separate goroutine.
+func (c *Client) ReceiveFiles(
+	ctx context.Context,
+	fileHandler func(
+		ctx context.Context,
+		file *File,
+	),
+	errorHandler func(err error),
+) error {
+	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
+		internal_models.FILERECEIVED,
+	}, func(event internal_models.GenericEventData) {
+		fileReceivedEvent, err := event.AsFileReceivedEventData()
+		if err != nil {
+			errorHandler(err)
+			return
+		}
+		if fileReceivedEvent.PayloadUri == nil {
+			errorHandler(ErrMissingPayload)
+			return
+		}
+		payloadURI := *fileReceivedEvent.PayloadUri
+		payload, err := c.fetchFilePayload(ctx, payloadURI, errorHandler, c.payloadsClient)
+		if err != nil {
+			errorHandler(err)
+			return
+		}
+		fileHandler(ctx, &File{
+			Payload:             payload,
+			ReceivingEndpointID: fileReceivedEvent.ReceivingEndpointId,
+			Filename:            fileReceivedEvent.Filename,
+		})
+	}, errorHandler)
+}
+
+func (c *Client) fetchFilePayload(
+	ctx context.Context,
+	payloadURIStr string,
+	errorHandler func(err error),
+	httpClient oapi.HttpRequestDoer,
+) (io.Reader, error) {
+	payloadURI, err := url.Parse(payloadURIStr)
+	if err != nil {
+		return nil, err
+	}
+	req := &http.Request{Method: http.MethodGet, URL: payloadURI}
+	resp, err := httpClient.Do(req.WithContext(ctx))
+	if err != nil {
+		err = fmt.Errorf("%w: %v", ErrFailedToFetchPayload, err)
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		closeErr := resp.Body.Close()
+		if closeErr != nil {
+			errorHandler(fmt.Errorf("%w: %v", ErrToCloseResponseBody, closeErr))
+		}
+		return nil, fmt.Errorf("%w: received status code was: %d", ErrUnexpectedStatusCodeWhenFetchingPayload, resp.StatusCode)
+	}
+	return resp.Body, nil
 }

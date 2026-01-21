@@ -114,7 +114,7 @@ func TestSendMessages(t *testing.T) {
 		XAgrirouterEndpointId:    endpointID,
 		ContentLength:            100,
 		XAgrirouterSentTimestamp: time.Now(),
-		XAgrirouterMessageType:   "img:png",
+		XAgrirouterMessageType:   "gps:info",
 		XAgrirouterTenantId:      uuid.New(),
 		XAgrirouterContextId:     "test-context",
 	}
@@ -127,7 +127,7 @@ func TestSendMessages(t *testing.T) {
 	events.Expect("sendMessages", `
     {
       "endpointId":"`+endpointID.String()+`",
-      "messageType":"img:png",
+      "messageType":"gps:info",
       "payload":"`+payload.encodedB64+`",
 	  "appMessageId":"test-context-0"
     }`)
@@ -170,7 +170,7 @@ func TestSendAndReceiveMessages(t *testing.T) {
 		XAgrirouterEndpointId:    endpointID,
 		ContentLength:            100,
 		XAgrirouterSentTimestamp: time.Now(),
-		XAgrirouterMessageType:   "img:png",
+		XAgrirouterMessageType:   "gps:info",
 		XAgrirouterTenantId:      uuid.New(),
 		XAgrirouterContextId:     "test-context",
 	}
@@ -180,7 +180,7 @@ func TestSendAndReceiveMessages(t *testing.T) {
 	events := testContainer.Events
 	events.Expect("sendMessages",
 		`{  "endpointId":"`+endpointID.String()+`",
-            "messageType":"img:png",
+            "messageType":"gps:info",
             "payload":"`+payload.encodedB64+`",
             "appMessageId":"test-context-0"
 	     }`)
@@ -190,10 +190,76 @@ func TestSendAndReceiveMessages(t *testing.T) {
 
 	assert.EventuallyWithT(t, func(c *assert.CollectT) {
 		if assert.Len(c, receivedMessages, 1, "Should have received exactly one message") {
-			assert.Equal(c, "img:png", receivedMessages[0].MessageType, "Message type should match")
+			assert.Equal(c, "gps:info", receivedMessages[0].MessageType, "Message type should match")
 			assert.Equal(c, payload.bytes, receivedMessages[0].Payload, "Payload should match")
 			assert.Equal(c, "test-context-0", receivedMessages[0].AppMessageID, "AppMessageId should match")
 			assert.Equal(c, endpointID, receivedMessages[0].ReceivingEndpointID, "ReceivingEndpointID should match")
+		}
+	}, 10*time.Second, 1*time.Second)
+}
+
+//nolint:funlen // Test function length is acceptable here, test needs to be detailed.
+func TestSendAndReceiveFiles(t *testing.T) {
+	env := setupTestEnvironment(t)
+	client := env.client
+	testContainer := env.testContainer
+
+	receivingContext, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	finishedReceiving := make(chan struct{})
+	var receiveErr error
+	var receivedFiles []*agrirouter.File
+	defer func() {
+		// make sure that no errors happened during receiving
+		<-finishedReceiving
+		require.NoError(t, receiveErr)
+	}()
+
+	go func() {
+		connectErr := client.ReceiveFiles(receivingContext, func(_ context.Context, file *agrirouter.File) {
+			receivedFiles = append(receivedFiles, file)
+		}, func(err error) {
+			receiveErr = err
+		})
+		assert.EqualError(t, connectErr, "context deadline exceeded")
+		close(finishedReceiving)
+	}()
+
+	endpointID := uuid.New()
+	filename := "test.png"
+	params := &agrirouter.SendMessagesParams{
+		XAgrirouterIsPublish:     true,
+		XAgrirouterEndpointId:    endpointID,
+		ContentLength:            100,
+		XAgrirouterSentTimestamp: time.Now(),
+		XAgrirouterMessageType:   "img:png",
+		XAgrirouterTenantId:      uuid.New(),
+		XAgrirouterContextId:     "test-context",
+		XAgrirouterFilename:      &filename,
+	}
+	payload := newTestPayload(100)
+	err := client.SendMessages(context.Background(), params, bytes.NewReader(payload.bytes))
+	require.NoError(t, err, "Failed to send file")
+	events := testContainer.Events
+	events.Expect("sendMessages",
+		`{  "endpointId":"`+endpointID.String()+`",
+            "messageType":"img:png",
+            "payload":"`+payload.encodedB64+`",
+            "appMessageId":"test-context-0",
+            "filename":"test.png"
+	     }`)
+	assert.EventuallyWithT(t, func(c *assert.CollectT) {
+		assert.NoError(c, events.CheckExpectations(c))
+	}, 10*time.Second, 1*time.Second, "Event not received in time")
+
+	assert.EventuallyWithT(t, func(c *assert.CollectT) {
+		if assert.Len(c, receivedFiles, 1, "Should have received exactly one file") {
+			receivedPayload, readErr := io.ReadAll(receivedFiles[0].Payload)
+			assert.NoError(c, readErr, "Should be able to read file payload")
+			assert.Equal(c, payload.bytes, receivedPayload, "Payload should match")
+			assert.Equal(c, endpointID, receivedFiles[0].ReceivingEndpointID, "ReceivingEndpointID should match")
+			assert.NotNil(c, receivedFiles[0].Filename, "Filename should not be nil")
+			assert.Equal(c, "test.png", *receivedFiles[0].Filename, "Filename should match")
 		}
 	}, 10*time.Second, 1*time.Second)
 }

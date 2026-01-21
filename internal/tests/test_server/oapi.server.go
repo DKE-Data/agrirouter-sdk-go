@@ -84,13 +84,21 @@ type EndpointType string
 // FileReceivedEventData Data structure for FILE_RECEIVED events. This event shall arrive whenever a big file transfer
 // has completed in its entirety, i.e when big payload was sent as several message chunks, this
 // event would be sent last when the complete payload is received.
+//
+// To read payload from this event when using the `payload_uri` field to download
+// the complete payload, it is not required to provide Authorization for this
+// request, as the URI itself contains access to that specific payload.
+//
+// These URIs are time-limited and would expire after at most 15 minutes, so clients
+// should download the payload before that happens.
 type FileReceivedEventData struct {
 	EventType string `json:"event_type"`
 
 	// Filename Optional name of the file that is attached to messages as metadata.
 	Filename *string `json:"filename,omitempty"`
 
-	// Payload The payload of the file, base64 encoded. Only one of `payload` or `payload_uri` would be present.
+	// Payload The payload of the file, base64 encoded.
+	// Only one of `payload` or `payload_uri` can be present.
 	Payload *[]byte `json:"payload,omitempty"`
 
 	// PayloadUri The URI to access the payload. May have hostname that is different from
@@ -98,6 +106,9 @@ type FileReceivedEventData struct {
 	// Clients MUST use provided URI as is without any modifications.
 	// If event embeds payload directly, this field would be absent.
 	PayloadUri *PayloadURI `json:"payload_uri,omitempty"`
+
+	// ReceivingEndpointId Internally-generated agrirouter ID of the receiving endpoint.
+	ReceivingEndpointId openapi_types.UUID `json:"receiving_endpoint_id"`
 }
 
 // GenericEventData defines model for GenericEventData.

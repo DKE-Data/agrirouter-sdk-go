@@ -28,8 +28,9 @@ var (
 
 // Client is the structure that allows interaction with the agrirouter API.
 type Client struct {
-	oapiClient *oapi.ClientWithResponses
-	serverURL  *url.URL
+	oapiClient     *oapi.ClientWithResponses
+	payloadsClient oapi.HttpRequestDoer
+	serverURL      *url.URL
 }
 
 // NewClient creates a new agrirouter client with the given server URL.
@@ -39,14 +40,17 @@ func NewClient(serverURL string, opts ...ClientOption) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to parse server URL: %w", ErrURLIsInvalid, err)
 	}
-	client, err := oapi.NewClientWithResponses(serverURL, opts...)
+	oapiClient, err := oapi.NewClientWithResponses(serverURL, opts...)
 	if err != nil {
 		return nil, err
 	}
 
+	filePayloadsClient := oapiClient.ClientInterface.(*oapi.Client).Client
+
 	return &Client{
-		oapiClient: client,
-		serverURL:  parsedURL,
+		oapiClient:     oapiClient,
+		payloadsClient: filePayloadsClient,
+		serverURL:      parsedURL,
 	}, nil
 }
 
