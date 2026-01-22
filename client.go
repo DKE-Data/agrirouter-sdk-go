@@ -28,30 +28,44 @@ var (
 
 // Client is the structure that allows interaction with the agrirouter API.
 type Client struct {
-	oapiClient     *oapi.ClientWithResponses
-	payloadsClient oapi.HttpRequestDoer
-	serverURL      *url.URL
+	oapiClient            *oapi.ClientWithResponses
+	messagePayloadsClient oapi.HttpRequestDoer
+	filePayloadsClient    oapi.HttpRequestDoer
+	serverURL             *url.URL
+
+	oapiOptions []oapi.ClientOption
 }
 
 // NewClient creates a new agrirouter client with the given server URL.
 // The server URL should be the base URL of the agrirouter API, e.g. "https://api.qa.agrirouter.farm".
 func NewClient(serverURL string, opts ...ClientOption) (*Client, error) {
+	client := &Client{}
+	for _, opt := range opts {
+		if err := opt(client); err != nil {
+			return nil, err
+		}
+	}
+
 	parsedURL, err := url.Parse(serverURL)
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to parse server URL: %w", ErrURLIsInvalid, err)
 	}
-	oapiClient, err := oapi.NewClientWithResponses(serverURL, opts...)
+	oapiClient, err := oapi.NewClientWithResponses(serverURL, client.oapiOptions...)
 	if err != nil {
 		return nil, err
 	}
 
-	filePayloadsClient := oapiClient.ClientInterface.(*oapi.Client).Client
+	client.oapiClient = oapiClient
+	client.serverURL = parsedURL
 
-	return &Client{
-		oapiClient:     oapiClient,
-		payloadsClient: filePayloadsClient,
-		serverURL:      parsedURL,
-	}, nil
+	// TODO: fix this when server will start using s3 for serving message payloads
+	client.messagePayloadsClient = oapiClient.ClientInterface.(*oapi.Client).Client
+
+	if client.filePayloadsClient == nil {
+		client.filePayloadsClient = http.DefaultClient
+	}
+
+	return client, nil
 }
 
 // PutEndpoint sends a request to the agrirouter API to create or update an endpoint.
@@ -126,17 +140,41 @@ func putEndpointError(err error, err2 error) error {
 }
 
 // ClientOption is a type for options that can be passed to the agrirouter client.
-type ClientOption = oapi.ClientOption
+type ClientOption = func(*Client) error
 
 // WithHTTPClient allows to set a custom HTTP client for the agrirouter client.
+// This client will be used for all API calls, but not for fetching file payloads.
 func WithHTTPClient(httpClient *http.Client) ClientOption {
-	return oapi.WithHTTPClient(httpClient)
+	return func(c *Client) error {
+		oapiOpt := oapi.WithHTTPClient(httpClient)
+		c.oapiOptions = append(c.oapiOptions, oapiOpt)
+		return nil
+	}
 }
 
 // RequestEditorFn is a function that can modify the request before it is sent.
 type RequestEditorFn = oapi.RequestEditorFn
 
-// WithRequestEditorFn allows to set a custom request editor function to modify request before sending it.
+// WithRequestEditorFn allows to set a custom request editor function
+// to modify request before sending it. This will not apply to requests
+// when fetching file payloads, only to agrirouter API calls.
 func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
-	return oapi.WithRequestEditorFn(fn)
+	return func(c *Client) error {
+		oapiOpt := oapi.WithRequestEditorFn(fn)
+		c.oapiOptions = append(c.oapiOptions, oapiOpt)
+		return nil
+	}
+}
+
+// PayloadsHTTPClient is an interface for an HTTP client that can be used to fetch payloads.
+type PayloadsHTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// WithPayloadsHTTPClient allows to set a custom HTTP client for fetching payloads.
+func WithPayloadsHTTPClient(httpClient PayloadsHTTPClient) ClientOption {
+	return func(c *Client) error {
+		c.filePayloadsClient = httpClient
+		return nil
+	}
 }

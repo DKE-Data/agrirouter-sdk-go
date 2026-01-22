@@ -99,7 +99,7 @@ func (c *Client) fetchMessagePayload(
 		return nil, err
 	}
 	req := &http.Request{Method: http.MethodGet, URL: payloadURI}
-	resp, err := c.payloadsClient.Do(req.WithContext(ctx))
+	resp, err := c.messagePayloadsClient.Do(req.WithContext(ctx))
 	if err != nil {
 		err = fmt.Errorf("%w: %v", ErrFailedToFetchPayload, err)
 		return nil, err
@@ -195,7 +195,7 @@ func (c *Client) ReceiveFiles(
 			return
 		}
 		payloadURI := *fileReceivedEvent.PayloadUri
-		payload, err := c.fetchFilePayload(ctx, payloadURI, errorHandler, c.payloadsClient)
+		payload, err := c.fetchFilePayload(ctx, payloadURI, errorHandler, c.filePayloadsClient)
 		if err != nil {
 			errorHandler(err)
 			return
