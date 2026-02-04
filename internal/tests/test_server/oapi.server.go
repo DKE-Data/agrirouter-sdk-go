@@ -97,6 +97,11 @@ type FileReceivedEventData struct {
 	// Filename Optional name of the file that is attached to messages as metadata.
 	Filename *string `json:"filename,omitempty"`
 
+	// MessageType The message type of the received payload.
+	// See available types here:
+	// https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
+	MessageType string `json:"message_type"`
+
 	// Payload The payload of the file, base64 encoded.
 	// Only one of `payload` or `payload_uri` can be present.
 	Payload *[]byte `json:"payload,omitempty"`

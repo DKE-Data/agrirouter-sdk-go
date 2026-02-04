@@ -88,6 +88,7 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 					}
 					eventData := FileReceivedEventData{
 						EventType:           string(FILERECEIVED),
+						MessageType:         messageSentTestEvent.MessageType,
 						ReceivingEndpointId: messageSentTestEvent.EndpointID,
 						PayloadUri:          &payloadUriStr,
 						Filename:            messageSentTestEvent.Filename,

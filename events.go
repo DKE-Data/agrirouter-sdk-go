@@ -167,6 +167,7 @@ type File struct {
 	ReceivingEndpointID uuid.UUID // ReceivingEndpointID is the UUID of the endpoint that received the file
 	Payload             io.Reader // Payload is the file payload as a stream
 	Filename            *string   // Filename is optional as sent by sender endpoint
+	MessageType         string    // MessageType is the URN type of the message
 }
 
 // ReceiveFiles listens for incoming files from the agrirouter API and
@@ -204,6 +205,7 @@ func (c *Client) ReceiveFiles(
 			Payload:             payload,
 			ReceivingEndpointID: fileReceivedEvent.ReceivingEndpointId,
 			Filename:            fileReceivedEvent.Filename,
+			MessageType:         fileReceivedEvent.MessageType,
 		})
 	}, errorHandler)
 }

@@ -437,6 +437,7 @@ components:
       required:
         - event_type
         - receiving_endpoint_id
+        - message_type
       properties:
         payload_uri:
           $ref: "#/components/schemas/PayloadURI"
@@ -456,6 +457,13 @@ components:
           type: string
           format: uuid
           description: Internally-generated agrirouter ID of the receiving endpoint.
+        message_type:
+          type: string
+          example: "iso:11783:-10:taskdata:zip"
+          description: |
+            The message type of the received payload.
+            See available types here:
+            https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
     PutEndpointRequest:
       type: object
       required:
