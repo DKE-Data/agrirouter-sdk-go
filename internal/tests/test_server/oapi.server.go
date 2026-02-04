@@ -717,6 +717,14 @@ func (response PutEndpoint403Response) VisitPutEndpointResponse(w http.ResponseW
 	return nil
 }
 
+type PutEndpoint413Response struct {
+}
+
+func (response PutEndpoint413Response) VisitPutEndpointResponse(w http.ResponseWriter) error {
+	w.WriteHeader(413)
+	return nil
+}
+
 type PutEndpoint500Response struct {
 }
 
@@ -846,6 +854,14 @@ type SendMessages403Response struct {
 
 func (response SendMessages403Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(403)
+	return nil
+}
+
+type SendMessages413Response struct {
+}
+
+func (response SendMessages413Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(413)
 	return nil
 }
 

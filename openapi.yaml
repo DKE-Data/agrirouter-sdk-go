@@ -147,6 +147,8 @@ paths:
           description: Authentication failed
         '403':
           description: Authorization failed
+        '413':
+          description: Content too large
         '500':
           description: Server Side Error
   /payloads/{messageId}/{messageReceivedAt}:
@@ -303,6 +305,8 @@ paths:
           description: Authentication failed
         '403':
           description: Authorization failed
+        '413':
+          description: Content too large
         '502':
           description: Bad Gateway, upstream service has returned an error
         '503':
