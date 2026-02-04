@@ -168,6 +168,7 @@ type File struct {
 	Payload             io.Reader // Payload is the file payload as a stream
 	Filename            *string   // Filename is optional as sent by sender endpoint
 	MessageType         string    // MessageType is the URN type of the message
+	Size                int64     // Size of file payload in bytes
 }
 
 // ReceiveFiles listens for incoming files from the agrirouter API and
@@ -206,6 +207,7 @@ func (c *Client) ReceiveFiles(
 			ReceivingEndpointID: fileReceivedEvent.ReceivingEndpointId,
 			Filename:            fileReceivedEvent.Filename,
 			MessageType:         fileReceivedEvent.MessageType,
+			Size:                fileReceivedEvent.Size,
 		})
 	}, errorHandler)
 }

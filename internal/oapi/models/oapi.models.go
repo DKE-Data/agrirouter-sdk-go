@@ -108,6 +108,9 @@ type FileReceivedEventData struct {
 
 	// ReceivingEndpointId Internally-generated agrirouter ID of the receiving endpoint.
 	ReceivingEndpointId openapi_types.UUID `json:"receiving_endpoint_id"`
+
+	// Size The size of file payload in bytes.
+	Size int64 `json:"size"`
 }
 
 // GenericEventData defines model for GenericEventData.

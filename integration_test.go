@@ -266,6 +266,7 @@ func TestSendAndReceiveFiles(t *testing.T) {
 			assert.NotNil(c, receivedFiles[0].Filename, "Filename should not be nil")
 			assert.Equal(c, "test.png", *receivedFiles[0].Filename, "Filename should match")
 			assert.Equal(c, "img:png", receivedFiles[0].MessageType, "MessageType should match")
+			assert.Equal(c, int64(len(payload.bytes)), receivedFiles[0].Size, "Size should match payload length")
 		}
 	}, 10*time.Second, 1*time.Second)
 }

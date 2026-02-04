@@ -438,6 +438,7 @@ components:
         - event_type
         - receiving_endpoint_id
         - message_type
+        - size
       properties:
         payload_uri:
           $ref: "#/components/schemas/PayloadURI"
@@ -464,6 +465,11 @@ components:
             The message type of the received payload.
             See available types here:
             https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html
+        size:
+          type: integer
+          format: int64
+          minimum: 0
+          description: The size of file payload in bytes.
     PutEndpointRequest:
       type: object
       required:

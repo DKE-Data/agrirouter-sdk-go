@@ -86,12 +86,19 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 					sseMessage := &sse.Message{
 						Type: fileReceivedType,
 					}
+					// compute size from base64 payload
+					decoded, decErr := base64.StdEncoding.DecodeString(messageSentTestEvent.Payload)
+					var size int64
+					if decErr == nil {
+						size = int64(len(decoded))
+					}
 					eventData := FileReceivedEventData{
 						EventType:           string(FILERECEIVED),
 						MessageType:         messageSentTestEvent.MessageType,
 						ReceivingEndpointId: messageSentTestEvent.EndpointID,
 						PayloadUri:          &payloadUriStr,
 						Filename:            messageSentTestEvent.Filename,
+						Size:                size,
 					}
 					marshalledEventData, err := json.Marshal(eventData)
 					if err != nil {
