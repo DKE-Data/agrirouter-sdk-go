@@ -119,6 +119,28 @@ func (c *Client) SendMessages(
 	return fmt.Errorf("%w: unexpected status code %d, body: %s", ErrFailedStatusCode, res.StatusCode(), string(res.Body))
 }
 
+// ConfirmMessages confirms that messages have been received and processed.
+//
+// Each confirmation carries a message ID and the endpoint ID that received it.
+// The same message may be received by different endpoints and can be confirmed
+// separately, either in the same request or in different ones.
+func (c *Client) ConfirmMessages(
+	ctx context.Context,
+	params *ConfirmMessagesParams,
+	req ConfirmMessagesRequest,
+) error {
+	res, err := c.oapiClient.ConfirmMessagesWithResponse(ctx, params, req)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrAPICallFailed, err)
+	}
+
+	if res.StatusCode() == http.StatusAccepted {
+		return nil
+	}
+
+	return fmt.Errorf("%w: unexpected status code %d, body: %s", ErrFailedStatusCode, res.StatusCode(), string(res.Body))
+}
+
 func httpResponseToErr(res *http.Response, body []byte) error {
 	if res == nil {
 		return fmt.Errorf("%w: response is nil", ErrAPICallFailed)

@@ -22,6 +22,9 @@ const (
 	// SendMessagesTestEvent happens when messages are sent in the test container.
 	SendMessagesTestEvent = "sendMessages"
 
+	// ConfirmMessagesTestEvent happens when messages are confirmed in the test container.
+	ConfirmMessagesTestEvent = "confirmMessages"
+
 	// ReadyTestEvent indicates that the test events stream is ready.
 	ReadyTestEvent = "ready"
 )

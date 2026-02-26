@@ -265,6 +265,47 @@ paths:
         '500':
           description: Server Side Error
 
+  /confirmations:
+    post:
+      operationId: confirmMessages
+      summary: Confirm received messages
+      description: |
+        Confirm that messages have been received and processed by the application.
+        Each confirmation carries a message ID and the endpoint ID that received it.
+        The same message may be received by different endpoints and can be confirmed
+        separately, either in the same request or in different ones.
+      parameters:
+        - $ref: "#/components/parameters/x-agrirouter-tenant-id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmMessagesRequest"
+      responses:
+        '202':
+          description: Confirmation is saved for processing, feed will be updated eventually
+        '400':
+          description: Request is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Server Side Error
+
   /endpoints/{externalId}:
     put:
       operationId: putEndpoint
@@ -470,6 +511,31 @@ components:
           format: int64
           minimum: 0
           description: The size of file payload in bytes.
+    ConfirmMessagesRequest:
+      type: object
+      required:
+        - confirmations
+      properties:
+        confirmations:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/MessageConfirmation"
+          description: List of message confirmations.
+    MessageConfirmation:
+      type: object
+      required:
+        - message_id
+        - endpoint_id
+      properties:
+        message_id:
+          type: string
+          format: uuid
+          description: The agrirouter message ID of the confirmed message.
+        endpoint_id:
+          type: string
+          format: uuid
+          description: The agrirouter endpoint ID that received the message.
     PutEndpointRequest:
       type: object
       required:
@@ -560,6 +626,14 @@ components:
             - "SEND"
             - "RECEIVE"
             - "SEND_RECEIVE"
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: A human-readable error message describing what went wrong.
     EndpointType:
       type: string
       enum:

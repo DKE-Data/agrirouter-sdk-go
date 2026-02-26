@@ -271,6 +271,42 @@ func TestSendAndReceiveFiles(t *testing.T) {
 	}, 10*time.Second, 1*time.Second)
 }
 
+func TestConfirmMessages(t *testing.T) {
+	env := setupTestEnvironment(t)
+	client := env.client
+	testContainer := env.testContainer
+
+	messageID := uuid.New()
+	endpointID := uuid.New()
+	tenantID := uuid.New()
+
+	err := client.ConfirmMessages(context.Background(), &agrirouter.ConfirmMessagesParams{
+		XAgrirouterTenantId: tenantID,
+	}, agrirouter.ConfirmMessagesRequest{
+		Confirmations: []agrirouter.MessageConfirmation{
+			{
+				MessageId:  messageID,
+				EndpointId: endpointID,
+			},
+		},
+	})
+	require.NoError(t, err, "Failed to confirm messages")
+
+	events := testContainer.Events
+	events.Expect("confirmMessages", `{
+		"confirmations": [
+			{
+				"message_id": "`+messageID.String()+`",
+				"endpoint_id": "`+endpointID.String()+`"
+			}
+		]
+	}`)
+
+	assert.EventuallyWithT(t, func(c *assert.CollectT) {
+		assert.NoError(c, events.CheckExpectations(c))
+	}, 10*time.Second, 1*time.Second, "Event not received in time")
+}
+
 func TestReceiveMessagesFor2SecondsAndStop(t *testing.T) {
 	env := setupTestEnvironment(t)
 	client := env.client

@@ -92,6 +92,11 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// ConfirmMessagesWithBody request with any body
+	ConfirmMessagesWithBody(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ConfirmMessages(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PutEndpointWithBody request with any body
 	PutEndpointWithBody(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -105,6 +110,30 @@ type ClientInterface interface {
 
 	// GetMessagePayload request
 	GetMessagePayload(ctx context.Context, messageId openapi_types.UUID, messageReceivedAt time.Time, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) ConfirmMessagesWithBody(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewConfirmMessagesRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ConfirmMessages(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewConfirmMessagesRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) PutEndpointWithBody(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -165,6 +194,59 @@ func (c *Client) GetMessagePayload(ctx context.Context, messageId openapi_types.
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewConfirmMessagesRequest calls the generic ConfirmMessages builder with application/json body
+func NewConfirmMessagesRequest(server string, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewConfirmMessagesRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewConfirmMessagesRequestWithBody generates requests for ConfirmMessages with any type of body
+func NewConfirmMessagesRequestWithBody(server string, params *ConfirmMessagesParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/confirmations")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
+
+	}
+
+	return req, nil
 }
 
 // NewPutEndpointRequest calls the generic PutEndpoint builder with application/json body
@@ -489,6 +571,11 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// ConfirmMessagesWithBodyWithResponse request with any body
+	ConfirmMessagesWithBodyWithResponse(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error)
+
+	ConfirmMessagesWithResponse(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error)
+
 	// PutEndpointWithBodyWithResponse request with any body
 	PutEndpointWithBodyWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error)
 
@@ -502,6 +589,30 @@ type ClientWithResponsesInterface interface {
 
 	// GetMessagePayloadWithResponse request
 	GetMessagePayloadWithResponse(ctx context.Context, messageId openapi_types.UUID, messageReceivedAt time.Time, reqEditors ...RequestEditorFn) (*GetMessagePayloadResponse, error)
+}
+
+type ConfirmMessagesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *ErrorResponse
+	JSON401      *ErrorResponse
+	JSON403      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ConfirmMessagesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ConfirmMessagesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type PutEndpointResponse struct {
@@ -590,6 +701,23 @@ func (r GetMessagePayloadResponse) StatusCode() int {
 	return 0
 }
 
+// ConfirmMessagesWithBodyWithResponse request with arbitrary body returning *ConfirmMessagesResponse
+func (c *ClientWithResponses) ConfirmMessagesWithBodyWithResponse(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error) {
+	rsp, err := c.ConfirmMessagesWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseConfirmMessagesResponse(rsp)
+}
+
+func (c *ClientWithResponses) ConfirmMessagesWithResponse(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error) {
+	rsp, err := c.ConfirmMessages(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseConfirmMessagesResponse(rsp)
+}
+
 // PutEndpointWithBodyWithResponse request with arbitrary body returning *PutEndpointResponse
 func (c *ClientWithResponses) PutEndpointWithBodyWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error) {
 	rsp, err := c.PutEndpointWithBody(ctx, externalId, params, contentType, body, reqEditors...)
@@ -632,6 +760,46 @@ func (c *ClientWithResponses) GetMessagePayloadWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseGetMessagePayloadResponse(rsp)
+}
+
+// ParseConfirmMessagesResponse parses an HTTP response from a ConfirmMessagesWithResponse call
+func ParseConfirmMessagesResponse(rsp *http.Response) (*ConfirmMessagesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ConfirmMessagesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParsePutEndpointResponse parses an HTTP response from a PutEndpointWithResponse call

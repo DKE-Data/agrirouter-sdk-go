@@ -177,6 +177,22 @@ func (s *Server) SendMessages(ctx context.Context, request SendMessagesRequestOb
 	return SendMessages200Response{}, nil
 }
 
+func (s *Server) ConfirmMessages(_ context.Context, request ConfirmMessagesRequestObject) (ConfirmMessagesResponseObject, error) {
+	dataBytes, err := json.Marshal(request.Body)
+	if err != nil {
+		return nil, err
+	}
+	s.events <- struct {
+		Data      string
+		EventType string
+	}{
+		Data:      string(dataBytes),
+		EventType: agriroutertestcontainer.ConfirmMessagesTestEvent,
+	}
+
+	return ConfirmMessages202Response{}, nil
+}
+
 func (s *Server) PutEndpoint(ctx context.Context, request PutEndpointRequestObject) (PutEndpointResponseObject, error) {
 	s.events <- struct {
 		Data      string

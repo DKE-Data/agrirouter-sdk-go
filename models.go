@@ -68,6 +68,15 @@ const VirtualCommunicationUnit = internal_models.VirtualCommunicationUnit
 // and provide farmers with their own typically web-based user interface.
 const FarmingSoftware = internal_models.FarmingSoftware
 
+// ConfirmMessagesParams contains parameters to confirm messages.
+type ConfirmMessagesParams = internal_models.ConfirmMessagesParams
+
+// ConfirmMessagesRequest is the request structure for confirming received messages.
+type ConfirmMessagesRequest = internal_models.ConfirmMessagesRequest
+
+// MessageConfirmation is a single message confirmation carrying a message ID and endpoint ID.
+type MessageConfirmation = internal_models.MessageConfirmation
+
 // MessageReceivedEventData represents the data received in a MessageReceived event.
 //
 // It contains information about the received message, including its type and payload URI.

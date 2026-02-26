@@ -38,6 +38,12 @@ const (
 	MESSAGERECEIVED ReceiveEventsParamsTypes = "MESSAGE_RECEIVED"
 )
 
+// ConfirmMessagesRequest defines model for ConfirmMessagesRequest.
+type ConfirmMessagesRequest struct {
+	// Confirmations List of message confirmations.
+	Confirmations []MessageConfirmation `json:"confirmations"`
+}
+
 // Endpoint defines model for Endpoint.
 type Endpoint struct {
 	ApplicationId     openapi_types.UUID   `json:"application_id"`
@@ -74,6 +80,12 @@ type EndpointSubscription struct {
 
 // EndpointType defines model for EndpointType.
 type EndpointType string
+
+// ErrorResponse defines model for ErrorResponse.
+type ErrorResponse struct {
+	// Message A human-readable error message describing what went wrong.
+	Message string `json:"message"`
+}
 
 // FileReceivedEventData Data structure for FILE_RECEIVED events. This event shall arrive whenever a big file transfer
 // has completed in its entirety, i.e when big payload was sent as several message chunks, this
@@ -116,6 +128,15 @@ type FileReceivedEventData struct {
 // GenericEventData defines model for GenericEventData.
 type GenericEventData struct {
 	union json.RawMessage
+}
+
+// MessageConfirmation defines model for MessageConfirmation.
+type MessageConfirmation struct {
+	// EndpointId The agrirouter endpoint ID that received the message.
+	EndpointId openapi_types.UUID `json:"endpoint_id"`
+
+	// MessageId The agrirouter message ID of the confirmed message.
+	MessageId openapi_types.UUID `json:"message_id"`
 }
 
 // MessageReceivedEventData Data structure for MESSAGE_RECEIVED events. This event would arrive whenever application
@@ -177,6 +198,12 @@ type PutEndpointRequest struct {
 
 // XAgrirouterTenantId defines model for x-agrirouter-tenant-id.
 type XAgrirouterTenantId = openapi_types.UUID
+
+// ConfirmMessagesParams defines parameters for ConfirmMessages.
+type ConfirmMessagesParams struct {
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
 
 // PutEndpointParams defines parameters for PutEndpoint.
 type PutEndpointParams struct {
@@ -244,6 +271,9 @@ type SendMessagesParams struct {
 	// XAgrirouterFilename Optional name of the file that is attached to messages as metadata.
 	XAgrirouterFilename *string `json:"x-agrirouter-filename,omitempty"`
 }
+
+// ConfirmMessagesJSONRequestBody defines body for ConfirmMessages for application/json ContentType.
+type ConfirmMessagesJSONRequestBody = ConfirmMessagesRequest
 
 // PutEndpointJSONRequestBody defines body for PutEndpoint for application/json ContentType.
 type PutEndpointJSONRequestBody = PutEndpointRequest

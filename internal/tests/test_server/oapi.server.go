@@ -44,6 +44,12 @@ const (
 	MESSAGERECEIVED ReceiveEventsParamsTypes = "MESSAGE_RECEIVED"
 )
 
+// ConfirmMessagesRequest defines model for ConfirmMessagesRequest.
+type ConfirmMessagesRequest struct {
+	// Confirmations List of message confirmations.
+	Confirmations []MessageConfirmation `json:"confirmations"`
+}
+
 // Endpoint defines model for Endpoint.
 type Endpoint struct {
 	ApplicationId     openapi_types.UUID   `json:"application_id"`
@@ -80,6 +86,12 @@ type EndpointSubscription struct {
 
 // EndpointType defines model for EndpointType.
 type EndpointType string
+
+// ErrorResponse defines model for ErrorResponse.
+type ErrorResponse struct {
+	// Message A human-readable error message describing what went wrong.
+	Message string `json:"message"`
+}
 
 // FileReceivedEventData Data structure for FILE_RECEIVED events. This event shall arrive whenever a big file transfer
 // has completed in its entirety, i.e when big payload was sent as several message chunks, this
@@ -122,6 +134,15 @@ type FileReceivedEventData struct {
 // GenericEventData defines model for GenericEventData.
 type GenericEventData struct {
 	union json.RawMessage
+}
+
+// MessageConfirmation defines model for MessageConfirmation.
+type MessageConfirmation struct {
+	// EndpointId The agrirouter endpoint ID that received the message.
+	EndpointId openapi_types.UUID `json:"endpoint_id"`
+
+	// MessageId The agrirouter message ID of the confirmed message.
+	MessageId openapi_types.UUID `json:"message_id"`
 }
 
 // MessageReceivedEventData Data structure for MESSAGE_RECEIVED events. This event would arrive whenever application
@@ -183,6 +204,12 @@ type PutEndpointRequest struct {
 
 // XAgrirouterTenantId defines model for x-agrirouter-tenant-id.
 type XAgrirouterTenantId = openapi_types.UUID
+
+// ConfirmMessagesParams defines parameters for ConfirmMessages.
+type ConfirmMessagesParams struct {
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
 
 // PutEndpointParams defines parameters for PutEndpoint.
 type PutEndpointParams struct {
@@ -250,6 +277,9 @@ type SendMessagesParams struct {
 	// XAgrirouterFilename Optional name of the file that is attached to messages as metadata.
 	XAgrirouterFilename *string `json:"x-agrirouter-filename,omitempty"`
 }
+
+// ConfirmMessagesJSONRequestBody defines body for ConfirmMessages for application/json ContentType.
+type ConfirmMessagesJSONRequestBody = ConfirmMessagesRequest
 
 // PutEndpointJSONRequestBody defines body for PutEndpoint for application/json ContentType.
 type PutEndpointJSONRequestBody = PutEndpointRequest
@@ -345,6 +375,9 @@ func (t *GenericEventData) UnmarshalJSON(b []byte) error {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Confirm received messages
+	// (POST /confirmations)
+	ConfirmMessages(ctx echo.Context, params ConfirmMessagesParams) error
 	// Create or update endpoint
 	// (PUT /endpoints/{externalId})
 	PutEndpoint(ctx echo.Context, externalId string, params PutEndpointParams) error
@@ -362,6 +395,41 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// ConfirmMessages converts echo context to params.
+func (w *ServerInterfaceWrapper) ConfirmMessages(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ConfirmMessagesParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ConfirmMessages(ctx, params)
+	return err
 }
 
 // PutEndpoint converts echo context to params.
@@ -666,11 +734,64 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.POST(baseURL+"/confirmations", wrapper.ConfirmMessages)
 	router.PUT(baseURL+"/endpoints/:externalId", wrapper.PutEndpoint)
 	router.GET(baseURL+"/events", wrapper.ReceiveEvents)
 	router.POST(baseURL+"/messages", wrapper.SendMessages)
 	router.GET(baseURL+"/payloads/:messageId/:messageReceivedAt", wrapper.GetMessagePayload)
 
+}
+
+type ConfirmMessagesRequestObject struct {
+	Params ConfirmMessagesParams
+	Body   *ConfirmMessagesJSONRequestBody
+}
+
+type ConfirmMessagesResponseObject interface {
+	VisitConfirmMessagesResponse(w http.ResponseWriter) error
+}
+
+type ConfirmMessages202Response struct {
+}
+
+func (response ConfirmMessages202Response) VisitConfirmMessagesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type ConfirmMessages400JSONResponse ErrorResponse
+
+func (response ConfirmMessages400JSONResponse) VisitConfirmMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ConfirmMessages401JSONResponse ErrorResponse
+
+func (response ConfirmMessages401JSONResponse) VisitConfirmMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ConfirmMessages403JSONResponse ErrorResponse
+
+func (response ConfirmMessages403JSONResponse) VisitConfirmMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ConfirmMessages500Response struct {
+}
+
+func (response ConfirmMessages500Response) VisitConfirmMessagesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
 }
 
 type PutEndpointRequestObject struct {
@@ -951,6 +1072,9 @@ func (response GetMessagePayload500Response) VisitGetMessagePayloadResponse(w ht
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// Confirm received messages
+	// (POST /confirmations)
+	ConfirmMessages(ctx context.Context, request ConfirmMessagesRequestObject) (ConfirmMessagesResponseObject, error)
 	// Create or update endpoint
 	// (PUT /endpoints/{externalId})
 	PutEndpoint(ctx context.Context, request PutEndpointRequestObject) (PutEndpointResponseObject, error)
@@ -975,6 +1099,37 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// ConfirmMessages operation middleware
+func (sh *strictHandler) ConfirmMessages(ctx echo.Context, params ConfirmMessagesParams) error {
+	var request ConfirmMessagesRequestObject
+
+	request.Params = params
+
+	var body ConfirmMessagesJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ConfirmMessages(ctx.Request().Context(), request.(ConfirmMessagesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ConfirmMessages")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(ConfirmMessagesResponseObject); ok {
+		return validResponse.VisitConfirmMessagesResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
 }
 
 // PutEndpoint operation middleware
