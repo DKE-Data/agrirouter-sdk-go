@@ -109,6 +109,10 @@ type FileReceivedEventData struct {
 	// Filename Optional name of the file that is attached to messages as metadata.
 	Filename *string `json:"filename,omitempty"`
 
+	// MessageIds List of agrirouter message IDs of the messages that carried the file payload chunks.
+	// This is useful for confirming the messages after processing the file.
+	MessageIds []openapi_types.UUID `json:"message_ids"`
+
 	// MessageType The message type of the received payload.
 	// See available types here:
 	// https://docs.agrirouter.com/agrirouter-interface-documentation/latest/tmt/overview.html

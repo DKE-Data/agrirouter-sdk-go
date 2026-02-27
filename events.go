@@ -166,11 +166,12 @@ func (c *Client) receiveAndHandleEvents(
 // Typically files would have larger payloads than messages,
 // so the payload is provided as an io.Reader to allow streaming.
 type File struct {
-	ReceivingEndpointID uuid.UUID // ReceivingEndpointID is the UUID of the endpoint that received the file
-	Payload             io.Reader // Payload is the file payload as a stream
-	Filename            *string   // Filename is optional as sent by sender endpoint
-	MessageType         string    // MessageType is the URN type of the message
-	Size                int64     // Size of file payload in bytes
+	ReceivingEndpointID uuid.UUID   // ReceivingEndpointID is the UUID of the endpoint that received the file
+	Payload             io.Reader   // Payload is the file payload as a stream
+	Filename            *string     // Filename is optional as sent by sender endpoint
+	MessageType         string      // MessageType is the URN type of the message
+	Size                int64       // Size of file payload in bytes
+	MessageIDs          []uuid.UUID // MessageIDs are the agrirouter message IDs of the messages that carried the file payload chunks
 }
 
 // ReceiveFiles listens for incoming files from the agrirouter API and
@@ -210,6 +211,7 @@ func (c *Client) ReceiveFiles(
 			Filename:            fileReceivedEvent.Filename,
 			MessageType:         fileReceivedEvent.MessageType,
 			Size:                fileReceivedEvent.Size,
+			MessageIDs:          fileReceivedEvent.MessageIds,
 		})
 	}, errorHandler)
 }

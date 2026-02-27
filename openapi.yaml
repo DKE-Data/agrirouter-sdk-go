@@ -480,6 +480,7 @@ components:
         - receiving_endpoint_id
         - message_type
         - size
+        - message_ids
       properties:
         payload_uri:
           $ref: "#/components/schemas/PayloadURI"
@@ -511,6 +512,14 @@ components:
           format: int64
           minimum: 0
           description: The size of file payload in bytes.
+        message_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: |
+            List of agrirouter message IDs of the messages that carried the file payload chunks.
+            This is useful for confirming the messages after processing the file.
     ConfirmMessagesRequest:
       type: object
       required:

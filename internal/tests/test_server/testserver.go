@@ -99,6 +99,7 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 						PayloadUri:          &payloadUriStr,
 						Filename:            messageSentTestEvent.Filename,
 						Size:                size,
+						MessageIds:          []uuid.UUID{messageId},
 					}
 					marshalledEventData, err := json.Marshal(eventData)
 					if err != nil {
