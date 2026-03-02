@@ -133,6 +133,9 @@ type FileReceivedEventData struct {
 
 	// Size The size of file payload in bytes.
 	Size int64 `json:"size"`
+
+	// TenantId The tenant ID of the to which receiving endpoint belongs. This is useful for confirming messages back to agrirouter.
+	TenantId *string `json:"tenant_id,omitempty"`
 }
 
 // GenericEventData defines model for GenericEventData.
@@ -184,6 +187,9 @@ type MessageReceivedEventData struct {
 
 	// SentAt The timestamp when the message was sent by sending application.
 	SentAt time.Time `json:"sent_at"`
+
+	// TenantId The tenant ID of the to which receiving endpoint belongs. This is useful for confirming messages back to agrirouter.
+	TenantId *string `json:"tenant_id,omitempty"`
 }
 
 // PayloadURI The URI to access the payload. May have hostname that is different from

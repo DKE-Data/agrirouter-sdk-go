@@ -42,6 +42,7 @@ type SendMessagesTestEventData struct {
 	MessageType  string    `json:"messageType"`
 	AppMessageId string    `json:"appMessageId"`
 	Filename     *string   `json:"filename,omitempty"`
+	TenantID     string    `json:"tenantId"`
 }
 
 func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequestObject) (ReceiveEventsResponseObject, error) {
@@ -100,6 +101,7 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 						Filename:            messageSentTestEvent.Filename,
 						Size:                size,
 						MessageIds:          []uuid.UUID{messageId},
+						TenantId:            &messageSentTestEvent.TenantID,
 					}
 					marshalledEventData, err := json.Marshal(eventData)
 					if err != nil {
@@ -124,6 +126,7 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 						MessageType:         messageSentTestEvent.MessageType,
 						Id:                  messageId,
 						ReceivingEndpointId: messageSentTestEvent.EndpointID,
+						TenantId:            &messageSentTestEvent.TenantID,
 					}
 					marshalledEventData, err := json.Marshal(eventData)
 					if err != nil {
@@ -160,6 +163,7 @@ func (s *Server) SendMessages(ctx context.Context, request SendMessagesRequestOb
 		MessageType:  request.Params.XAgrirouterMessageType,
 		AppMessageId: request.Params.XAgrirouterContextId + "-0",
 		Filename:     request.Params.XAgrirouterFilename,
+		TenantID:     request.Params.XAgrirouterTenantId.String(),
 	}
 	s.sentMessagesTestEvents <- &data
 

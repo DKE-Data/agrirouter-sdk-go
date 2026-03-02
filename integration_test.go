@@ -114,13 +114,14 @@ func TestSendMessages(t *testing.T) {
 	testContainer := env.testContainer
 
 	endpointID := uuid.New()
+	tenantID := uuid.New()
 	params := &agrirouter.SendMessagesParams{
 		XAgrirouterIsPublish:     true,
 		XAgrirouterEndpointId:    endpointID,
 		ContentLength:            100,
 		XAgrirouterSentTimestamp: time.Now(),
 		XAgrirouterMessageType:   "gps:info",
-		XAgrirouterTenantId:      uuid.New(),
+		XAgrirouterTenantId:      tenantID,
 		XAgrirouterContextId:     "test-context",
 	}
 
@@ -134,7 +135,8 @@ func TestSendMessages(t *testing.T) {
       "endpointId":"`+endpointID.String()+`",
       "messageType":"gps:info",
       "payload":"`+payload.encodedB64+`",
-	  "appMessageId":"test-context-0"
+	  "appMessageId":"test-context-0",
+	  "tenantId":"`+tenantID.String()+`"
     }`)
 
 	assert.EventuallyWithT(t, func(c *assert.CollectT) {
@@ -170,13 +172,14 @@ func TestSendAndReceiveMessages(t *testing.T) {
 	}()
 
 	endpointID := uuid.New()
+	tenantID := uuid.New()
 	params := &agrirouter.SendMessagesParams{
 		XAgrirouterIsPublish:     true,
 		XAgrirouterEndpointId:    endpointID,
 		ContentLength:            100,
 		XAgrirouterSentTimestamp: time.Now(),
 		XAgrirouterMessageType:   "gps:info",
-		XAgrirouterTenantId:      uuid.New(),
+		XAgrirouterTenantId:      tenantID,
 		XAgrirouterContextId:     "test-context",
 	}
 	payload := newTestPayload(100)
@@ -187,7 +190,8 @@ func TestSendAndReceiveMessages(t *testing.T) {
 		`{  "endpointId":"`+endpointID.String()+`",
             "messageType":"gps:info",
             "payload":"`+payload.encodedB64+`",
-            "appMessageId":"test-context-0"
+            "appMessageId":"test-context-0",
+            "tenantId":"`+tenantID.String()+`"
 	     }`)
 	assert.EventuallyWithT(t, func(c *assert.CollectT) {
 		assert.NoError(c, events.CheckExpectations(c))
@@ -199,6 +203,8 @@ func TestSendAndReceiveMessages(t *testing.T) {
 			assert.Equal(c, payload.bytes, receivedMessages[0].Payload, "Payload should match")
 			assert.Equal(c, "test-context-0", receivedMessages[0].AppMessageID, "AppMessageId should match")
 			assert.Equal(c, endpointID, receivedMessages[0].ReceivingEndpointID, "ReceivingEndpointID should match")
+			assert.NotNil(c, receivedMessages[0].TenantID, "TenantID should not be nil")
+			assert.Equal(c, tenantID.String(), *receivedMessages[0].TenantID, "TenantID should match")
 		}
 	}, 10*time.Second, 1*time.Second)
 }
@@ -231,6 +237,7 @@ func TestSendAndReceiveFiles(t *testing.T) {
 	}()
 
 	endpointID := uuid.New()
+	tenantID := uuid.New()
 	filename := "test.png"
 	params := &agrirouter.SendMessagesParams{
 		XAgrirouterIsPublish:     true,
@@ -238,7 +245,7 @@ func TestSendAndReceiveFiles(t *testing.T) {
 		ContentLength:            100,
 		XAgrirouterSentTimestamp: time.Now(),
 		XAgrirouterMessageType:   "img:png",
-		XAgrirouterTenantId:      uuid.New(),
+		XAgrirouterTenantId:      tenantID,
 		XAgrirouterContextId:     "test-context",
 		XAgrirouterFilename:      &filename,
 	}
@@ -251,7 +258,8 @@ func TestSendAndReceiveFiles(t *testing.T) {
             "messageType":"img:png",
             "payload":"`+payload.encodedB64+`",
             "appMessageId":"test-context-0",
-            "filename":"test.png"
+            "filename":"test.png",
+            "tenantId":"`+tenantID.String()+`"
 	     }`)
 	assert.EventuallyWithT(t, func(c *assert.CollectT) {
 		assert.NoError(c, events.CheckExpectations(c))
@@ -268,6 +276,8 @@ func TestSendAndReceiveFiles(t *testing.T) {
 			assert.Equal(c, "img:png", receivedFiles[0].MessageType, "MessageType should match")
 			assert.Equal(c, int64(len(payload.bytes)), receivedFiles[0].Size, "Size should match payload length")
 			assert.NotEmpty(c, receivedFiles[0].MessageIDs, "MessageIDs should not be empty")
+			assert.NotNil(c, receivedFiles[0].TenantID, "TenantID should not be nil")
+			assert.Equal(c, tenantID.String(), *receivedFiles[0].TenantID, "TenantID should match")
 		}
 	}, 10*time.Second, 1*time.Second)
 }
