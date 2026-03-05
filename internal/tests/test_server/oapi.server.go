@@ -134,6 +134,9 @@ type FileReceivedEventData struct {
 	// Size The size of file payload in bytes.
 	Size int64 `json:"size"`
 
+	// TeamsetContextId The teamset context ID that was provided by sending application when sending the message, if any.
+	TeamsetContextId *string `json:"teamset_context_id,omitempty"`
+
 	// TenantId The tenant ID of the to which receiving endpoint belongs. This is useful for confirming messages back to agrirouter.
 	TenantId *string `json:"tenant_id,omitempty"`
 }
@@ -187,6 +190,9 @@ type MessageReceivedEventData struct {
 
 	// SentAt The timestamp when the message was sent by sending application.
 	SentAt time.Time `json:"sent_at"`
+
+	// TeamsetContextId The teamset context ID that was provided by sending application when sending the message, if any.
+	TeamsetContextId *string `json:"teamset_context_id,omitempty"`
 
 	// TenantId The tenant ID of the to which receiving endpoint belongs. This is useful for confirming messages back to agrirouter.
 	TenantId *string `json:"tenant_id,omitempty"`
@@ -832,36 +838,40 @@ func (response PutEndpoint201JSONResponse) VisitPutEndpointResponse(w http.Respo
 	return json.NewEncoder(w).Encode(response)
 }
 
-type PutEndpoint400Response struct {
-}
+type PutEndpoint400JSONResponse ErrorResponse
 
-func (response PutEndpoint400Response) VisitPutEndpointResponse(w http.ResponseWriter) error {
+func (response PutEndpoint400JSONResponse) VisitPutEndpointResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-type PutEndpoint401Response struct {
-}
+type PutEndpoint401JSONResponse ErrorResponse
 
-func (response PutEndpoint401Response) VisitPutEndpointResponse(w http.ResponseWriter) error {
+func (response PutEndpoint401JSONResponse) VisitPutEndpointResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(401)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-type PutEndpoint403Response struct {
-}
+type PutEndpoint403JSONResponse ErrorResponse
 
-func (response PutEndpoint403Response) VisitPutEndpointResponse(w http.ResponseWriter) error {
+func (response PutEndpoint403JSONResponse) VisitPutEndpointResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-type PutEndpoint413Response struct {
-}
+type PutEndpoint413JSONResponse ErrorResponse
 
-func (response PutEndpoint413Response) VisitPutEndpointResponse(w http.ResponseWriter) error {
+func (response PutEndpoint413JSONResponse) VisitPutEndpointResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(413)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type PutEndpoint500Response struct {

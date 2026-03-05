@@ -37,12 +37,13 @@ func (s *Server) GetMessagePayload(
 }
 
 type SendMessagesTestEventData struct {
-	EndpointID   uuid.UUID `json:"endpointId"`
-	Payload      string    `json:"payload"` // base64-encoded payload
-	MessageType  string    `json:"messageType"`
-	AppMessageId string    `json:"appMessageId"`
-	Filename     *string   `json:"filename,omitempty"`
-	TenantID     string    `json:"tenantId"`
+	EndpointID       uuid.UUID `json:"endpointId"`
+	Payload          string    `json:"payload"` // base64-encoded payload
+	MessageType      string    `json:"messageType"`
+	AppMessageId     string    `json:"appMessageId"`
+	Filename         *string   `json:"filename,omitempty"`
+	TenantID         string    `json:"tenantId"`
+	TeamsetContextID *string   `json:"teamsetContextId,omitempty"`
 }
 
 func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequestObject) (ReceiveEventsResponseObject, error) {
@@ -102,6 +103,7 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 						Size:                size,
 						MessageIds:          []uuid.UUID{messageId},
 						TenantId:            &messageSentTestEvent.TenantID,
+						TeamsetContextId:    messageSentTestEvent.TeamsetContextID,
 					}
 					marshalledEventData, err := json.Marshal(eventData)
 					if err != nil {
@@ -127,6 +129,7 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 						Id:                  messageId,
 						ReceivingEndpointId: messageSentTestEvent.EndpointID,
 						TenantId:            &messageSentTestEvent.TenantID,
+						TeamsetContextId:    messageSentTestEvent.TeamsetContextID,
 					}
 					marshalledEventData, err := json.Marshal(eventData)
 					if err != nil {
@@ -158,12 +161,13 @@ func (s *Server) SendMessages(ctx context.Context, request SendMessagesRequestOb
 	}
 	bodyBase64 := base64.StdEncoding.EncodeToString(bodyBytes)
 	var data SendMessagesTestEventData = SendMessagesTestEventData{
-		EndpointID:   request.Params.XAgrirouterEndpointId,
-		Payload:      bodyBase64,
-		MessageType:  request.Params.XAgrirouterMessageType,
-		AppMessageId: request.Params.XAgrirouterContextId + "-0",
-		Filename:     request.Params.XAgrirouterFilename,
-		TenantID:     request.Params.XAgrirouterTenantId.String(),
+		EndpointID:       request.Params.XAgrirouterEndpointId,
+		Payload:          bodyBase64,
+		MessageType:      request.Params.XAgrirouterMessageType,
+		AppMessageId:     request.Params.XAgrirouterContextId + "-0",
+		Filename:         request.Params.XAgrirouterFilename,
+		TenantID:         request.Params.XAgrirouterTenantId.String(),
+		TeamsetContextID: request.Params.XAgrirouterTeamsetContextId,
 	}
 	s.sentMessagesTestEvents <- &data
 

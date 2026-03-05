@@ -342,12 +342,28 @@ paths:
                 $ref: "#/components/schemas/Endpoint"
         '400':
           description: Request is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         '401':
           description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         '403':
           description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         '413':
           description: Content too large
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         '502':
           description: Bad Gateway, upstream service has returned an error
         '503':
@@ -370,11 +386,6 @@ components:
         clientCredentials:
           tokenUrl: https://oauth.qa.agrirouter.farm/token
           scopes: {}
-        authorizationCode:
-          authorizationUrl: https://oauth.qa.agrirouter.farm/authorize
-          tokenUrl: https://oauth.qa.agrirouter.farm/token
-          scopes:
-            endpoints:manage: Manage endpoints in the Agrirouter tenant.
     agrirouterOauthPROD:
       type: oauth2
       description: Agrirouter OAuth2 authentication for PROD environment.
@@ -382,11 +393,6 @@ components:
         clientCredentials:
           tokenUrl: https://api-oauth.agrirouter.com/token
           scopes: {}
-        authorizationCode:
-          authorizationUrl: https://api-oauth.agrirouter.com/authorize
-          tokenUrl: https://api-oauth.agrirouter.com/token
-          scopes:
-            endpoints:manage: Manage endpoints in the Agrirouter tenant.
   parameters:
     x-agrirouter-tenant-id:
       name: x-agrirouter-tenant-id
@@ -465,6 +471,9 @@ components:
         tenant_id:
           type: string
           description: The tenant ID of the to which receiving endpoint belongs. This is useful for confirming messages back to agrirouter.
+        teamset_context_id:
+          type: string
+          description: The teamset context ID that was provided by sending application when sending the message, if any.
     FileReceivedEventData:
       type: object
       description: |
@@ -526,6 +535,9 @@ components:
         tenant_id:
           type: string
           description: The tenant ID of the to which receiving endpoint belongs. This is useful for confirming messages back to agrirouter.
+        teamset_context_id:
+          type: string
+          description: The teamset context ID that was provided by sending application when sending the message, if any.
     ConfirmMessagesRequest:
       type: object
       required:

@@ -128,6 +128,9 @@ type FileReceivedEventData struct {
 	// Size The size of file payload in bytes.
 	Size int64 `json:"size"`
 
+	// TeamsetContextId The teamset context ID that was provided by sending application when sending the message, if any.
+	TeamsetContextId *string `json:"teamset_context_id,omitempty"`
+
 	// TenantId The tenant ID of the to which receiving endpoint belongs. This is useful for confirming messages back to agrirouter.
 	TenantId *string `json:"tenant_id,omitempty"`
 }
@@ -181,6 +184,9 @@ type MessageReceivedEventData struct {
 
 	// SentAt The timestamp when the message was sent by sending application.
 	SentAt time.Time `json:"sent_at"`
+
+	// TeamsetContextId The teamset context ID that was provided by sending application when sending the message, if any.
+	TeamsetContextId *string `json:"teamset_context_id,omitempty"`
 
 	// TenantId The tenant ID of the to which receiving endpoint belongs. This is useful for confirming messages back to agrirouter.
 	TenantId *string `json:"tenant_id,omitempty"`

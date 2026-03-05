@@ -40,6 +40,7 @@ type Message struct {
 	ReceivingEndpointID uuid.UUID // ReceivingEndpointID is the UUID of the endpoint that received the message
 	Filename            *string   // Filename is optional as sent by sender endpoint
 	TenantID            *string   // TenantID is the tenant to which the receiving endpoint belongs
+	TeamsetContextID    *string   // TeamsetContextID is the teamset context ID provided by the sending application, if any
 }
 
 // MessageHandler is a function that handles a received message.
@@ -70,6 +71,7 @@ func (c *Client) ReceiveMessages(
 			ReceivingEndpointID: messageReceivedEvent.ReceivingEndpointId,
 			Filename:            messageReceivedEvent.Filename,
 			TenantID:            messageReceivedEvent.TenantId,
+			TeamsetContextID:    messageReceivedEvent.TeamsetContextId,
 		}
 		if messageReceivedEvent.PayloadUri == nil {
 			if messageReceivedEvent.Payload == nil {
@@ -175,6 +177,7 @@ type File struct {
 	Size                int64       // Size of file payload in bytes
 	MessageIDs          []uuid.UUID // MessageIDs are the agrirouter message IDs of the messages that carried the file payload chunks
 	TenantID            *string     // TenantID is the tenant to which the receiving endpoint belongs
+	TeamsetContextID    *string     // TeamsetContextID is the teamset context ID provided by the sending application, if any
 }
 
 // ReceiveFiles listens for incoming files from the agrirouter API and
@@ -216,6 +219,7 @@ func (c *Client) ReceiveFiles(
 			Size:                fileReceivedEvent.Size,
 			MessageIDs:          fileReceivedEvent.MessageIds,
 			TenantID:            fileReceivedEvent.TenantId,
+			TeamsetContextID:    fileReceivedEvent.TeamsetContextId,
 		})
 	}, errorHandler)
 }
