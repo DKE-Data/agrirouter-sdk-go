@@ -982,36 +982,40 @@ func (response SendMessages200Response) VisitSendMessagesResponse(w http.Respons
 	return nil
 }
 
-type SendMessages400Response struct {
-}
+type SendMessages400JSONResponse ErrorResponse
 
-func (response SendMessages400Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
+func (response SendMessages400JSONResponse) VisitSendMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-type SendMessages401Response struct {
-}
+type SendMessages401JSONResponse ErrorResponse
 
-func (response SendMessages401Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
+func (response SendMessages401JSONResponse) VisitSendMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(401)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-type SendMessages403Response struct {
-}
+type SendMessages403JSONResponse ErrorResponse
 
-func (response SendMessages403Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
+func (response SendMessages403JSONResponse) VisitSendMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(403)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-type SendMessages413Response struct {
-}
+type SendMessages413JSONResponse ErrorResponse
 
-func (response SendMessages413Response) VisitSendMessagesResponse(w http.ResponseWriter) error {
+func (response SendMessages413JSONResponse) VisitSendMessagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(413)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type SendMessages500Response struct {
