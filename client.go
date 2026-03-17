@@ -28,10 +28,9 @@ var (
 
 // Client is the structure that allows interaction with the agrirouter API.
 type Client struct {
-	oapiClient            *oapi.ClientWithResponses
-	messagePayloadsClient oapi.HttpRequestDoer
-	filePayloadsClient    oapi.HttpRequestDoer
-	serverURL             *url.URL
+	oapiClient     *oapi.ClientWithResponses
+	payloadsClient oapi.HttpRequestDoer
+	serverURL      *url.URL
 
 	oapiOptions []oapi.ClientOption
 }
@@ -58,11 +57,8 @@ func NewClient(serverURL string, opts ...ClientOption) (*Client, error) {
 	client.oapiClient = oapiClient
 	client.serverURL = parsedURL
 
-	// TODO: fix this when server will start using s3 for serving message payloads
-	client.messagePayloadsClient = oapiClient.ClientInterface.(*oapi.Client).Client
-
-	if client.filePayloadsClient == nil {
-		client.filePayloadsClient = http.DefaultClient
+	if client.payloadsClient == nil {
+		client.payloadsClient = http.DefaultClient
 	}
 
 	return client, nil
@@ -196,7 +192,7 @@ type PayloadsHTTPClient interface {
 // WithPayloadsHTTPClient allows to set a custom HTTP client for fetching payloads.
 func WithPayloadsHTTPClient(httpClient PayloadsHTTPClient) ClientOption {
 	return func(c *Client) error {
-		c.filePayloadsClient = httpClient
+		c.payloadsClient = httpClient
 		return nil
 	}
 }

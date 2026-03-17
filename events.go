@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -105,7 +106,7 @@ func (c *Client) fetchMessagePayload(
 		return nil, err
 	}
 	req := &http.Request{Method: http.MethodGet, URL: payloadURI}
-	resp, err := c.messagePayloadsClient.Do(req.WithContext(ctx))
+	resp, err := c.payloadsClient.Do(req.WithContext(ctx))
 	if err != nil {
 		err = fmt.Errorf("%w: %v", ErrFailedToFetchPayload, err)
 		return nil, err
@@ -123,6 +124,13 @@ func (c *Client) fetchMessagePayload(
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrFailedToReadPayload, err)
 	}
+
+	slog.Info("payload fetched from presigned URL",
+		"presigned_url_size", len(payloadURIStr),
+		"s3_http_overhead", httpHeadersSize(resp.Header),
+		"payload_size", len(payload),
+	)
+
 	return payload, nil
 }
 
@@ -206,7 +214,7 @@ func (c *Client) ReceiveFiles(
 			return
 		}
 		payloadURI := *fileReceivedEvent.PayloadUri
-		payload, err := c.fetchFilePayload(ctx, payloadURI, errorHandler, c.filePayloadsClient)
+		payload, err := c.fetchFilePayload(ctx, payloadURI, errorHandler)
 		if err != nil {
 			errorHandler(err)
 			return
@@ -228,14 +236,13 @@ func (c *Client) fetchFilePayload(
 	ctx context.Context,
 	payloadURIStr string,
 	errorHandler func(err error),
-	httpClient oapi.HttpRequestDoer,
 ) (io.Reader, error) {
 	payloadURI, err := url.Parse(payloadURIStr)
 	if err != nil {
 		return nil, err
 	}
 	req := &http.Request{Method: http.MethodGet, URL: payloadURI}
-	resp, err := httpClient.Do(req.WithContext(ctx))
+	resp, err := c.payloadsClient.Do(req.WithContext(ctx))
 	if err != nil {
 		err = fmt.Errorf("%w: %v", ErrFailedToFetchPayload, err)
 		return nil, err
@@ -248,4 +255,17 @@ func (c *Client) fetchFilePayload(
 		return nil, fmt.Errorf("%w: received status code was: %d", ErrUnexpectedStatusCodeWhenFetchingPayload, resp.StatusCode)
 	}
 	return resp.Body, nil
+}
+
+// httpHeadersSize estimates the byte size of HTTP response headers
+// (status line + header key-value pairs + CRLF delimiters).
+func httpHeadersSize(headers http.Header) int {
+	size := 0
+	for key, values := range headers {
+		for _, value := range values {
+			// "Key: Value\r\n"
+			size += len(key) + len(": ") + len(value) + len("\r\n")
+		}
+	}
+	return size
 }
