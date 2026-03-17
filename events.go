@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -124,12 +123,6 @@ func (c *Client) fetchMessagePayload(
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrFailedToReadPayload, err)
 	}
-
-	slog.Info("payload fetched from presigned URL",
-		"presigned_url_size", len(payloadURIStr),
-		"s3_http_overhead", httpHeadersSize(resp.Header),
-		"payload_size", len(payload),
-	)
 
 	return payload, nil
 }
@@ -255,17 +248,4 @@ func (c *Client) fetchFilePayload(
 		return nil, fmt.Errorf("%w: received status code was: %d", ErrUnexpectedStatusCodeWhenFetchingPayload, resp.StatusCode)
 	}
 	return resp.Body, nil
-}
-
-// httpHeadersSize estimates the byte size of HTTP response headers
-// (status line + header key-value pairs + CRLF delimiters).
-func httpHeadersSize(headers http.Header) int {
-	size := 0
-	for key, values := range headers {
-		for _, value := range values {
-			// "Key: Value\r\n"
-			size += len(key) + len(": ") + len(value) + len("\r\n")
-		}
-	}
-	return size
 }
