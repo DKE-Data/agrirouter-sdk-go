@@ -69,6 +69,23 @@ var sendMessagesCmd = &cobra.Command{
 			return fmt.Errorf("failed to parse tenant-id '%s' as UUID: %w", tenantID, err)
 		}
 
+		directRecipents, err := cmd.Flags().GetStringArray("direct-recipients")
+		if err != nil {
+			return fmt.Errorf("failed to get direct-recipients flag: %w", err)
+		}
+		var directRecipientsParsed *[]uuid.UUID
+		if len(directRecipents) > 0 {
+			directRecipientsParsedTemp := make([]uuid.UUID, len(directRecipents))
+			for i, recipient := range directRecipents {
+				recipientParsed, err := uuid.Parse(recipient)
+				if err != nil {
+					return fmt.Errorf("failed to parse direct recipient '%s' as UUID: %w", recipient, err)
+				}
+				directRecipientsParsedTemp[i] = recipientParsed
+			}
+			directRecipientsParsed = &directRecipientsParsedTemp
+		}
+
 		client, err := getClient(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to create agrirouter client: %w", err)
@@ -77,15 +94,19 @@ var sendMessagesCmd = &cobra.Command{
 		// get file name from path
 		filename := filepath.Base(fromFile)
 
+		contextId := uuid.New().String()
+		fmt.Printf("Sending message with contextId %s\n", contextId)
+
 		err = client.SendMessages(ctx, &agrirouter.SendMessagesParams{
-			XAgrirouterIsPublish:     true,
-			ContentLength:            int64(len(fileContent)),
-			XAgrirouterSentTimestamp: time.Now(),
-			XAgrirouterMessageType:   messageType,
-			XAgrirouterContextId:     uuid.New().String(),
-			XAgrirouterEndpointId:    endpointIDParsed,
-			XAgrirouterTenantId:      tenantIDParsed,
-			XAgrirouterFilename:      &filename,
+			XAgrirouterIsPublish:        true,
+			ContentLength:               int64(len(fileContent)),
+			XAgrirouterSentTimestamp:    time.Now(),
+			XAgrirouterMessageType:      messageType,
+			XAgrirouterContextId:        contextId,
+			XAgrirouterEndpointId:       endpointIDParsed,
+			XAgrirouterTenantId:         tenantIDParsed,
+			XAgrirouterFilename:         &filename,
+			XAgrirouterDirectRecipients: directRecipientsParsed,
 		}, bytes.NewReader(fileContent))
 		if err != nil {
 			return fmt.Errorf("failed to send messages: %w", err)
@@ -108,4 +129,6 @@ func init() {
 
 	sendMessagesCmd.Flags().StringP("tenant-id", "t", "", "ID of the tenant to send the message in")
 	sendMessagesCmd.MarkFlagRequired("tenant-id")
+
+	sendMessagesCmd.Flags().StringArrayP("direct-recipients", "d", []string{}, "endpoint ids for direct recipients to send messages to")
 }

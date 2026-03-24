@@ -85,10 +85,10 @@ var putEndpointCmd = &cobra.Command{
 		}
 
 		switch endpointType {
-		case string(agrirouter.CommunicationUnit), string(agrirouter.VirtualCommunicationUnit), string(agrirouter.FarmingSoftware):
+		case string(agrirouter.VirtualCommunicationUnit), string(agrirouter.CloudSoftware):
 			// valid
 		default:
-			return fmt.Errorf("invalid endpoint-type '%s', must be one of: %s, %s, %s", endpointType, agrirouter.CommunicationUnit, agrirouter.VirtualCommunicationUnit, agrirouter.FarmingSoftware)
+			return fmt.Errorf("invalid endpoint-type '%s', must be one of: %s, %s", endpointType, agrirouter.VirtualCommunicationUnit, agrirouter.CloudSoftware)
 		}
 
 		var capabilities []agrirouter.EndpointCapability
@@ -177,11 +177,10 @@ func init() {
 
 	putEndpointCmd.Flags().String(
 		endpointTypeOpt,
-		string(agrirouter.FarmingSoftware),
-		fmt.Sprintf("The type of the endpoint, available types: %s, %s, %s",
-			agrirouter.CommunicationUnit,
+		string(agrirouter.CloudSoftware),
+		fmt.Sprintf("The type of the endpoint, available types: %s, %s",
 			agrirouter.VirtualCommunicationUnit,
-			agrirouter.FarmingSoftware,
+			agrirouter.CloudSoftware,
 		),
 	)
 	putEndpointCmd.MarkFlagRequired(endpointTypeOpt)

@@ -26,9 +26,8 @@ const (
 
 // Defines values for EndpointType.
 const (
-	CommunicationUnit        EndpointType = "communication_unit"
+	CloudSoftware            EndpointType = "cloud_software"
 	FarmingSoftware          EndpointType = "farming_software"
-	TelemetryPlatform        EndpointType = "telemetry_platform"
 	VirtualCommunicationUnit EndpointType = "virtual_communication_unit"
 )
 

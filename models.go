@@ -48,12 +48,6 @@ const CapabilityDirectionReceive = internal_models.RECEIVE
 // CapabilityDirectionSendReceive indicates capability of endpoint to both send and receive messages.
 const CapabilityDirectionSendReceive = internal_models.SENDRECEIVE
 
-// CommunicationUnit is an endpoint type representing a communication unit.
-//
-// Communication units are typically devices that can send and receive agrirouter messages,
-// which are installed inside of a vehicle or a machine.
-const CommunicationUnit = internal_models.CommunicationUnit
-
 // VirtualCommunicationUnit is an endpoint type representing a virtual communication unit.
 //
 // Virtual communication units like usual communication units represent devices
@@ -66,7 +60,15 @@ const VirtualCommunicationUnit = internal_models.VirtualCommunicationUnit
 // Farming software applications can send and receive agrirouter messages,
 // and they are typically cloud deployed applications that manage agricultural data
 // and provide farmers with their own typically web-based user interface.
+// Deprecated: use CloudSoftware instead as industry agnostic term for same thing.
 const FarmingSoftware = internal_models.FarmingSoftware
+
+// CloudSoftware is an endpoint type representing cloud software applications.
+//
+// Cloud software applications can send and receive agrirouter messages,
+// and they are typically backend applications that could manage data from
+// specific industry (i.e agriculture) and provide users with their own UI.
+const CloudSoftware = internal_models.CloudSoftware
 
 // ConfirmMessagesParams contains parameters to confirm messages.
 type ConfirmMessagesParams = internal_models.ConfirmMessagesParams

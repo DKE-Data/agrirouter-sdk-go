@@ -681,6 +681,6 @@ components:
       type: string
       enum:
         - farming_software
-        - telemetry_platform
-        - communication_unit
+        - cloud_software
         - virtual_communication_unit
+  
