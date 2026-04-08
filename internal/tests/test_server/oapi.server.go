@@ -75,6 +75,17 @@ type EndpointCapability struct {
 // EndpointCapabilityDirection defines model for EndpointCapability.Direction.
 type EndpointCapabilityDirection string
 
+// EndpointDeletedEventData Data structure for ENDPOINT_DELETED events. This event would arrive whenever one of the endpoints of the application is deleted from agrirouter, either by this API or by other means.
+type EndpointDeletedEventData struct {
+	EventType string `json:"event_type"`
+
+	// ExternalId The external ID of the deleted endpoint, which was provided when creating or updating the endpoint.
+	ExternalId string `json:"external_id"`
+
+	// Id The agrirouter endpoint ID of the deleted endpoint.
+	Id openapi_types.UUID `json:"id"`
+}
+
 // EndpointSubscription defines model for EndpointSubscription.
 type EndpointSubscription struct {
 	// MessageType The message type that the endpoint is subscribed to.
@@ -212,6 +223,11 @@ type PutEndpointRequest struct {
 	Capabilities []EndpointCapability `json:"capabilities"`
 	EndpointType EndpointType         `json:"endpoint_type"`
 
+	// Name The name of the endpoint, for easier identification in agrirouter web interface.
+	// Does not have to be unique.
+	// Not yet implemented at the moment, but you can already start sending this.
+	Name *string `json:"name,omitempty"`
+
 	// SoftwareVersionId The ID of the software version that owns the endpoint
 	SoftwareVersionId openapi_types.UUID     `json:"software_version_id"`
 	Subscriptions     []EndpointSubscription `json:"subscriptions"`
@@ -222,6 +238,12 @@ type XAgrirouterTenantId = openapi_types.UUID
 
 // ConfirmMessagesParams defines parameters for ConfirmMessages.
 type ConfirmMessagesParams struct {
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// DeleteEndpointParams defines parameters for DeleteEndpoint.
+type DeleteEndpointParams struct {
 	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
 	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
 }
@@ -355,6 +377,34 @@ func (t *GenericEventData) MergeFileReceivedEventData(v FileReceivedEventData) e
 	return err
 }
 
+// AsEndpointDeletedEventData returns the union data inside the GenericEventData as a EndpointDeletedEventData
+func (t GenericEventData) AsEndpointDeletedEventData() (EndpointDeletedEventData, error) {
+	var body EndpointDeletedEventData
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEndpointDeletedEventData overwrites any union data inside the GenericEventData as the provided EndpointDeletedEventData
+func (t *GenericEventData) FromEndpointDeletedEventData(v EndpointDeletedEventData) error {
+	v.EventType = "EndpointDeletedEventData"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEndpointDeletedEventData performs a merge with any union data inside the GenericEventData, using the provided EndpointDeletedEventData
+func (t *GenericEventData) MergeEndpointDeletedEventData(v EndpointDeletedEventData) error {
+	v.EventType = "EndpointDeletedEventData"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t GenericEventData) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"event_type"`
@@ -369,6 +419,8 @@ func (t GenericEventData) ValueByDiscriminator() (interface{}, error) {
 		return nil, err
 	}
 	switch discriminator {
+	case "EndpointDeletedEventData":
+		return t.AsEndpointDeletedEventData()
 	case "FileReceivedEventData":
 		return t.AsFileReceivedEventData()
 	case "MessageReceivedEventData":
@@ -393,6 +445,9 @@ type ServerInterface interface {
 	// Confirm received messages
 	// (POST /confirmations)
 	ConfirmMessages(ctx echo.Context, params ConfirmMessagesParams) error
+	// Delete endpoint
+	// (DELETE /endpoints/{externalId})
+	DeleteEndpoint(ctx echo.Context, externalId string, params DeleteEndpointParams) error
 	// Create or update endpoint
 	// (PUT /endpoints/{externalId})
 	PutEndpoint(ctx echo.Context, externalId string, params PutEndpointParams) error
@@ -444,6 +499,48 @@ func (w *ServerInterfaceWrapper) ConfirmMessages(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ConfirmMessages(ctx, params)
+	return err
+}
+
+// DeleteEndpoint converts echo context to params.
+func (w *ServerInterfaceWrapper) DeleteEndpoint(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "externalId" -------------
+	var externalId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "externalId", ctx.Param("externalId"), &externalId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter externalId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteEndpointParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeleteEndpoint(ctx, externalId, params)
 	return err
 }
 
@@ -750,6 +847,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.POST(baseURL+"/confirmations", wrapper.ConfirmMessages)
+	router.DELETE(baseURL+"/endpoints/:externalId", wrapper.DeleteEndpoint)
 	router.PUT(baseURL+"/endpoints/:externalId", wrapper.PutEndpoint)
 	router.GET(baseURL+"/events", wrapper.ReceiveEvents)
 	router.POST(baseURL+"/messages", wrapper.SendMessages)
@@ -805,6 +903,67 @@ type ConfirmMessages500Response struct {
 }
 
 func (response ConfirmMessages500Response) VisitConfirmMessagesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type DeleteEndpointRequestObject struct {
+	ExternalId string `json:"externalId"`
+	Params     DeleteEndpointParams
+}
+
+type DeleteEndpointResponseObject interface {
+	VisitDeleteEndpointResponse(w http.ResponseWriter) error
+}
+
+type DeleteEndpoint204Response struct {
+}
+
+func (response DeleteEndpoint204Response) VisitDeleteEndpointResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteEndpoint400JSONResponse ErrorResponse
+
+func (response DeleteEndpoint400JSONResponse) VisitDeleteEndpointResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteEndpoint401JSONResponse ErrorResponse
+
+func (response DeleteEndpoint401JSONResponse) VisitDeleteEndpointResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteEndpoint403JSONResponse ErrorResponse
+
+func (response DeleteEndpoint403JSONResponse) VisitDeleteEndpointResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteEndpoint404JSONResponse ErrorResponse
+
+func (response DeleteEndpoint404JSONResponse) VisitDeleteEndpointResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeleteEndpoint500Response struct {
+}
+
+func (response DeleteEndpoint500Response) VisitDeleteEndpointResponse(w http.ResponseWriter) error {
 	w.WriteHeader(500)
 	return nil
 }
@@ -1098,6 +1257,9 @@ type StrictServerInterface interface {
 	// Confirm received messages
 	// (POST /confirmations)
 	ConfirmMessages(ctx context.Context, request ConfirmMessagesRequestObject) (ConfirmMessagesResponseObject, error)
+	// Delete endpoint
+	// (DELETE /endpoints/{externalId})
+	DeleteEndpoint(ctx context.Context, request DeleteEndpointRequestObject) (DeleteEndpointResponseObject, error)
 	// Create or update endpoint
 	// (PUT /endpoints/{externalId})
 	PutEndpoint(ctx context.Context, request PutEndpointRequestObject) (PutEndpointResponseObject, error)
@@ -1149,6 +1311,32 @@ func (sh *strictHandler) ConfirmMessages(ctx echo.Context, params ConfirmMessage
 		return err
 	} else if validResponse, ok := response.(ConfirmMessagesResponseObject); ok {
 		return validResponse.VisitConfirmMessagesResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// DeleteEndpoint operation middleware
+func (sh *strictHandler) DeleteEndpoint(ctx echo.Context, externalId string, params DeleteEndpointParams) error {
+	var request DeleteEndpointRequestObject
+
+	request.ExternalId = externalId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteEndpoint(ctx.Request().Context(), request.(DeleteEndpointRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteEndpoint")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DeleteEndpointResponseObject); ok {
+		return validResponse.VisitDeleteEndpointResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

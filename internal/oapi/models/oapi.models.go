@@ -69,6 +69,17 @@ type EndpointCapability struct {
 // EndpointCapabilityDirection defines model for EndpointCapability.Direction.
 type EndpointCapabilityDirection string
 
+// EndpointDeletedEventData Data structure for ENDPOINT_DELETED events. This event would arrive whenever one of the endpoints of the application is deleted from agrirouter, either by this API or by other means.
+type EndpointDeletedEventData struct {
+	EventType string `json:"event_type"`
+
+	// ExternalId The external ID of the deleted endpoint, which was provided when creating or updating the endpoint.
+	ExternalId string `json:"external_id"`
+
+	// Id The agrirouter endpoint ID of the deleted endpoint.
+	Id openapi_types.UUID `json:"id"`
+}
+
 // EndpointSubscription defines model for EndpointSubscription.
 type EndpointSubscription struct {
 	// MessageType The message type that the endpoint is subscribed to.
@@ -206,6 +217,11 @@ type PutEndpointRequest struct {
 	Capabilities []EndpointCapability `json:"capabilities"`
 	EndpointType EndpointType         `json:"endpoint_type"`
 
+	// Name The name of the endpoint, for easier identification in agrirouter web interface.
+	// Does not have to be unique.
+	// Not yet implemented at the moment, but you can already start sending this.
+	Name *string `json:"name,omitempty"`
+
 	// SoftwareVersionId The ID of the software version that owns the endpoint
 	SoftwareVersionId openapi_types.UUID     `json:"software_version_id"`
 	Subscriptions     []EndpointSubscription `json:"subscriptions"`
@@ -216,6 +232,12 @@ type XAgrirouterTenantId = openapi_types.UUID
 
 // ConfirmMessagesParams defines parameters for ConfirmMessages.
 type ConfirmMessagesParams struct {
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// DeleteEndpointParams defines parameters for DeleteEndpoint.
+type DeleteEndpointParams struct {
 	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
 	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
 }
@@ -349,6 +371,34 @@ func (t *GenericEventData) MergeFileReceivedEventData(v FileReceivedEventData) e
 	return err
 }
 
+// AsEndpointDeletedEventData returns the union data inside the GenericEventData as a EndpointDeletedEventData
+func (t GenericEventData) AsEndpointDeletedEventData() (EndpointDeletedEventData, error) {
+	var body EndpointDeletedEventData
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEndpointDeletedEventData overwrites any union data inside the GenericEventData as the provided EndpointDeletedEventData
+func (t *GenericEventData) FromEndpointDeletedEventData(v EndpointDeletedEventData) error {
+	v.EventType = "EndpointDeletedEventData"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEndpointDeletedEventData performs a merge with any union data inside the GenericEventData, using the provided EndpointDeletedEventData
+func (t *GenericEventData) MergeEndpointDeletedEventData(v EndpointDeletedEventData) error {
+	v.EventType = "EndpointDeletedEventData"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t GenericEventData) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"event_type"`
@@ -363,6 +413,8 @@ func (t GenericEventData) ValueByDiscriminator() (interface{}, error) {
 		return nil, err
 	}
 	switch discriminator {
+	case "EndpointDeletedEventData":
+		return t.AsEndpointDeletedEventData()
 	case "FileReceivedEventData":
 		return t.AsFileReceivedEventData()
 	case "MessageReceivedEventData":

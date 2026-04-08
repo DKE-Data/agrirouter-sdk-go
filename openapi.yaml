@@ -258,10 +258,11 @@ paths:
 
         Here is a table:
 
-        | Event Type          | Schema                                                                    |
-        |---------------------|---------------------------------------------------------------------------|
-        | MESSAGE_RECEIVED    | [MessageReceivedEventData](#/components/schemas/MessageReceivedEventData) |
-        | FILE_RECEIVED       | [FileReceivedEventData](#/components/schemas/FileReceivedEventData)       |
+        | Event Type          | Schema                                                                     |
+        |---------------------|----------------------------------------------------------------------------|
+        | MESSAGE_RECEIVED    | [MessageReceivedEventData](#/components/schemas/MessageReceivedEventData)  |
+        | FILE_RECEIVED       | [FileReceivedEventData](#/components/schemas/FileReceivedEventData)        |
+        | ENDPOINT_DELETED     | [EndpointDeletedEventData](#/components/schemas/EndpointDeletedEventData) |
 
       # As there is no yet accepted way of defining schema for SSE data,
       # it would have to be only described in description for now.
@@ -323,6 +324,49 @@ paths:
           description: Server Side Error
 
   /endpoints/{externalId}:
+    delete:
+      operationId: deleteEndpoint
+      summary: Delete endpoint
+      description: Delete endpoint by external ID. This would remove the endpoint from agrirouter and it would no longer receive messages.
+      security:
+        - agrirouterOauthQA: ["endpoints:manage"]
+        - agrirouterOauthPROD: ["endpoints:manage"]
+      parameters:
+        - $ref: "#/components/parameters/x-agrirouter-tenant-id"
+        - name: externalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Endpoint successfully deleted
+        '400':
+          description: Request is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Endpoint with the specified external ID not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Server Side Error
     put:
       operationId: putEndpoint
       summary: Create or update endpoint
@@ -423,6 +467,7 @@ components:
       oneOf:
         - $ref: "#/components/schemas/MessageReceivedEventData"
         - $ref: "#/components/schemas/FileReceivedEventData"
+        - $ref: "#/components/schemas/EndpointDeletedEventData"
       discriminator:
         propertyName: event_type
     PayloadURI:
@@ -490,6 +535,25 @@ components:
         teamset_context_id:
           type: string
           description: The teamset context ID that was provided by sending application when sending the message, if any.
+    EndpointDeletedEventData:
+      type: object
+      description: |
+        Data structure for ENDPOINT_DELETED events. This event would arrive whenever one of the endpoints of the application is deleted from agrirouter, either by this API or by other means.
+      required:
+        - id
+        - external_id
+        - event_type
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The agrirouter endpoint ID of the deleted endpoint.
+        external_id:
+          type: string
+          description: The external ID of the deleted endpoint, which was provided when creating or updating the endpoint.
+        event_type:
+          type: string
+          const: ENDPOINT_DELETED
     FileReceivedEventData:
       type: object
       description: |
@@ -588,6 +652,12 @@ components:
         - subscriptions
         - endpoint_type
       properties:
+        name:
+          type: string
+          description: |
+            The name of the endpoint, for easier identification in agrirouter web interface. 
+            Does not have to be unique.
+            Not yet implemented at the moment, but you can already start sending this.
         application_id:
           type: string
           format: uuid

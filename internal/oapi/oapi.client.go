@@ -97,6 +97,9 @@ type ClientInterface interface {
 
 	ConfirmMessages(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// DeleteEndpoint request
+	DeleteEndpoint(ctx context.Context, externalId string, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PutEndpointWithBody request with any body
 	PutEndpointWithBody(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -126,6 +129,18 @@ func (c *Client) ConfirmMessagesWithBody(ctx context.Context, params *ConfirmMes
 
 func (c *Client) ConfirmMessages(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewConfirmMessagesRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeleteEndpoint(ctx context.Context, externalId string, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteEndpointRequest(c.Server, externalId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -232,6 +247,53 @@ func NewConfirmMessagesRequestWithBody(server string, params *ConfirmMessagesPar
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewDeleteEndpointRequest generates requests for DeleteEndpoint
+func NewDeleteEndpointRequest(server string, externalId string, params *DeleteEndpointParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "externalId", runtime.ParamLocationPath, externalId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/endpoints/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	if params != nil {
 
@@ -576,6 +638,9 @@ type ClientWithResponsesInterface interface {
 
 	ConfirmMessagesWithResponse(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error)
 
+	// DeleteEndpointWithResponse request
+	DeleteEndpointWithResponse(ctx context.Context, externalId string, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*DeleteEndpointResponse, error)
+
 	// PutEndpointWithBodyWithResponse request with any body
 	PutEndpointWithBodyWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error)
 
@@ -609,6 +674,31 @@ func (r ConfirmMessagesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ConfirmMessagesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeleteEndpointResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *ErrorResponse
+	JSON401      *ErrorResponse
+	JSON403      *ErrorResponse
+	JSON404      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteEndpointResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteEndpointResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -726,6 +816,15 @@ func (c *ClientWithResponses) ConfirmMessagesWithResponse(ctx context.Context, p
 	return ParseConfirmMessagesResponse(rsp)
 }
 
+// DeleteEndpointWithResponse request returning *DeleteEndpointResponse
+func (c *ClientWithResponses) DeleteEndpointWithResponse(ctx context.Context, externalId string, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*DeleteEndpointResponse, error) {
+	rsp, err := c.DeleteEndpoint(ctx, externalId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteEndpointResponse(rsp)
+}
+
 // PutEndpointWithBodyWithResponse request with arbitrary body returning *PutEndpointResponse
 func (c *ClientWithResponses) PutEndpointWithBodyWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error) {
 	rsp, err := c.PutEndpointWithBody(ctx, externalId, params, contentType, body, reqEditors...)
@@ -804,6 +903,53 @@ func ParseConfirmMessagesResponse(rsp *http.Response) (*ConfirmMessagesResponse,
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeleteEndpointResponse parses an HTTP response from a DeleteEndpointWithResponse call
+func ParseDeleteEndpointResponse(rsp *http.Response) (*DeleteEndpointResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteEndpointResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	}
 
