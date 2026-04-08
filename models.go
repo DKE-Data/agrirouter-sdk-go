@@ -36,6 +36,9 @@ type EndpointSubscription = internal_models.EndpointSubscription
 // PutEndpointParams contains parameters to create or update an endpoint.
 type PutEndpointParams = internal_models.PutEndpointParams
 
+// DeleteEndpointParams contains parameters to delete an endpoint.
+type DeleteEndpointParams = internal_models.DeleteEndpointParams
+
 // SendMessagesParams contains parameters to send a message.
 type SendMessagesParams = internal_models.SendMessagesParams
 

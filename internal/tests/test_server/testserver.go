@@ -26,14 +26,17 @@ type Server struct {
 	sentMessagesTestEvents chan *SendMessagesTestEventData
 }
 
-func (s *Server) GetMessagePayload(
-	ctx context.Context,
-	request GetMessagePayloadRequestObject,
-) (GetMessagePayloadResponseObject, error) {
-	// even though this is part of the spec, test server does not need to implement this
-	// because it uses _testPayloads routes to serve payloads and correctly behaving clients
-	// are expected to use uris provided in events, rather than calling this resource
-	panic("should not be implemented")
+// DeleteEndpoint implements [StrictServerInterface].
+func (s *Server) DeleteEndpoint(_ context.Context, request DeleteEndpointRequestObject) (DeleteEndpointResponseObject, error) {
+	s.events <- struct {
+		Data      string
+		EventType string
+	}{
+		Data:      fmt.Sprintf(`{"externalId": %q}`, request.ExternalId),
+		EventType: agriroutertestcontainer.DeleteEndpointTestEvent,
+	}
+
+	return DeleteEndpoint204Response{}, nil
 }
 
 type SendMessagesTestEventData struct {
@@ -202,12 +205,25 @@ func (s *Server) ConfirmMessages(_ context.Context, request ConfirmMessagesReque
 	return ConfirmMessages202Response{}, nil
 }
 
-func (s *Server) PutEndpoint(ctx context.Context, request PutEndpointRequestObject) (PutEndpointResponseObject, error) {
+func (s *Server) PutEndpoint(_ context.Context, request PutEndpointRequestObject) (PutEndpointResponseObject, error) {
+	eventData := struct {
+		ExternalId string  `json:"externalId"`
+		Name       *string `json:"name,omitempty"`
+	}{
+		ExternalId: request.ExternalId,
+	}
+	if request.Body != nil {
+		eventData.Name = request.Body.Name
+	}
+	dataBytes, err := json.Marshal(eventData)
+	if err != nil {
+		return nil, err
+	}
 	s.events <- struct {
 		Data      string
 		EventType string
 	}{
-		Data:      fmt.Sprintf(`{"externalId": "%s"}`, request.ExternalId),
+		Data:      string(dataBytes),
 		EventType: agriroutertestcontainer.PutEndpointTestEvent,
 	}
 

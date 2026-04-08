@@ -223,15 +223,29 @@ type PutEndpointRequest struct {
 	Capabilities []EndpointCapability `json:"capabilities"`
 	EndpointType EndpointType         `json:"endpoint_type"`
 
-	// Name The name of the endpoint, for easier identification in agrirouter web interface.
+	// Name Optional name of the endpoint, for easier identification in agrirouter web interface.
 	// Does not have to be unique.
-	// Not yet implemented at the moment, but you can already start sending this.
+	// If not specified, the name would be generated automatically.
+	//
+	// When provided, must be 1-200 characters long and may contain letters from any
+	// script, digits, spaces, and the following special characters: `-`, `_`, `.`, `,`, `:`.
+	// Names consisting only of whitespace are not allowed as well, which is not
+	// expressed in the regex pattern.
+	//
+	// It is not guaranteed that this "application-set" name would be used,
+	// because user may override it with "user-set" name in agrirouter web interface.
+	// Name send via this API cannot override "user-set" name, but
+	// it can update "application-set" name at any time and user can choose to
+	// switch name back to "application-set".
 	Name *string `json:"name,omitempty"`
 
 	// SoftwareVersionId The ID of the software version that owns the endpoint
 	SoftwareVersionId openapi_types.UUID     `json:"software_version_id"`
 	Subscriptions     []EndpointSubscription `json:"subscriptions"`
 }
+
+// ExternalId defines model for externalId.
+type ExternalId = string
 
 // XAgrirouterTenantId defines model for x-agrirouter-tenant-id.
 type XAgrirouterTenantId = openapi_types.UUID
@@ -447,19 +461,16 @@ type ServerInterface interface {
 	ConfirmMessages(ctx echo.Context, params ConfirmMessagesParams) error
 	// Delete endpoint
 	// (DELETE /endpoints/{externalId})
-	DeleteEndpoint(ctx echo.Context, externalId string, params DeleteEndpointParams) error
+	DeleteEndpoint(ctx echo.Context, externalId ExternalId, params DeleteEndpointParams) error
 	// Create or update endpoint
 	// (PUT /endpoints/{externalId})
-	PutEndpoint(ctx echo.Context, externalId string, params PutEndpointParams) error
+	PutEndpoint(ctx echo.Context, externalId ExternalId, params PutEndpointParams) error
 	// Receive events from agrirouter outbox
 	// (GET /events)
 	ReceiveEvents(ctx echo.Context, params ReceiveEventsParams) error
 	// Send one or several messages to agrirouter inbox
 	// (POST /messages)
 	SendMessages(ctx echo.Context, params SendMessagesParams) error
-	// Download message payload from agrirouter
-	// (GET /payloads/{messageId}/{messageReceivedAt})
-	GetMessagePayload(ctx echo.Context, messageId openapi_types.UUID, messageReceivedAt time.Time) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -506,7 +517,7 @@ func (w *ServerInterfaceWrapper) ConfirmMessages(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) DeleteEndpoint(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "externalId" -------------
-	var externalId string
+	var externalId ExternalId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "externalId", ctx.Param("externalId"), &externalId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -548,7 +559,7 @@ func (w *ServerInterfaceWrapper) DeleteEndpoint(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) PutEndpoint(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "externalId" -------------
-	var externalId string
+	var externalId ExternalId
 
 	err = runtime.BindStyledParameterWithOptions("simple", "externalId", ctx.Param("externalId"), &externalId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -790,34 +801,6 @@ func (w *ServerInterfaceWrapper) SendMessages(ctx echo.Context) error {
 	return err
 }
 
-// GetMessagePayload converts echo context to params.
-func (w *ServerInterfaceWrapper) GetMessagePayload(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "messageId" -------------
-	var messageId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "messageId", ctx.Param("messageId"), &messageId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter messageId: %s", err))
-	}
-
-	// ------------- Path parameter "messageReceivedAt" -------------
-	var messageReceivedAt time.Time
-
-	err = runtime.BindStyledParameterWithOptions("simple", "messageReceivedAt", ctx.Param("messageReceivedAt"), &messageReceivedAt, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter messageReceivedAt: %s", err))
-	}
-
-	ctx.Set(AgrirouterOauthQAScopes, []string{})
-
-	ctx.Set(AgrirouterOauthPRODScopes, []string{})
-
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetMessagePayload(ctx, messageId, messageReceivedAt)
-	return err
-}
-
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -851,7 +834,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.PUT(baseURL+"/endpoints/:externalId", wrapper.PutEndpoint)
 	router.GET(baseURL+"/events", wrapper.ReceiveEvents)
 	router.POST(baseURL+"/messages", wrapper.SendMessages)
-	router.GET(baseURL+"/payloads/:messageId/:messageReceivedAt", wrapper.GetMessagePayload)
 
 }
 
@@ -908,7 +890,7 @@ func (response ConfirmMessages500Response) VisitConfirmMessagesResponse(w http.R
 }
 
 type DeleteEndpointRequestObject struct {
-	ExternalId string `json:"externalId"`
+	ExternalId ExternalId `json:"externalId"`
 	Params     DeleteEndpointParams
 }
 
@@ -969,7 +951,7 @@ func (response DeleteEndpoint500Response) VisitDeleteEndpointResponse(w http.Res
 }
 
 type PutEndpointRequestObject struct {
-	ExternalId string `json:"externalId"`
+	ExternalId ExternalId `json:"externalId"`
 	Params     PutEndpointParams
 	Body       *PutEndpointJSONRequestBody
 }
@@ -1184,74 +1166,6 @@ func (response SendMessages500Response) VisitSendMessagesResponse(w http.Respons
 	return nil
 }
 
-type GetMessagePayloadRequestObject struct {
-	MessageId         openapi_types.UUID `json:"messageId"`
-	MessageReceivedAt time.Time          `json:"messageReceivedAt"`
-}
-
-type GetMessagePayloadResponseObject interface {
-	VisitGetMessagePayloadResponse(w http.ResponseWriter) error
-}
-
-type GetMessagePayload200ApplicationoctetStreamResponse struct {
-	Body          io.Reader
-	ContentLength int64
-}
-
-func (response GetMessagePayload200ApplicationoctetStreamResponse) VisitGetMessagePayloadResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/octet-stream")
-	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
-	}
-	w.WriteHeader(200)
-
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(w, response.Body)
-	return err
-}
-
-type GetMessagePayload400Response struct {
-}
-
-func (response GetMessagePayload400Response) VisitGetMessagePayloadResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
-	return nil
-}
-
-type GetMessagePayload401Response struct {
-}
-
-func (response GetMessagePayload401Response) VisitGetMessagePayloadResponse(w http.ResponseWriter) error {
-	w.WriteHeader(401)
-	return nil
-}
-
-type GetMessagePayload403Response struct {
-}
-
-func (response GetMessagePayload403Response) VisitGetMessagePayloadResponse(w http.ResponseWriter) error {
-	w.WriteHeader(403)
-	return nil
-}
-
-type GetMessagePayload404Response struct {
-}
-
-func (response GetMessagePayload404Response) VisitGetMessagePayloadResponse(w http.ResponseWriter) error {
-	w.WriteHeader(404)
-	return nil
-}
-
-type GetMessagePayload500Response struct {
-}
-
-func (response GetMessagePayload500Response) VisitGetMessagePayloadResponse(w http.ResponseWriter) error {
-	w.WriteHeader(500)
-	return nil
-}
-
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Confirm received messages
@@ -1269,9 +1183,6 @@ type StrictServerInterface interface {
 	// Send one or several messages to agrirouter inbox
 	// (POST /messages)
 	SendMessages(ctx context.Context, request SendMessagesRequestObject) (SendMessagesResponseObject, error)
-	// Download message payload from agrirouter
-	// (GET /payloads/{messageId}/{messageReceivedAt})
-	GetMessagePayload(ctx context.Context, request GetMessagePayloadRequestObject) (GetMessagePayloadResponseObject, error)
 }
 
 type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
@@ -1318,7 +1229,7 @@ func (sh *strictHandler) ConfirmMessages(ctx echo.Context, params ConfirmMessage
 }
 
 // DeleteEndpoint operation middleware
-func (sh *strictHandler) DeleteEndpoint(ctx echo.Context, externalId string, params DeleteEndpointParams) error {
+func (sh *strictHandler) DeleteEndpoint(ctx echo.Context, externalId ExternalId, params DeleteEndpointParams) error {
 	var request DeleteEndpointRequestObject
 
 	request.ExternalId = externalId
@@ -1344,7 +1255,7 @@ func (sh *strictHandler) DeleteEndpoint(ctx echo.Context, externalId string, par
 }
 
 // PutEndpoint operation middleware
-func (sh *strictHandler) PutEndpoint(ctx echo.Context, externalId string, params PutEndpointParams) error {
+func (sh *strictHandler) PutEndpoint(ctx echo.Context, externalId ExternalId, params PutEndpointParams) error {
 	var request PutEndpointRequestObject
 
 	request.ExternalId = externalId
@@ -1421,32 +1332,6 @@ func (sh *strictHandler) SendMessages(ctx echo.Context, params SendMessagesParam
 		return err
 	} else if validResponse, ok := response.(SendMessagesResponseObject); ok {
 		return validResponse.VisitSendMessagesResponse(ctx.Response())
-	} else if response != nil {
-		return fmt.Errorf("unexpected response type: %T", response)
-	}
-	return nil
-}
-
-// GetMessagePayload operation middleware
-func (sh *strictHandler) GetMessagePayload(ctx echo.Context, messageId openapi_types.UUID, messageReceivedAt time.Time) error {
-	var request GetMessagePayloadRequestObject
-
-	request.MessageId = messageId
-	request.MessageReceivedAt = messageReceivedAt
-
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetMessagePayload(ctx.Request().Context(), request.(GetMessagePayloadRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetMessagePayload")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		return err
-	} else if validResponse, ok := response.(GetMessagePayloadResponseObject); ok {
-		return validResponse.VisitGetMessagePayloadResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

@@ -12,11 +12,9 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	. "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
 	"github.com/oapi-codegen/runtime"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -98,21 +96,18 @@ type ClientInterface interface {
 	ConfirmMessages(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteEndpoint request
-	DeleteEndpoint(ctx context.Context, externalId string, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteEndpoint(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PutEndpointWithBody request with any body
-	PutEndpointWithBody(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutEndpointWithBody(ctx context.Context, externalId ExternalId, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PutEndpoint(ctx context.Context, externalId string, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	PutEndpoint(ctx context.Context, externalId ExternalId, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ReceiveEvents request
 	ReceiveEvents(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// SendMessagesWithBody request with any body
 	SendMessagesWithBody(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetMessagePayload request
-	GetMessagePayload(ctx context.Context, messageId openapi_types.UUID, messageReceivedAt time.Time, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) ConfirmMessagesWithBody(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -139,7 +134,7 @@ func (c *Client) ConfirmMessages(ctx context.Context, params *ConfirmMessagesPar
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteEndpoint(ctx context.Context, externalId string, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteEndpoint(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteEndpointRequest(c.Server, externalId, params)
 	if err != nil {
 		return nil, err
@@ -151,7 +146,7 @@ func (c *Client) DeleteEndpoint(ctx context.Context, externalId string, params *
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutEndpointWithBody(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PutEndpointWithBody(ctx context.Context, externalId ExternalId, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutEndpointRequestWithBody(c.Server, externalId, params, contentType, body)
 	if err != nil {
 		return nil, err
@@ -163,7 +158,7 @@ func (c *Client) PutEndpointWithBody(ctx context.Context, externalId string, par
 	return c.Client.Do(req)
 }
 
-func (c *Client) PutEndpoint(ctx context.Context, externalId string, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) PutEndpoint(ctx context.Context, externalId ExternalId, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutEndpointRequest(c.Server, externalId, params, body)
 	if err != nil {
 		return nil, err
@@ -189,18 +184,6 @@ func (c *Client) ReceiveEvents(ctx context.Context, params *ReceiveEventsParams,
 
 func (c *Client) SendMessagesWithBody(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSendMessagesRequestWithBody(c.Server, params, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetMessagePayload(ctx context.Context, messageId openapi_types.UUID, messageReceivedAt time.Time, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetMessagePayloadRequest(c.Server, messageId, messageReceivedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +248,7 @@ func NewConfirmMessagesRequestWithBody(server string, params *ConfirmMessagesPar
 }
 
 // NewDeleteEndpointRequest generates requests for DeleteEndpoint
-func NewDeleteEndpointRequest(server string, externalId string, params *DeleteEndpointParams) (*http.Request, error) {
+func NewDeleteEndpointRequest(server string, externalId ExternalId, params *DeleteEndpointParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -312,7 +295,7 @@ func NewDeleteEndpointRequest(server string, externalId string, params *DeleteEn
 }
 
 // NewPutEndpointRequest calls the generic PutEndpoint builder with application/json body
-func NewPutEndpointRequest(server string, externalId string, params *PutEndpointParams, body PutEndpointJSONRequestBody) (*http.Request, error) {
+func NewPutEndpointRequest(server string, externalId ExternalId, params *PutEndpointParams, body PutEndpointJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -323,7 +306,7 @@ func NewPutEndpointRequest(server string, externalId string, params *PutEndpoint
 }
 
 // NewPutEndpointRequestWithBody generates requests for PutEndpoint with any type of body
-func NewPutEndpointRequestWithBody(server string, externalId string, params *PutEndpointParams, contentType string, body io.Reader) (*http.Request, error) {
+func NewPutEndpointRequestWithBody(server string, externalId ExternalId, params *PutEndpointParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -549,47 +532,6 @@ func NewSendMessagesRequestWithBody(server string, params *SendMessagesParams, c
 	return req, nil
 }
 
-// NewGetMessagePayloadRequest generates requests for GetMessagePayload
-func NewGetMessagePayloadRequest(server string, messageId openapi_types.UUID, messageReceivedAt time.Time) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "messageId", runtime.ParamLocationPath, messageId)
-	if err != nil {
-		return nil, err
-	}
-
-	var pathParam1 string
-
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "messageReceivedAt", runtime.ParamLocationPath, messageReceivedAt)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/payloads/%s/%s", pathParam0, pathParam1)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -639,21 +581,18 @@ type ClientWithResponsesInterface interface {
 	ConfirmMessagesWithResponse(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error)
 
 	// DeleteEndpointWithResponse request
-	DeleteEndpointWithResponse(ctx context.Context, externalId string, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*DeleteEndpointResponse, error)
+	DeleteEndpointWithResponse(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*DeleteEndpointResponse, error)
 
 	// PutEndpointWithBodyWithResponse request with any body
-	PutEndpointWithBodyWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error)
+	PutEndpointWithBodyWithResponse(ctx context.Context, externalId ExternalId, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error)
 
-	PutEndpointWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error)
+	PutEndpointWithResponse(ctx context.Context, externalId ExternalId, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error)
 
 	// ReceiveEventsWithResponse request
 	ReceiveEventsWithResponse(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*ReceiveEventsResponse, error)
 
 	// SendMessagesWithBodyWithResponse request with any body
 	SendMessagesWithBodyWithResponse(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendMessagesResponse, error)
-
-	// GetMessagePayloadWithResponse request
-	GetMessagePayloadWithResponse(ctx context.Context, messageId openapi_types.UUID, messageReceivedAt time.Time, reqEditors ...RequestEditorFn) (*GetMessagePayloadResponse, error)
 }
 
 type ConfirmMessagesResponse struct {
@@ -778,27 +717,6 @@ func (r SendMessagesResponse) StatusCode() int {
 	return 0
 }
 
-type GetMessagePayloadResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r GetMessagePayloadResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetMessagePayloadResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ConfirmMessagesWithBodyWithResponse request with arbitrary body returning *ConfirmMessagesResponse
 func (c *ClientWithResponses) ConfirmMessagesWithBodyWithResponse(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error) {
 	rsp, err := c.ConfirmMessagesWithBody(ctx, params, contentType, body, reqEditors...)
@@ -817,7 +735,7 @@ func (c *ClientWithResponses) ConfirmMessagesWithResponse(ctx context.Context, p
 }
 
 // DeleteEndpointWithResponse request returning *DeleteEndpointResponse
-func (c *ClientWithResponses) DeleteEndpointWithResponse(ctx context.Context, externalId string, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*DeleteEndpointResponse, error) {
+func (c *ClientWithResponses) DeleteEndpointWithResponse(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*DeleteEndpointResponse, error) {
 	rsp, err := c.DeleteEndpoint(ctx, externalId, params, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -826,7 +744,7 @@ func (c *ClientWithResponses) DeleteEndpointWithResponse(ctx context.Context, ex
 }
 
 // PutEndpointWithBodyWithResponse request with arbitrary body returning *PutEndpointResponse
-func (c *ClientWithResponses) PutEndpointWithBodyWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error) {
+func (c *ClientWithResponses) PutEndpointWithBodyWithResponse(ctx context.Context, externalId ExternalId, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error) {
 	rsp, err := c.PutEndpointWithBody(ctx, externalId, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -834,7 +752,7 @@ func (c *ClientWithResponses) PutEndpointWithBodyWithResponse(ctx context.Contex
 	return ParsePutEndpointResponse(rsp)
 }
 
-func (c *ClientWithResponses) PutEndpointWithResponse(ctx context.Context, externalId string, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error) {
+func (c *ClientWithResponses) PutEndpointWithResponse(ctx context.Context, externalId ExternalId, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error) {
 	rsp, err := c.PutEndpoint(ctx, externalId, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -858,15 +776,6 @@ func (c *ClientWithResponses) SendMessagesWithBodyWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParseSendMessagesResponse(rsp)
-}
-
-// GetMessagePayloadWithResponse request returning *GetMessagePayloadResponse
-func (c *ClientWithResponses) GetMessagePayloadWithResponse(ctx context.Context, messageId openapi_types.UUID, messageReceivedAt time.Time, reqEditors ...RequestEditorFn) (*GetMessagePayloadResponse, error) {
-	rsp, err := c.GetMessagePayload(ctx, messageId, messageReceivedAt, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetMessagePayloadResponse(rsp)
 }
 
 // ParseConfirmMessagesResponse parses an HTTP response from a ConfirmMessagesWithResponse call
@@ -1075,22 +984,6 @@ func ParseSendMessagesResponse(rsp *http.Response) (*SendMessagesResponse, error
 		}
 		response.JSON413 = &dest
 
-	}
-
-	return response, nil
-}
-
-// ParseGetMessagePayloadResponse parses an HTTP response from a GetMessagePayloadWithResponse call
-func ParseGetMessagePayloadResponse(rsp *http.Response) (*GetMessagePayloadResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetMessagePayloadResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
 	}
 
 	return response, nil

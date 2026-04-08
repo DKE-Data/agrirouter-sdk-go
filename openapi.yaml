@@ -167,49 +167,6 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
         '500':
           description: Server Side Error
-  /payloads/{messageId}/{messageReceivedAt}:
-    get:
-      operationId: getMessagePayload
-      summary: Download message payload from agrirouter
-      description: |
-        Download message payload from agrirouter by message ID.
-        The payload is returned as a binary stream in the response body.
-        Typically clients are expected to receive URL pointed to this
-        resource in the `payload_uri` field of the event data when
-        receiving MESSAGE_RECEIVED or FILE_RECEIVED events.
-      parameters:
-        - name: messageId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: The agrirouter message ID of the payload to download.
-        - name: messageReceivedAt
-          in: path
-          required: true
-          schema:
-            type: string
-            format: date-time
-          description: The timestamp when the message was received by agrirouter.
-      responses:
-        '200':
-          description: Message payload successfully retrieved
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-        '400':
-          description: Request is invalid
-        '401':
-          description: Authentication failed
-        '403':
-          description: Authorization failed
-        '404':
-          description: Payload not found
-        '500':
-          description: Server Side Error
   /events:
     get:
       operationId: receiveEvents
@@ -324,49 +281,6 @@ paths:
           description: Server Side Error
 
   /endpoints/{externalId}:
-    delete:
-      operationId: deleteEndpoint
-      summary: Delete endpoint
-      description: Delete endpoint by external ID. This would remove the endpoint from agrirouter and it would no longer receive messages.
-      security:
-        - agrirouterOauthQA: ["endpoints:manage"]
-        - agrirouterOauthPROD: ["endpoints:manage"]
-      parameters:
-        - $ref: "#/components/parameters/x-agrirouter-tenant-id"
-        - name: externalId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Endpoint successfully deleted
-        '400':
-          description: Request is invalid
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        '401':
-          description: Authentication failed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        '403':
-          description: Authorization failed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        '404':
-          description: Endpoint with the specified external ID not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        '500':
-          description: Server Side Error
     put:
       operationId: putEndpoint
       summary: Create or update endpoint
@@ -376,11 +290,7 @@ paths:
         - agrirouterOauthPROD: ["endpoints:manage"]
       parameters:
         - $ref: "#/components/parameters/x-agrirouter-tenant-id"
-        - name: externalId
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: "#/components/parameters/externalId"
       requestBody:
         required: true
         content:
@@ -432,6 +342,45 @@ paths:
           description: Gateway Timeout, request took too long to process
         '500':
           description: Server Side Error
+    delete:
+      operationId: deleteEndpoint
+      summary: Delete endpoint
+      description: Delete endpoint by external ID. This would remove the endpoint from agrirouter and it would no longer receive messages.
+      security:
+        - agrirouterOauthQA: ["endpoints:manage"]
+        - agrirouterOauthPROD: ["endpoints:manage"]
+      parameters:
+        - $ref: "#/components/parameters/x-agrirouter-tenant-id"
+        - $ref: "#/components/parameters/externalId"
+      responses:
+        '204':
+          description: Endpoint successfully deleted
+        '400':
+          description: Request is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Endpoint with the specified external ID not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Server Side Error
 
 security:
   - agrirouterOauthQA: []
@@ -462,6 +411,23 @@ components:
         type: string
         format: uuid
       description: The farmer's tenant ID in relation to which communication is done.
+    externalId:
+      name: externalId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 255
+        pattern: '^([uU][rR][nN]:)?[a-zA-Z0-9][a-zA-Z0-9-]{0,31}:[a-zA-Z0-9()+,\-.:=@;$_!*%/?#]+$'
+      description: |
+        Application-defined external ID of the endpoint. SHOULD be formatted as a
+        URN as defined by RFC 8141 (e.g. `urn:my-app:endpoint:42`). The `urn:`
+        prefix itself is optional for backwards compatibility, but the value must
+        always contain a namespace identifier and a namespace-specific string
+        separated by a colon. The URN namespace identifier and namespace-specific
+        string allow applications to scope their endpoint IDs in a stable,
+        globally unique way.
   schemas:
     GenericEventData:
       oneOf:
@@ -654,10 +620,24 @@ components:
       properties:
         name:
           type: string
+          minLength: 1
+          maxLength: 200
+          pattern: '^[\p{L}\p{N} _.,:\-]+$'
           description: |
-            The name of the endpoint, for easier identification in agrirouter web interface. 
+            Optional name of the endpoint, for easier identification in agrirouter web interface.
             Does not have to be unique.
-            Not yet implemented at the moment, but you can already start sending this.
+            If not specified, the name would be generated automatically.
+
+            When provided, must be 1-200 characters long and may contain letters from any
+            script, digits, spaces, and the following special characters: `-`, `_`, `.`, `,`, `:`. 
+            Names consisting only of whitespace are not allowed as well, which is not
+            expressed in the regex pattern.
+
+            It is not guaranteed that this "application-set" name would be used, 
+            because user may override it with "user-set" name in agrirouter web interface.
+            Name send via this API cannot override "user-set" name, but
+            it can update "application-set" name at any time and user can choose to
+            switch name back to "application-set".
         application_id:
           type: string
           format: uuid

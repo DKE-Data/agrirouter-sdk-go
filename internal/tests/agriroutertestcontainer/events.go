@@ -19,6 +19,9 @@ const (
 	// PutEndpointTestEvent happens when an endpoint is put in the test container.
 	PutEndpointTestEvent = "putEndpoint"
 
+	// DeleteEndpointTestEvent happens when an endpoint is deleted in the test container.
+	DeleteEndpointTestEvent = "deleteEndpoint"
+
 	// SendMessagesTestEvent happens when messages are sent in the test container.
 	SendMessagesTestEvent = "sendMessages"
 

@@ -16,6 +16,9 @@ var (
 	// ErrPutEndpointFailed is returned when an error occurs while trying to put an endpoint.
 	ErrPutEndpointFailed = errors.New("failed to put endpoint")
 
+	// ErrDeleteEndpointFailed is returned when an error occurs while trying to delete an endpoint.
+	ErrDeleteEndpointFailed = errors.New("failed to delete endpoint")
+
 	// ErrFailedStatusCode is returned when the agrirouter API returns a status code that is not expected.
 	ErrFailedStatusCode = errors.New("unexpected status code received from agrirouter API")
 
@@ -93,6 +96,33 @@ func (c *Client) PutEndpoint(
 	}
 
 	return nil, putEndpointError(ErrFailedStatusCode, httpResponseToErr(res.HTTPResponse, res.Body))
+}
+
+// DeleteEndpoint sends a request to the agrirouter API to delete an endpoint
+// identified by its application-defined external ID.
+//
+// Once deleted, the endpoint will no longer receive messages and cannot be
+// recovered. The caller must be authorized to manage the endpoint, typically
+// by being the application that originally created it.
+func (c *Client) DeleteEndpoint(
+	ctx context.Context,
+	externalID string,
+	params *DeleteEndpointParams,
+) error {
+	res, err := c.oapiClient.DeleteEndpointWithResponse(ctx, externalID, params)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrDeleteEndpointFailed, err)
+	}
+
+	if res.StatusCode() == http.StatusNoContent {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"%w: %w",
+		ErrDeleteEndpointFailed,
+		httpResponseToErr(res.HTTPResponse, res.Body),
+	)
 }
 
 // SendMessages sends a message to the agrirouter API.

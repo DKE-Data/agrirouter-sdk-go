@@ -217,15 +217,29 @@ type PutEndpointRequest struct {
 	Capabilities []EndpointCapability `json:"capabilities"`
 	EndpointType EndpointType         `json:"endpoint_type"`
 
-	// Name The name of the endpoint, for easier identification in agrirouter web interface.
+	// Name Optional name of the endpoint, for easier identification in agrirouter web interface.
 	// Does not have to be unique.
-	// Not yet implemented at the moment, but you can already start sending this.
+	// If not specified, the name would be generated automatically.
+	//
+	// When provided, must be 1-200 characters long and may contain letters from any
+	// script, digits, spaces, and the following special characters: `-`, `_`, `.`, `,`, `:`.
+	// Names consisting only of whitespace are not allowed as well, which is not
+	// expressed in the regex pattern.
+	//
+	// It is not guaranteed that this "application-set" name would be used,
+	// because user may override it with "user-set" name in agrirouter web interface.
+	// Name send via this API cannot override "user-set" name, but
+	// it can update "application-set" name at any time and user can choose to
+	// switch name back to "application-set".
 	Name *string `json:"name,omitempty"`
 
 	// SoftwareVersionId The ID of the software version that owns the endpoint
 	SoftwareVersionId openapi_types.UUID     `json:"software_version_id"`
 	Subscriptions     []EndpointSubscription `json:"subscriptions"`
 }
+
+// ExternalId defines model for externalId.
+type ExternalId = string
 
 // XAgrirouterTenantId defines model for x-agrirouter-tenant-id.
 type XAgrirouterTenantId = openapi_types.UUID

@@ -69,7 +69,7 @@ func TestPutEndpoint(t *testing.T) {
 	testContainer := env.testContainer
 
 	t.Run("PutEndpoint", func(t *testing.T) {
-		externalID := "test-endpoint"
+		externalID := "urn:test-app:endpoint:1"
 		req := &agrirouter.PutEndpointRequest{
 
 			Capabilities: []agrirouter.EndpointCapability{},
@@ -89,6 +89,49 @@ func TestPutEndpoint(t *testing.T) {
 			assert.NoError(c, events.CheckExpectations(c))
 		}, 10*time.Second, 1*time.Second, "Event not received in time")
 	})
+
+	t.Run("PutEndpointWithName", func(t *testing.T) {
+		externalID := "urn:test-app:endpoint:2"
+		name := "My Test Endpoint"
+		req := &agrirouter.PutEndpointRequest{
+			Name:         &name,
+			Capabilities: []agrirouter.EndpointCapability{},
+		}
+
+		resp, err := client.PutEndpoint(context.Background(), externalID, &agrirouter.PutEndpointParams{
+			XAgrirouterTenantId: uuid.New(),
+		}, req)
+		require.NoError(t, err, "Failed to put endpoint")
+		require.NotNil(t, resp, "Response should not be nil")
+		require.Equal(t, externalID, resp.ExternalId, "External ID should match")
+		events := testContainer.Events
+
+		events.Expect("putEndpoint", `{"externalId":"`+externalID+`","name":"`+name+`"}`)
+
+		assert.EventuallyWithT(t, func(c *assert.CollectT) {
+			assert.NoError(c, events.CheckExpectations(c))
+		}, 10*time.Second, 1*time.Second, "Event not received in time")
+	})
+}
+
+func TestDeleteEndpoint(t *testing.T) {
+	env := setupTestEnvironment(t)
+	client := env.client
+	testContainer := env.testContainer
+
+	externalID := "urn:test-app:endpoint:to-delete"
+
+	err := client.DeleteEndpoint(context.Background(), externalID, &agrirouter.DeleteEndpointParams{
+		XAgrirouterTenantId: uuid.New(),
+	})
+	require.NoError(t, err, "Failed to delete endpoint")
+
+	events := testContainer.Events
+	events.Expect("deleteEndpoint", `{"externalId":"`+externalID+`"}`)
+
+	assert.EventuallyWithT(t, func(c *assert.CollectT) {
+		assert.NoError(c, events.CheckExpectations(c))
+	}, 10*time.Second, 1*time.Second, "Event not received in time")
 }
 
 type testPayload struct {
