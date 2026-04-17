@@ -658,6 +658,26 @@ components:
             $ref: "#/components/schemas/EndpointSubscription"
         endpoint_type:
           $ref: "#/components/schemas/EndpointType"
+        allow_delete_by_user:
+          type: boolean
+          default: false
+          description: >
+            Flag indicating whether the user is allowed to delete this endpoint.
+
+            Note that even when this flag is not set, the user can still force
+            deletion of the endpoint. Applications must handle the ENDPOINT_DELETED
+            event on a best-effort basis. It is also possible that an endpoint is
+            deleted immediately after creation due to a race with the user
+            disconnecting the entire application, so applications should not rely
+            on this flag to prevent endpoint deletion entirely.
+        connections_uri:
+          type: string
+          format: uri
+          description: >
+            URI pointing to where the user can manage the entity connected to this endpoint,
+            e.g. to disconnect or delete equipment from an equipment vendor.
+            When provided, this URI will be shown when the user attempts to delete the endpoint,
+            instead of the usual deletion dialog, directing them to the vendor's management page.
     Endpoint:
       type: object
       required:
@@ -689,6 +709,18 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/EndpointCapability"
+        allow_delete_by_user:
+          type: boolean
+          default: false
+          description: Flag indicating whether the user is allowed to delete this endpoint.
+          readOnly: true
+        connections_uri:
+          type: string
+          format: uri
+          description: >
+            URI pointing to where the user can manage the entity connected to this endpoint,
+            e.g. to disconnect or delete equipment from an equipment vendor.
+          readOnly: true
     EndpointSubscription:
       type: object
       required:

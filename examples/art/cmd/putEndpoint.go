@@ -19,6 +19,8 @@ const (
 	externalIDOpt        = "external-id"
 	withCapabilityOpt    = "with-capability"
 	withSubscriptionOpt  = "with-subscription"
+	allowDeleteByUserOpt = "allow-delete-by-user"
+	connectionsURIOpt    = "connections-uri"
 )
 
 var putEndpointCmd = &cobra.Command{
@@ -141,6 +143,24 @@ var putEndpointCmd = &cobra.Command{
 			namePtr = nil
 		}
 
+		connectionsURI, err := cmd.Flags().GetString(connectionsURIOpt)
+		if err != nil {
+			return fmt.Errorf("failed to get connections-uri flag: %w", err)
+		}
+		connectionsURIPtr := &connectionsURI
+		if connectionsURI == "" {
+			connectionsURIPtr = nil
+		}
+
+		var allowDeleteByUserPtr *bool
+		if cmd.Flags().Changed(allowDeleteByUserOpt) {
+			allowDeleteByUser, err := cmd.Flags().GetBool(allowDeleteByUserOpt)
+			if err != nil {
+				return fmt.Errorf("failed to get allow-delete-by-user flag: %w", err)
+			}
+			allowDeleteByUserPtr = &allowDeleteByUser
+		}
+
 		slog.Info("Putting endpoint",
 			"externalID", externalID,
 			"name", name,
@@ -150,6 +170,8 @@ var putEndpointCmd = &cobra.Command{
 			"endpointType", endpointType,
 			"capabilities", capabilities,
 			"subscriptions", subscriptions,
+			"allowDeleteByUser", allowDeleteByUserPtr,
+			"connectionsURI", connectionsURIPtr,
 		)
 
 		epResult, err := client.PutEndpoint(ctx, externalID, &agrirouter.PutEndpointParams{
@@ -161,6 +183,8 @@ var putEndpointCmd = &cobra.Command{
 			EndpointType:      agrirouter.EndpointType(endpointType),
 			Capabilities:      capabilities,
 			Subscriptions:     subscriptions,
+			AllowDeleteByUser: allowDeleteByUserPtr,
+			ConnectionsUri:    connectionsURIPtr,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to put endpoint: %w", err)
@@ -205,4 +229,13 @@ func init() {
 
 	putEndpointCmd.Flags().StringSlice(withSubscriptionOpt, []string{}, `Subscriptions to assign to the endpoint,
 	every subscription should be simply a message type, for example: 'iso:11783:-10:taskdata:zip'`)
+
+	putEndpointCmd.Flags().Bool(allowDeleteByUserOpt, false, `Whether the user is allowed to delete this endpoint from agrirouter web interface.
+	Note that even when this flag is not set, the user can still force deletion of the endpoint,
+	so applications must handle ENDPOINT_DELETED event on a best-effort basis.
+	If the flag is not passed at all, the field is omitted from the request and server default applies.`)
+
+	putEndpointCmd.Flags().String(connectionsURIOpt, "", `Optional URI pointing to where the user can manage the entity connected to this endpoint,
+	e.g. to disconnect or delete equipment from an equipment vendor. When provided, this URI will be
+	shown when the user attempts to delete the endpoint instead of the usual deletion dialog.`)
 }

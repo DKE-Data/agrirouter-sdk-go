@@ -63,6 +63,7 @@ func streamContainerLogs(container *agriroutertestcontainer.AgrirouterContainer)
 	}
 }
 
+//nolint:funlen // Test function length is acceptable here, test needs to be detailed.
 func TestPutEndpoint(t *testing.T) {
 	env := setupTestEnvironment(t)
 	client := env.client
@@ -107,6 +108,34 @@ func TestPutEndpoint(t *testing.T) {
 		events := testContainer.Events
 
 		events.Expect("putEndpoint", `{"externalId":"`+externalID+`","name":"`+name+`"}`)
+
+		assert.EventuallyWithT(t, func(c *assert.CollectT) {
+			assert.NoError(c, events.CheckExpectations(c))
+		}, 10*time.Second, 1*time.Second, "Event not received in time")
+	})
+
+	t.Run("PutEndpointWithAllowDeleteByUserAndConnectionsUri", func(t *testing.T) {
+		externalID := "urn:test-app:endpoint:3"
+		allowDeleteByUser := true
+		connectionsURI := "https://vendor.example/manage/device-42"
+		req := &agrirouter.PutEndpointRequest{
+			Capabilities:      []agrirouter.EndpointCapability{},
+			AllowDeleteByUser: &allowDeleteByUser,
+			ConnectionsUri:    &connectionsURI,
+		}
+
+		resp, err := client.PutEndpoint(context.Background(), externalID, &agrirouter.PutEndpointParams{
+			XAgrirouterTenantId: uuid.New(),
+		}, req)
+		require.NoError(t, err, "Failed to put endpoint")
+		require.NotNil(t, resp, "Response should not be nil")
+		require.Equal(t, externalID, resp.ExternalId, "External ID should match")
+		events := testContainer.Events
+
+		events.Expect("putEndpoint",
+			`{"externalId":"`+externalID+
+				`","allowDeleteByUser":true`+
+				`,"connectionsUri":"`+connectionsURI+`"}`)
 
 		assert.EventuallyWithT(t, func(c *assert.CollectT) {
 			assert.NoError(c, events.CheckExpectations(c))

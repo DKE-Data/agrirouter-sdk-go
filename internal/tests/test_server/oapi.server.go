@@ -52,12 +52,17 @@ type ConfirmMessagesRequest struct {
 
 // Endpoint defines model for Endpoint.
 type Endpoint struct {
+	// AllowDeleteByUser Flag indicating whether the user is allowed to delete this endpoint.
+	AllowDeleteByUser *bool                `json:"allow_delete_by_user,omitempty"`
 	ApplicationId     openapi_types.UUID   `json:"application_id"`
 	Capabilities      []EndpointCapability `json:"capabilities"`
-	EndpointType      EndpointType         `json:"endpoint_type"`
-	ExternalId        string               `json:"external_id"`
-	Id                openapi_types.UUID   `json:"id"`
-	SoftwareVersionId openapi_types.UUID   `json:"software_version_id"`
+
+	// ConnectionsUri URI pointing to where the user can manage the entity connected to this endpoint, e.g. to disconnect or delete equipment from an equipment vendor.
+	ConnectionsUri    *string            `json:"connections_uri,omitempty"`
+	EndpointType      EndpointType       `json:"endpoint_type"`
+	ExternalId        string             `json:"external_id"`
+	Id                openapi_types.UUID `json:"id"`
+	SoftwareVersionId openapi_types.UUID `json:"software_version_id"`
 
 	// TenantId The tenant ID of the endpoint
 	TenantId string `json:"tenant_id"`
@@ -217,12 +222,19 @@ type PayloadURI = string
 
 // PutEndpointRequest defines model for PutEndpointRequest.
 type PutEndpointRequest struct {
+	// AllowDeleteByUser Flag indicating whether the user is allowed to delete this endpoint.
+	// Note that even when this flag is not set, the user can still force deletion of the endpoint. Applications must handle the ENDPOINT_DELETED event on a best-effort basis. It is also possible that an endpoint is deleted immediately after creation due to a race with the user disconnecting the entire application, so applications should not rely on this flag to prevent endpoint deletion entirely.
+	AllowDeleteByUser *bool `json:"allow_delete_by_user,omitempty"`
+
 	// ApplicationId The ID of the application that owns the endpoint
 	ApplicationId openapi_types.UUID `json:"application_id"`
 
 	// Capabilities The effective capabilities of the endpoint, must be subset of the capabilities of software version.
 	Capabilities []EndpointCapability `json:"capabilities"`
-	EndpointType EndpointType         `json:"endpoint_type"`
+
+	// ConnectionsUri URI pointing to where the user can manage the entity connected to this endpoint, e.g. to disconnect or delete equipment from an equipment vendor. When provided, this URI will be shown when the user attempts to delete the endpoint, instead of the usual deletion dialog, directing them to the vendor's management page.
+	ConnectionsUri *string      `json:"connections_uri,omitempty"`
+	EndpointType   EndpointType `json:"endpoint_type"`
 
 	// Name Optional name of the endpoint, for easier identification in agrirouter web interface.
 	// Does not have to be unique.

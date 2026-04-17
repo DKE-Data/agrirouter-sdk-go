@@ -231,13 +231,17 @@ func (s *Server) ConfirmMessages(_ context.Context, request ConfirmMessagesReque
 
 func (s *Server) PutEndpoint(_ context.Context, request PutEndpointRequestObject) (PutEndpointResponseObject, error) {
 	eventData := struct {
-		ExternalId string  `json:"externalId"`
-		Name       *string `json:"name,omitempty"`
+		ExternalId        string  `json:"externalId"`
+		Name              *string `json:"name,omitempty"`
+		AllowDeleteByUser *bool   `json:"allowDeleteByUser,omitempty"`
+		ConnectionsUri    *string `json:"connectionsUri,omitempty"`
 	}{
 		ExternalId: request.ExternalId,
 	}
 	if request.Body != nil {
 		eventData.Name = request.Body.Name
+		eventData.AllowDeleteByUser = request.Body.AllowDeleteByUser
+		eventData.ConnectionsUri = request.Body.ConnectionsUri
 	}
 	dataBytes, err := json.Marshal(eventData)
 	if err != nil {
