@@ -89,6 +89,12 @@ type MessageConfirmation = internal_models.MessageConfirmation
 // and processing it accordingly (e.g. decoding, storing, or acting upon the message content).
 type MessageReceivedEventData = internal_models.MessageReceivedEventData
 
+// EndpointDeletedEventData represents the data received in an EndpointDeleted event.
+//
+// It contains the agrirouter ID and the external ID of the endpoint that was deleted,
+// either via this API or by other means (e.g. user-initiated deletion from the agrirouter UI).
+type EndpointDeletedEventData = internal_models.EndpointDeletedEventData
+
 // EndpointType represents the type of an agrirouter endpoint.
 //
 // There are three main types of endpoints:

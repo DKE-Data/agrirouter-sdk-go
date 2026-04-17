@@ -186,6 +186,7 @@ paths:
               enum:
                 - MESSAGE_RECEIVED
                 - FILE_RECEIVED
+                - ENDPOINT_DELETED
       description: |
         Receive stream of events from the agrirouter outbox.
         The events are retrieved for every endpoint of an
@@ -219,7 +220,7 @@ paths:
         |---------------------|----------------------------------------------------------------------------|
         | MESSAGE_RECEIVED    | [MessageReceivedEventData](#/components/schemas/MessageReceivedEventData)  |
         | FILE_RECEIVED       | [FileReceivedEventData](#/components/schemas/FileReceivedEventData)        |
-        | ENDPOINT_DELETED     | [EndpointDeletedEventData](#/components/schemas/EndpointDeletedEventData) |
+        | ENDPOINT_DELETED    | [EndpointDeletedEventData](#/components/schemas/EndpointDeletedEventData)  |
 
       # As there is no yet accepted way of defining schema for SSE data,
       # it would have to be only described in description for now.

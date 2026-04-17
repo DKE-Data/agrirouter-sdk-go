@@ -46,6 +46,41 @@ type Message struct {
 // MessageHandler is a function that handles a received message.
 type MessageHandler func(ctx context.Context, message *Message)
 
+// DeletedEndpoint represents an endpoint that has been deleted in agrirouter,
+// which is received when server sends us ENDPOINT_DELETED event.
+type DeletedEndpoint struct {
+	ID         uuid.UUID // ID is the agrirouter endpoint ID of the deleted endpoint
+	ExternalID string    // ExternalID is the external ID the endpoint was registered with
+}
+
+// EndpointDeletionHandler is a function that handles an endpoint-deletion event.
+type EndpointDeletionHandler func(ctx context.Context, deletion *DeletedEndpoint)
+
+// ReceiveEndpointDeletedEvents listens for endpoint-deletion events from the agrirouter API
+// and calls the provided handler for each deleted endpoint.
+//
+// This function blocks until the context is canceled or an error occurs.
+// It is recommended to run this function in a separate goroutine.
+func (c *Client) ReceiveEndpointDeletedEvents(
+	ctx context.Context,
+	deletionHandler EndpointDeletionHandler,
+	errorHandler func(err error),
+) error {
+	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
+		internal_models.ENDPOINTDELETED,
+	}, func(event internal_models.GenericEventData) {
+		deletedEvent, err := event.AsEndpointDeletedEventData()
+		if err != nil {
+			errorHandler(err)
+			return
+		}
+		deletionHandler(ctx, &DeletedEndpoint{
+			ID:         deletedEvent.Id,
+			ExternalID: deletedEvent.ExternalId,
+		})
+	}, errorHandler)
+}
+
 // ReceiveMessages listens for incoming messages from the agrirouter API and
 // calls the provided handler for each received message.
 //

@@ -23,7 +23,8 @@ type Server struct {
 		Data      string
 		EventType string
 	}
-	sentMessagesTestEvents chan *SendMessagesTestEventData
+	sentMessagesTestEvents    chan *SendMessagesTestEventData
+	deletedEndpointTestEvents chan *EndpointDeletedEventData
 }
 
 // DeleteEndpoint implements [StrictServerInterface].
@@ -34,6 +35,12 @@ func (s *Server) DeleteEndpoint(_ context.Context, request DeleteEndpointRequest
 	}{
 		Data:      fmt.Sprintf(`{"externalId": %q}`, request.ExternalId),
 		EventType: agriroutertestcontainer.DeleteEndpointTestEvent,
+	}
+
+	s.deletedEndpointTestEvents <- &EndpointDeletedEventData{
+		EventType:  string(ENDPOINTDELETED),
+		ExternalId: request.ExternalId,
+		Id:         uuid.New(),
 	}
 
 	return DeleteEndpoint204Response{}, nil
@@ -60,12 +67,29 @@ func (s *Server) ReceiveEvents(ctx context.Context, request ReceiveEventsRequest
 	if err != nil {
 		return nil, err
 	}
+	endpointDeletedType, err := sse.NewType(string(ENDPOINTDELETED))
+	if err != nil {
+		return nil, err
+	}
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				slog.Info("Context done, stopping receiving events")
 				return
+			case endpointDeletedTestEvent := <-s.deletedEndpointTestEvents:
+				sseMessage := &sse.Message{Type: endpointDeletedType}
+				marshalledEventData, err := json.Marshal(endpointDeletedTestEvent)
+				if err != nil {
+					slog.Error("Error marshaling EndpointDeletedEventData", "error", err)
+					continue
+				}
+				sseMessage.AppendData(string(marshalledEventData))
+				if publishErr := sseServer.Publish(sseMessage); publishErr != nil {
+					slog.Error("Error publishing SSE message", "error", publishErr)
+				} else {
+					slog.Info("Server sent EndpointDeleted event", "data", string(marshalledEventData))
+				}
 			case messageSentTestEvent := <-s.sentMessagesTestEvents:
 				messageId := uuid.New()
 				payloadPath := fmt.Sprintf("/_testPayloads/%s/2025-09-18", messageId.String())
@@ -269,6 +293,7 @@ func NewServer() *Server {
 			Data      string
 			EventType string
 		}),
-		sentMessagesTestEvents: make(chan *SendMessagesTestEventData, 100),
+		sentMessagesTestEvents:    make(chan *SendMessagesTestEventData, 100),
+		deletedEndpointTestEvents: make(chan *EndpointDeletedEventData, 100),
 	}
 }

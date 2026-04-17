@@ -33,6 +33,7 @@ const (
 
 // Defines values for ReceiveEventsParamsTypes.
 const (
+	ENDPOINTDELETED ReceiveEventsParamsTypes = "ENDPOINT_DELETED"
 	FILERECEIVED    ReceiveEventsParamsTypes = "FILE_RECEIVED"
 	MESSAGERECEIVED ReceiveEventsParamsTypes = "MESSAGE_RECEIVED"
 )

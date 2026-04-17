@@ -134,6 +134,44 @@ func TestDeleteEndpoint(t *testing.T) {
 	}, 10*time.Second, 1*time.Second, "Event not received in time")
 }
 
+func TestReceiveEndpointDeletionEvents(t *testing.T) {
+	env := setupTestEnvironment(t)
+	client := env.client
+
+	receivingContext, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+	defer cancel()
+	finishedReceiving := make(chan struct{})
+	var receiveErr error
+	var deletions []*agrirouter.DeletedEndpoint
+	defer func() {
+		<-finishedReceiving
+		require.NoError(t, receiveErr)
+	}()
+
+	go func() {
+		connectErr := client.ReceiveEndpointDeletedEvents(receivingContext, func(_ context.Context, deletion *agrirouter.DeletedEndpoint) {
+			deletions = append(deletions, deletion)
+		}, func(err error) {
+			receiveErr = err
+		})
+		assert.EqualError(t, connectErr, "context deadline exceeded")
+		close(finishedReceiving)
+	}()
+
+	externalID := "urn:test-app:endpoint:to-delete-and-observe"
+	err := client.DeleteEndpoint(context.Background(), externalID, &agrirouter.DeleteEndpointParams{
+		XAgrirouterTenantId: uuid.New(),
+	})
+	require.NoError(t, err, "Failed to delete endpoint")
+
+	assert.EventuallyWithT(t, func(c *assert.CollectT) {
+		if assert.Len(c, deletions, 1, "Should have received exactly one deletion event") {
+			assert.Equal(c, externalID, deletions[0].ExternalID, "ExternalID should match")
+			assert.NotEqual(c, uuid.Nil, deletions[0].ID, "ID should be set")
+		}
+	}, 10*time.Second, 500*time.Millisecond)
+}
+
 type testPayload struct {
 	bytes      []byte
 	encodedB64 string
