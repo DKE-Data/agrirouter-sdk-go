@@ -12,6 +12,7 @@ import (
 
 const (
 	endpointTypeOpt      = "endpoint-type"
+	nameOpt              = "name"
 	applicationIDOpt     = "application-id"
 	softwareVersionIDOpt = "software-version-id"
 	tenantIDOpt          = "tenant-id"
@@ -131,8 +132,18 @@ var putEndpointCmd = &cobra.Command{
 			})
 		}
 
+		name, err := cmd.Flags().GetString(nameOpt)
+		if err != nil {
+			return fmt.Errorf("failed to get name flag: %w", err)
+		}
+		namePtr := &name
+		if name == "" {
+			namePtr = nil
+		}
+
 		slog.Info("Putting endpoint",
 			"externalID", externalID,
+			"name", name,
 			"tenantID", tenantIDParsed,
 			"applicationID", applicationIDParsed,
 			"softwareVersionID", softwareVersionIDParsed,
@@ -144,6 +155,7 @@ var putEndpointCmd = &cobra.Command{
 		epResult, err := client.PutEndpoint(ctx, externalID, &agrirouter.PutEndpointParams{
 			XAgrirouterTenantId: tenantIDParsed,
 		}, &agrirouter.PutEndpointRequest{
+			Name:              namePtr,
 			ApplicationId:     applicationIDParsed,
 			SoftwareVersionId: softwareVersionIDParsed,
 			EndpointType:      agrirouter.EndpointType(endpointType),
@@ -165,6 +177,8 @@ func init() {
 
 	putEndpointCmd.Flags().String(externalIDOpt, "", "The external ID of the endpoint")
 	putEndpointCmd.MarkFlagRequired(externalIDOpt)
+
+	putEndpointCmd.Flags().String(nameOpt, "", "Optional name of endpoint")
 
 	putEndpointCmd.Flags().StringP(tenantIDOpt, "t", "", "ID of the tenant to create endpoint in")
 	putEndpointCmd.MarkFlagRequired(tenantIDOpt)
