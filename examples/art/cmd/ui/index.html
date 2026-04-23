@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>art serve</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 1.5rem; background: #fafafa; color: #222; }
+  h1 { margin-top: 0; }
+  section { background: white; border: 1px solid #ddd; border-radius: 6px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+  h2 { margin-top: 0; font-size: 1rem; color: #555; }
+  code { background: #eee; padding: 0 .3em; border-radius: 3px; }
+  button { padding: .5rem 1rem; font-size: 1rem; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  input { padding: .5rem; font-size: 1rem; width: 22rem; max-width: 100%; }
+  pre { background: #111; color: #eee; padding: .75rem; border-radius: 4px; overflow-x: auto; min-height: 3rem; white-space: pre-wrap; }
+  #term { height: 480px; background: #000; border-radius: 4px; padding: 4px; }
+  #term .xterm-viewport { overscroll-behavior: contain; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "svelte": "https://esm.sh/svelte@4.2.19",
+    "svelte/internal": "https://esm.sh/svelte@4.2.19/internal",
+    "svelte/internal/disclose-version": "https://esm.sh/svelte@4.2.19/internal/disclose-version"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app">Loading…</div>
+
+<script type="module">
+import { compile } from 'https://esm.sh/svelte@4.2.19/compiler';
+
+const source = `
+<script>
+  export let clientId = '';
+  export let authorizeUrl = '';
+
+  const params = new URLSearchParams(location.search);
+  let tenantId = params.get('tenant_id') || '';
+
+  let name = '';
+  let externalId = 'art-server:test';
+  let validating = false;
+  let log = [];
+
+  function append(line) { log = [...log, line]; }
+
+  function doAuthorize() {
+    window.location.href = authorizeUrl;
+  }
+
+  async function doValidate() {
+    if (!name || !externalId || !tenantId) return;
+    validating = true;
+    append('> PUT endpoint externalId=' + externalId + ' name=' + name + ' tenantId=' + tenantId);
+    try {
+      const r = await fetch('/api/validate', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ externalId, name, tenantId }),
+      });
+      const text = await r.text();
+      append((r.ok ? 'OK  ' : 'ERR ') + r.status + ': ' + text);
+    } catch (e) {
+      append('EXC: ' + e.message);
+    } finally {
+      validating = false;
+    }
+  }
+<\/script>
+
+<main>
+  <h1>art serve</h1>
+
+  <section>
+    <h2>Config</h2>
+    <div>client_id: <code>{clientId}</code></div>
+    <div>tenant_id: <code>{tenantId || '(not set — complete the authorize step to get it in the URL)'}</code></div>
+  </section>
+
+  <section>
+    <h2>1. Authorize</h2>
+    <p>Open agrirouter and grant <code>endpoints:manage</code>. You'll be redirected back here.</p>
+    <button on:click={doAuthorize}>Authorize at agrirouter</button>
+  </section>
+
+  <section>
+    <h2>2. Validate access (PUT endpoint)</h2>
+    <p>Once authorization was granted (and <code>tenant_id</code> is in the URL), PUT a test endpoint to confirm we have access.</p>
+    <div><input placeholder="external id" bind:value={externalId} disabled={validating} /></div>
+    <div><input placeholder="endpoint name" bind:value={name} disabled={validating} /></div>
+    <button on:click={doValidate} disabled={validating || !name || !externalId || !tenantId}>Validate</button>
+    <pre>{log.join('\\n') || '(no activity yet)'}</pre>
+  </section>
+
+  <section>
+    <h2>3. Terminal</h2>
+    <p>Sandboxed art-only REPL (runs <code>art repl</code>). Only art subcommands are accepted; AGRIROUTER_OAUTH_* are inherited from <code>art serve</code>.</p>
+    <div id="term"></div>
+  </section>
+</main>
+`;
+
+const { js } = compile(source, { generate: 'dom', format: 'esm', filename: 'App.svelte' });
+const blobUrl = URL.createObjectURL(new Blob([js.code], { type: 'application/javascript' }));
+const { default: App } = await import(blobUrl);
+
+const cfg = await fetch('/api/config').then(r => r.json());
+
+const appEl = document.getElementById('app');
+appEl.innerHTML = '';
+new App({
+  target: appEl,
+  props: {
+    clientId: cfg.clientId,
+    authorizeUrl: cfg.authorizeUrl,
+  },
+});
+
+// xterm + websocket
+const [{ Terminal }, { FitAddon }] = await Promise.all([
+  import('https://esm.sh/xterm@5.3.0'),
+  import('https://esm.sh/xterm-addon-fit@0.8.0'),
+]);
+
+const termEl = document.getElementById('term');
+const term = new Terminal({ convertEol: true, fontSize: 13, scrollback: 5000, theme: { background: '#000000' } });
+const fit = new FitAddon();
+term.loadAddon(fit);
+term.open(termEl);
+fit.fit();
+window.addEventListener('resize', () => fit.fit());
+
+// Keep wheel events inside the terminal — xterm still handles them for its
+// own scrollback, but the page never scrolls while the pointer is here.
+termEl.addEventListener('wheel', (e) => { e.preventDefault(); }, { passive: false });
+
+const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+const ws = new WebSocket(wsProto + '//' + location.host + '/ws/terminal');
+ws.binaryType = 'arraybuffer';
+
+ws.onopen = () => {
+  const send = () => ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
+  send();
+  term.onResize(() => send());
+  fit.fit();
+
+  // If tenant_id came back in the URL (after authorize), inject it into the
+  // repl so $ART_TENANT_ID is available for subsequent commands. Delay a bit
+  // so the welcome banner has time to render first.
+  const tenantFromUrl = new URLSearchParams(location.search).get('tenant_id');
+  if (tenantFromUrl) {
+    setTimeout(() => {
+      ws.send(JSON.stringify({ type: 'stdin', data: 'set-tenant ' + tenantFromUrl + '\r' }));
+    }, 300);
+  }
+};
+ws.onmessage = (ev) => {
+  if (typeof ev.data === 'string') {
+    term.write(ev.data);
+  } else {
+    term.write(new Uint8Array(ev.data));
+  }
+};
+ws.onclose = () => term.write('\r\n[connection closed]\r\n');
+
+term.onData((d) => {
+  if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'stdin', data: d }));
+});
+
+// Translate Ctrl+Left/Right → ESC+B/F and Ctrl+Backspace → Ctrl+W so
+// readline's word-nav / kill-word kick in. chzyer/readline doesn't recognise
+// the Ctrl+arrow escape sequences directly, and browsers sometimes eat
+// Ctrl+Backspace themselves. Alt+B/F / Ctrl+W / Alt+D already work as-is.
+term.attachCustomKeyEventHandler((e) => {
+  if (e.type !== 'keydown' || !e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return true;
+  const data =
+    e.key === 'ArrowLeft'  ? '\x1bb' :
+    e.key === 'ArrowRight' ? '\x1bf' :
+    e.key === 'Backspace'  ? '\x17'  : null;
+  if (data == null) return true;
+  if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'stdin', data }));
+  e.preventDefault();
+  return false;
+});
+</script>
+</body>
+</html>

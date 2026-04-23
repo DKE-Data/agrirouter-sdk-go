@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/DKE-Data/agrirouter-sdk-go"
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -43,28 +42,14 @@ var putEndpointCmd = &cobra.Command{
 			return fmt.Errorf("external-id flag is required")
 		}
 
-		tenantID, err := cmd.Flags().GetString(tenantIDOpt)
+		tenantIDParsed, err := uuidFlagOrEnv(cmd, tenantIDOpt, "ART_TENANT_ID")
 		if err != nil {
-			return fmt.Errorf("failed to get tenant-id flag: %w", err)
-		}
-		if tenantID == "" {
-			return fmt.Errorf("tenant-id flag is required")
-		}
-		tenantIDParsed, err := uuid.Parse(tenantID)
-		if err != nil {
-			return fmt.Errorf("failed to parse tenant-id '%s' as UUID: %w", tenantID, err)
+			return err
 		}
 
-		applicationID, err := cmd.Flags().GetString(applicationIDOpt)
+		applicationIDParsed, err := uuidFlagOrEnv(cmd, applicationIDOpt, "ART_APPLICATION_ID")
 		if err != nil {
-			return fmt.Errorf("failed to get application-id flag: %w", err)
-		}
-		if applicationID == "" {
-			return fmt.Errorf("application-id flag is required")
-		}
-		applicationIDParsed, err := uuid.Parse(applicationID)
-		if err != nil {
-			return fmt.Errorf("failed to parse application-id '%s' as UUID: %w", applicationID, err)
+			return err
 		}
 
 		endpointType, err := cmd.Flags().GetString(endpointTypeOpt)
@@ -75,16 +60,9 @@ var putEndpointCmd = &cobra.Command{
 			return fmt.Errorf("endpoint-type flag is required")
 		}
 
-		softwareVersionID, err := cmd.Flags().GetString(softwareVersionIDOpt)
+		softwareVersionIDParsed, err := uuidFlagOrEnv(cmd, softwareVersionIDOpt, "ART_SOFTWARE_VERSION_ID")
 		if err != nil {
-			return fmt.Errorf("failed to get software-version-id flag: %w", err)
-		}
-		if softwareVersionID == "" {
-			return fmt.Errorf("software-version-id flag is required")
-		}
-		softwareVersionIDParsed, err := uuid.Parse(softwareVersionID)
-		if err != nil {
-			return fmt.Errorf("failed to parse software-version-id '%s' as UUID: %w", softwareVersionID, err)
+			return err
 		}
 
 		switch endpointType {
@@ -94,7 +72,7 @@ var putEndpointCmd = &cobra.Command{
 			return fmt.Errorf("invalid endpoint-type '%s', must be one of: %s, %s", endpointType, agrirouter.VirtualCommunicationUnit, agrirouter.CloudSoftware)
 		}
 
-		var capabilities []agrirouter.EndpointCapability
+		capabilities := make([]agrirouter.EndpointCapability, 0)
 		capStrs, err := cmd.Flags().GetStringSlice(withCapabilityOpt)
 		if err != nil {
 			return fmt.Errorf("failed to get with-capability flag: %w", err)
@@ -204,14 +182,11 @@ func init() {
 
 	putEndpointCmd.Flags().String(nameOpt, "", "Optional name of endpoint")
 
-	putEndpointCmd.Flags().StringP(tenantIDOpt, "t", "", "ID of the tenant to create endpoint in")
-	putEndpointCmd.MarkFlagRequired(tenantIDOpt)
+	putEndpointCmd.Flags().StringP(tenantIDOpt, "t", "", "ID of the tenant to create endpoint in (default: $ART_TENANT_ID)")
 
-	putEndpointCmd.Flags().String(applicationIDOpt, "", "The application ID of the endpoint")
-	putEndpointCmd.MarkFlagRequired(applicationIDOpt)
+	putEndpointCmd.Flags().String(applicationIDOpt, "", "The application ID of the endpoint (default: $ART_APPLICATION_ID)")
 
-	putEndpointCmd.Flags().String(softwareVersionIDOpt, "", "The software version ID of the endpoint")
-	putEndpointCmd.MarkFlagRequired(softwareVersionIDOpt)
+	putEndpointCmd.Flags().String(softwareVersionIDOpt, "", "The software version ID of the endpoint (default: $ART_SOFTWARE_VERSION_ID)")
 
 	putEndpointCmd.Flags().String(
 		endpointTypeOpt,
@@ -222,6 +197,12 @@ func init() {
 		),
 	)
 	putEndpointCmd.MarkFlagRequired(endpointTypeOpt)
+	_ = putEndpointCmd.RegisterFlagCompletionFunc(endpointTypeOpt, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return []string{
+			string(agrirouter.VirtualCommunicationUnit),
+			string(agrirouter.CloudSoftware),
+		}, cobra.ShellCompDirectiveNoFileComp
+	})
 
 	putEndpointCmd.Flags().StringSlice(withCapabilityOpt, []string{}, `Capabilities to assign to the endpoint, 
 	every capability should be formatted as '<messageType>=<direction>', 

@@ -5,7 +5,6 @@ import (
 	"log/slog"
 
 	"github.com/DKE-Data/agrirouter-sdk-go"
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -29,16 +28,9 @@ var deleteEndpointCmd = &cobra.Command{
 			return fmt.Errorf("external-id flag is required")
 		}
 
-		tenantID, err := cmd.Flags().GetString(tenantIDOpt)
+		tenantIDParsed, err := uuidFlagOrEnv(cmd, tenantIDOpt, "ART_TENANT_ID")
 		if err != nil {
-			return fmt.Errorf("failed to get tenant-id flag: %w", err)
-		}
-		if tenantID == "" {
-			return fmt.Errorf("tenant-id flag is required")
-		}
-		tenantIDParsed, err := uuid.Parse(tenantID)
-		if err != nil {
-			return fmt.Errorf("failed to parse tenant-id '%s' as UUID: %w", tenantID, err)
+			return err
 		}
 
 		slog.Info("Deleting endpoint",
@@ -64,6 +56,5 @@ func init() {
 	deleteEndpointCmd.Flags().String(externalIDOpt, "", "The external ID of the endpoint to delete")
 	deleteEndpointCmd.MarkFlagRequired(externalIDOpt)
 
-	deleteEndpointCmd.Flags().StringP(tenantIDOpt, "t", "", "ID of the tenant the endpoint belongs to")
-	deleteEndpointCmd.MarkFlagRequired(tenantIDOpt)
+	deleteEndpointCmd.Flags().StringP(tenantIDOpt, "t", "", "ID of the tenant the endpoint belongs to (default: $ART_TENANT_ID)")
 }

@@ -13,9 +13,10 @@ var rootCmd = &cobra.Command{
 	Long: `agrirouter is data exchange platform for the agricultural industry.
 
 agrirouter G4 is a new API gateway allowing broader access to agrirouter.
-'art' is a simple command line tool demonstrating the usage of 
+'art' is a simple command line tool demonstrating the usage of
 the agrirouter-sdk-go to interact with agrirouter. It can be useful
 by itself in order to test and debug agrirouter via G4 API.`,
+	SilenceUsage: true,
 }
 
 func Execute() {

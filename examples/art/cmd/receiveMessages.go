@@ -35,6 +35,7 @@ var receiveMessagesCmd = &cobra.Command{
 
 		err = client.ReceiveMessages(ctx, func(ctx context.Context, message *agrirouter.Message) {
 			fmt.Printf("Received message:\n")
+			fmt.Printf("  MessageID: %s\n", message.ID)
 			fmt.Printf("  AppMessageID: %s\n", message.AppMessageID)
 			fmt.Printf("  Type: %s\n", message.MessageType)
 			fmt.Printf("  ReceivingEndpointID: %s\n", message.ReceivingEndpointID)

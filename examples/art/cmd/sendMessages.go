@@ -55,18 +55,9 @@ var sendMessagesCmd = &cobra.Command{
 			return fmt.Errorf("failed to parse endpoint-id '%s' as UUID: %w", endpointID, err)
 		}
 
-		tenantID, err := cmd.Flags().GetString("tenant-id")
+		tenantIDParsed, err := uuidFlagOrEnv(cmd, "tenant-id", "ART_TENANT_ID")
 		if err != nil {
-			return fmt.Errorf("failed to get tenant-id flag: %w", err)
-		}
-
-		if tenantID == "" {
-			return fmt.Errorf("tenant-id flag is required")
-		}
-
-		tenantIDParsed, err := uuid.Parse(tenantID)
-		if err != nil {
-			return fmt.Errorf("failed to parse tenant-id '%s' as UUID: %w", tenantID, err)
+			return err
 		}
 
 		directRecipents, err := cmd.Flags().GetStringArray("direct-recipients")
@@ -127,8 +118,7 @@ func init() {
 	sendMessagesCmd.Flags().StringP("message-type", "m", "", "Type of the message to send")
 	sendMessagesCmd.MarkFlagRequired("message-type")
 
-	sendMessagesCmd.Flags().StringP("tenant-id", "t", "", "ID of the tenant to send the message in")
-	sendMessagesCmd.MarkFlagRequired("tenant-id")
+	sendMessagesCmd.Flags().StringP("tenant-id", "t", "", "ID of the tenant to send the message in (default: $ART_TENANT_ID)")
 
 	sendMessagesCmd.Flags().StringArrayP("direct-recipients", "d", []string{}, "endpoint ids for direct recipients to send messages to")
 }
