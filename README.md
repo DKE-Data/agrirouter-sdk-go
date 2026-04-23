@@ -22,7 +22,7 @@ Following instructions are for developers working on this SDK.
 Run this command:
 
 ```bash
-git config core.hooksPath .githooks
+git config core.hooksPath githooks
 ```
 
 This will set up git hooks to run minimal set of checks on commit and push. These would not require `make`.
