@@ -108,6 +108,12 @@ type ClientInterface interface {
 
 	// SendMessagesWithBody request with any body
 	SendMessagesWithBody(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListAuthorizedTenants request
+	ListAuthorizedTenants(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ListTenantEndpoints request
+	ListTenantEndpoints(ctx context.Context, tenantId TenantId, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) ConfirmMessagesWithBody(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -184,6 +190,30 @@ func (c *Client) ReceiveEvents(ctx context.Context, params *ReceiveEventsParams,
 
 func (c *Client) SendMessagesWithBody(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSendMessagesRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListAuthorizedTenants(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAuthorizedTenantsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ListTenantEndpoints(ctx context.Context, tenantId TenantId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListTenantEndpointsRequest(c.Server, tenantId)
 	if err != nil {
 		return nil, err
 	}
@@ -532,6 +562,67 @@ func NewSendMessagesRequestWithBody(server string, params *SendMessagesParams, c
 	return req, nil
 }
 
+// NewListAuthorizedTenantsRequest generates requests for ListAuthorizedTenants
+func NewListAuthorizedTenantsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/tenants")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListTenantEndpointsRequest generates requests for ListTenantEndpoints
+func NewListTenantEndpointsRequest(server string, tenantId TenantId) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "tenantId", runtime.ParamLocationPath, tenantId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/tenants/%s/endpoints", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -593,6 +684,12 @@ type ClientWithResponsesInterface interface {
 
 	// SendMessagesWithBodyWithResponse request with any body
 	SendMessagesWithBodyWithResponse(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendMessagesResponse, error)
+
+	// ListAuthorizedTenantsWithResponse request
+	ListAuthorizedTenantsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAuthorizedTenantsResponse, error)
+
+	// ListTenantEndpointsWithResponse request
+	ListTenantEndpointsWithResponse(ctx context.Context, tenantId TenantId, reqEditors ...RequestEditorFn) (*ListTenantEndpointsResponse, error)
 }
 
 type ConfirmMessagesResponse struct {
@@ -717,6 +814,56 @@ func (r SendMessagesResponse) StatusCode() int {
 	return 0
 }
 
+type ListAuthorizedTenantsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TenantsListResponse
+	JSON400      *ErrorResponse
+	JSON401      *ErrorResponse
+	JSON403      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAuthorizedTenantsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAuthorizedTenantsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListTenantEndpointsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *EndpointsListResponse
+	JSON400      *ErrorResponse
+	JSON401      *ErrorResponse
+	JSON403      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListTenantEndpointsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListTenantEndpointsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // ConfirmMessagesWithBodyWithResponse request with arbitrary body returning *ConfirmMessagesResponse
 func (c *ClientWithResponses) ConfirmMessagesWithBodyWithResponse(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error) {
 	rsp, err := c.ConfirmMessagesWithBody(ctx, params, contentType, body, reqEditors...)
@@ -776,6 +923,24 @@ func (c *ClientWithResponses) SendMessagesWithBodyWithResponse(ctx context.Conte
 		return nil, err
 	}
 	return ParseSendMessagesResponse(rsp)
+}
+
+// ListAuthorizedTenantsWithResponse request returning *ListAuthorizedTenantsResponse
+func (c *ClientWithResponses) ListAuthorizedTenantsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListAuthorizedTenantsResponse, error) {
+	rsp, err := c.ListAuthorizedTenants(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAuthorizedTenantsResponse(rsp)
+}
+
+// ListTenantEndpointsWithResponse request returning *ListTenantEndpointsResponse
+func (c *ClientWithResponses) ListTenantEndpointsWithResponse(ctx context.Context, tenantId TenantId, reqEditors ...RequestEditorFn) (*ListTenantEndpointsResponse, error) {
+	rsp, err := c.ListTenantEndpoints(ctx, tenantId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListTenantEndpointsResponse(rsp)
 }
 
 // ParseConfirmMessagesResponse parses an HTTP response from a ConfirmMessagesWithResponse call
@@ -983,6 +1148,100 @@ func ParseSendMessagesResponse(rsp *http.Response) (*SendMessagesResponse, error
 			return nil, err
 		}
 		response.JSON413 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListAuthorizedTenantsResponse parses an HTTP response from a ListAuthorizedTenantsWithResponse call
+func ParseListAuthorizedTenantsResponse(rsp *http.Response) (*ListAuthorizedTenantsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAuthorizedTenantsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TenantsListResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListTenantEndpointsResponse parses an HTTP response from a ListTenantEndpointsWithResponse call
+func ParseListTenantEndpointsResponse(rsp *http.Response) (*ListTenantEndpointsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListTenantEndpointsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EndpointsListResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	}
 

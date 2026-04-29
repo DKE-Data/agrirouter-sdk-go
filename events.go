@@ -31,6 +31,251 @@ var ErrToCloseResponseBody = errors.New("failed to close response body")
 // ErrMissingPayload is returned when agrirouter returned no embedded payload with message nor a payload URI.
 var ErrMissingPayload = errors.New("missing payload: no embedded payload and no payload URI")
 
+// EventType identifies a kind of event sent by the agrirouter events stream.
+type EventType = internal_models.ReceiveEventsParamsTypes
+
+// Event types accepted by [Client.ReceiveEvents] and emitted by the events stream.
+const (
+	EventTypeMessageReceived      = internal_models.MESSAGERECEIVED
+	EventTypeFileReceived         = internal_models.FILERECEIVED
+	EventTypeEndpointDeleted      = internal_models.ENDPOINTDELETED
+	EventTypeEndpointsListChanged = internal_models.ENDPOINTSLISTCHANGED
+	EventTypeAuthorizationAdded   = internal_models.AUTHORIZATIONADDED
+	EventTypeAuthorizationRevoked = internal_models.AUTHORIZATIONREVOKED
+)
+
+// EventHandlers groups optional per-event-type callbacks for [Client.ReceiveEvents].
+//
+// Only handlers that are set will be invoked; events whose handler is nil are
+// silently dropped after parsing. Note that [Client.ReceiveEvents] does not
+// itself filter on handler presence — events are filtered server-side via the
+// types argument. If a handler is nil for an event type that was requested,
+// matching events still arrive but are discarded.
+type EventHandlers struct {
+	OnMessage              MessageHandler
+	OnFile                 func(ctx context.Context, file *File)
+	OnEndpointDeleted      EndpointDeletionHandler
+	OnEndpointsListChanged func(ctx context.Context, event *EndpointsListChangedEventData)
+	OnAuthorizationAdded   func(ctx context.Context, event *AuthorizationAddedEventData)
+	OnAuthorizationRevoked func(ctx context.Context, event *AuthorizationRevokedEventData)
+}
+
+// ReceiveEvents listens for events from the agrirouter API and dispatches each
+// received event to the matching handler in handlers.
+//
+// types restricts which event types the server streams. If types is empty or
+// nil, the server streams all supported event types.
+//
+// This function blocks until the context is canceled or an error occurs.
+// It is recommended to run this function in a separate goroutine.
+func (c *Client) ReceiveEvents(
+	ctx context.Context,
+	types []EventType,
+	handlers EventHandlers,
+	errorHandler func(err error),
+) error {
+	var typesParam *[]internal_models.ReceiveEventsParamsTypes
+	if len(types) > 0 {
+		t := append([]internal_models.ReceiveEventsParamsTypes(nil), types...)
+		typesParam = &t
+	}
+	return c.receiveAndHandleEvents(ctx, typesParam, func(event internal_models.GenericEventData) {
+		c.dispatchEvent(ctx, event, handlers, errorHandler)
+	}, errorHandler)
+}
+
+func (c *Client) dispatchEvent(
+	ctx context.Context,
+	event internal_models.GenericEventData,
+	handlers EventHandlers,
+	errorHandler func(err error),
+) {
+	discriminator, err := event.Discriminator()
+	if err != nil {
+		errorHandler(err)
+		return
+	}
+	switch EventType(discriminator) {
+	case EventTypeMessageReceived:
+		c.dispatchMessageReceived(ctx, event, handlers.OnMessage, errorHandler)
+	case EventTypeFileReceived:
+		c.dispatchFileReceived(ctx, event, handlers.OnFile, errorHandler)
+	case EventTypeEndpointDeleted:
+		dispatchEndpointDeleted(ctx, event, handlers.OnEndpointDeleted, errorHandler)
+	case EventTypeEndpointsListChanged:
+		dispatchEndpointsListChanged(ctx, event, handlers.OnEndpointsListChanged, errorHandler)
+	case EventTypeAuthorizationAdded:
+		dispatchAuthorizationAdded(ctx, event, handlers.OnAuthorizationAdded, errorHandler)
+	case EventTypeAuthorizationRevoked:
+		dispatchAuthorizationRevoked(ctx, event, handlers.OnAuthorizationRevoked, errorHandler)
+	}
+}
+
+func (c *Client) dispatchMessageReceived(
+	ctx context.Context,
+	event internal_models.GenericEventData,
+	handler MessageHandler,
+	errorHandler func(err error),
+) {
+	if handler == nil {
+		return
+	}
+	data, err := event.AsMessageReceivedEventData()
+	if err != nil {
+		errorHandler(err)
+		return
+	}
+	message, err := c.messageFromEventData(ctx, &data, errorHandler)
+	if err != nil {
+		errorHandler(err)
+		return
+	}
+	handler(ctx, message)
+}
+
+func (c *Client) dispatchFileReceived(
+	ctx context.Context,
+	event internal_models.GenericEventData,
+	handler func(ctx context.Context, file *File),
+	errorHandler func(err error),
+) {
+	if handler == nil {
+		return
+	}
+	data, err := event.AsFileReceivedEventData()
+	if err != nil {
+		errorHandler(err)
+		return
+	}
+	file, err := c.fileFromEventData(ctx, &data, errorHandler)
+	if err != nil {
+		errorHandler(err)
+		return
+	}
+	handler(ctx, file)
+}
+
+func dispatchEndpointDeleted(
+	ctx context.Context,
+	event internal_models.GenericEventData,
+	handler EndpointDeletionHandler,
+	errorHandler func(err error),
+) {
+	if handler == nil {
+		return
+	}
+	data, err := event.AsEndpointDeletedEventData()
+	if err != nil {
+		errorHandler(err)
+		return
+	}
+	handler(ctx, &DeletedEndpoint{ID: data.Id, ExternalID: data.ExternalId})
+}
+
+func dispatchEndpointsListChanged(
+	ctx context.Context,
+	event internal_models.GenericEventData,
+	handler func(ctx context.Context, event *EndpointsListChangedEventData),
+	errorHandler func(err error),
+) {
+	if handler == nil {
+		return
+	}
+	data, err := event.AsEndpointsListChangedEventData()
+	if err != nil {
+		errorHandler(err)
+		return
+	}
+	handler(ctx, &data)
+}
+
+func dispatchAuthorizationAdded(
+	ctx context.Context,
+	event internal_models.GenericEventData,
+	handler func(ctx context.Context, event *AuthorizationAddedEventData),
+	errorHandler func(err error),
+) {
+	if handler == nil {
+		return
+	}
+	data, err := event.AsAuthorizationAddedEventData()
+	if err != nil {
+		errorHandler(err)
+		return
+	}
+	handler(ctx, &data)
+}
+
+func dispatchAuthorizationRevoked(
+	ctx context.Context,
+	event internal_models.GenericEventData,
+	handler func(ctx context.Context, event *AuthorizationRevokedEventData),
+	errorHandler func(err error),
+) {
+	if handler == nil {
+		return
+	}
+	data, err := event.AsAuthorizationRevokedEventData()
+	if err != nil {
+		errorHandler(err)
+		return
+	}
+	handler(ctx, &data)
+}
+
+func (c *Client) messageFromEventData(
+	ctx context.Context,
+	data *internal_models.MessageReceivedEventData,
+	errorHandler func(err error),
+) (*Message, error) {
+	message := &Message{
+		ID:                  data.Id,
+		MessageType:         data.MessageType,
+		AppMessageID:        data.AppMessageId,
+		ReceivingEndpointID: data.ReceivingEndpointId,
+		Filename:            data.Filename,
+		TenantID:            data.TenantId,
+		TeamsetContextID:    data.TeamsetContextId,
+	}
+	if data.PayloadUri == nil {
+		if data.Payload == nil {
+			return nil, ErrMissingPayload
+		}
+		message.Payload = *data.Payload
+		return message, nil
+	}
+	payload, err := c.fetchMessagePayload(ctx, *data.PayloadUri, errorHandler)
+	if err != nil {
+		return nil, err
+	}
+	message.Payload = payload
+	return message, nil
+}
+
+func (c *Client) fileFromEventData(
+	ctx context.Context,
+	data *internal_models.FileReceivedEventData,
+	errorHandler func(err error),
+) (*File, error) {
+	if data.PayloadUri == nil {
+		return nil, ErrMissingPayload
+	}
+	payload, err := c.fetchFilePayload(ctx, *data.PayloadUri, errorHandler)
+	if err != nil {
+		return nil, err
+	}
+	return &File{
+		Payload:             payload,
+		ReceivingEndpointID: data.ReceivingEndpointId,
+		Filename:            data.Filename,
+		MessageType:         data.MessageType,
+		Size:                data.Size,
+		MessageIDs:          data.MessageIds,
+		TenantID:            data.TenantId,
+		TeamsetContextID:    data.TeamsetContextId,
+	}, nil
+}
+
 // Message represents a message received from agrirouter.
 type Message struct {
 	ID                  uuid.UUID // ID is the agrirouter message ID, generated by agrirouter
@@ -78,6 +323,75 @@ func (c *Client) ReceiveEndpointDeletedEvents(
 			ID:         deletedEvent.Id,
 			ExternalID: deletedEvent.ExternalId,
 		})
+	}, errorHandler)
+}
+
+// ReceiveEndpointsListChangedEvents listens for ENDPOINTS_LIST_CHANGED events from the
+// agrirouter API and calls the provided handler for each received event.
+//
+// The event carries the complete current list of endpoints visible to the
+// application in the affected tenant.
+//
+// This function blocks until the context is canceled or an error occurs.
+// It is recommended to run this function in a separate goroutine.
+func (c *Client) ReceiveEndpointsListChangedEvents(
+	ctx context.Context,
+	handler func(ctx context.Context, event *EndpointsListChangedEventData),
+	errorHandler func(err error),
+) error {
+	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
+		internal_models.ENDPOINTSLISTCHANGED,
+	}, func(event internal_models.GenericEventData) {
+		data, err := event.AsEndpointsListChangedEventData()
+		if err != nil {
+			errorHandler(err)
+			return
+		}
+		handler(ctx, &data)
+	}, errorHandler)
+}
+
+// ReceiveAuthorizationAddedEvents listens for AUTHORIZATION_ADDED events from the
+// agrirouter API and calls the provided handler for each received event.
+//
+// This function blocks until the context is canceled or an error occurs.
+// It is recommended to run this function in a separate goroutine.
+func (c *Client) ReceiveAuthorizationAddedEvents(
+	ctx context.Context,
+	handler func(ctx context.Context, event *AuthorizationAddedEventData),
+	errorHandler func(err error),
+) error {
+	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
+		internal_models.AUTHORIZATIONADDED,
+	}, func(event internal_models.GenericEventData) {
+		data, err := event.AsAuthorizationAddedEventData()
+		if err != nil {
+			errorHandler(err)
+			return
+		}
+		handler(ctx, &data)
+	}, errorHandler)
+}
+
+// ReceiveAuthorizationRevokedEvents listens for AUTHORIZATION_REVOKED events from the
+// agrirouter API and calls the provided handler for each received event.
+//
+// This function blocks until the context is canceled or an error occurs.
+// It is recommended to run this function in a separate goroutine.
+func (c *Client) ReceiveAuthorizationRevokedEvents(
+	ctx context.Context,
+	handler func(ctx context.Context, event *AuthorizationRevokedEventData),
+	errorHandler func(err error),
+) error {
+	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
+		internal_models.AUTHORIZATIONREVOKED,
+	}, func(event internal_models.GenericEventData) {
+		data, err := event.AsAuthorizationRevokedEventData()
+		if err != nil {
+			errorHandler(err)
+			return
+		}
+		handler(ctx, &data)
 	}, errorHandler)
 }
 

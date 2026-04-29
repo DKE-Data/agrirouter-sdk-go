@@ -213,6 +213,14 @@ func (s *Server) SendMessages(ctx context.Context, request SendMessagesRequestOb
 	return SendMessages200Response{}, nil
 }
 
+func (s *Server) ListAuthorizedTenants(_ context.Context, _ ListAuthorizedTenantsRequestObject) (ListAuthorizedTenantsResponseObject, error) {
+	return ListAuthorizedTenants200JSONResponse{Tenants: []TenantInfo{}}, nil
+}
+
+func (s *Server) ListTenantEndpoints(_ context.Context, _ ListTenantEndpointsRequestObject) (ListTenantEndpointsResponseObject, error) {
+	return ListTenantEndpoints200JSONResponse{Endpoints: []TenantEndpointInfo{}}, nil
+}
+
 func (s *Server) ConfirmMessages(_ context.Context, request ConfirmMessagesRequestObject) (ConfirmMessagesResponseObject, error) {
 	dataBytes, err := json.Marshal(request.Body)
 	if err != nil {

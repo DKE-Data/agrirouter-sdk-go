@@ -95,6 +95,39 @@ type MessageReceivedEventData = internal_models.MessageReceivedEventData
 // either via this API or by other means (e.g. user-initiated deletion from the agrirouter UI).
 type EndpointDeletedEventData = internal_models.EndpointDeletedEventData
 
+// EndpointsListChangedEventData represents the data received in an EndpointsListChanged event.
+//
+// It is emitted whenever the set of endpoints visible to the application,
+// or their respective capabilities and/or routes, change in a tenant.
+type EndpointsListChangedEventData = internal_models.EndpointsListChangedEventData
+
+// AuthorizationAddedEventData represents the data received in an AuthorizationAdded event.
+//
+// It is emitted whenever a user adds an authorization for a tenant to the
+// current application.
+type AuthorizationAddedEventData = internal_models.AuthorizationAddedEventData
+
+// AuthorizationRevokedEventData represents the data received in an AuthorizationRevoked event.
+//
+// It is emitted whenever a user revokes an authorization for a tenant from
+// the current application.
+type AuthorizationRevokedEventData = internal_models.AuthorizationRevokedEventData
+
+// TenantInfo describes an authorized tenant together with its visible endpoints.
+type TenantInfo = internal_models.TenantInfo
+
+// TenantEndpointInfo describes a single endpoint visible to the application within a tenant.
+type TenantEndpointInfo = internal_models.TenantEndpointInfo
+
+// TenantEndpointCapabilities describes the message types an endpoint can send or receive.
+type TenantEndpointCapabilities = internal_models.TenantEndpointCapabilities
+
+// RoutedEndpoints describes route-derived information for an application-owned endpoint.
+type RoutedEndpoints = internal_models.RoutedEndpoints
+
+// EndpointRouteMap is a map keyed by agrirouter endpoint ID, listing message types routable between two endpoints.
+type EndpointRouteMap = internal_models.EndpointRouteMap
+
 // EndpointType represents the type of an agrirouter endpoint.
 //
 // There are three main types of endpoints:

@@ -18,14 +18,26 @@ import (
 // 'repl' are excluded to keep the sandbox non-recursive; 'completion' is
 // excluded because it prints shell scripts that are useless inside the repl.
 var replAllowed = map[string]bool{
-	"put-endpoint":                    true,
-	"delete-endpoint":                 true,
-	"send-messages":                   true,
-	"receive-messages":                true,
-	"receive-endpoint-deleted-events": true,
-	"rede":                            true,
-	"confirm-messages":                true,
-	"help":                            true,
+	"put-endpoint":                           true,
+	"delete-endpoint":                        true,
+	"send-messages":                          true,
+	"receive-messages":                       true,
+	"receive-events":                         true,
+	"re":                                     true,
+	"receive-endpoint-deleted-events":        true,
+	"rede":                                   true,
+	"receive-endpoints-list-changed-events":  true,
+	"relc":                                   true,
+	"receive-authorization-added-events":     true,
+	"raa":                                    true,
+	"receive-authorization-revoked-events":   true,
+	"rar":                                    true,
+	"list-authorized-tenants":                true,
+	"lat":                                    true,
+	"list-tenant-endpoints":                  true,
+	"lte":                                    true,
+	"confirm-messages":                       true,
+	"help":                                   true,
 }
 
 var replCmd = &cobra.Command{
