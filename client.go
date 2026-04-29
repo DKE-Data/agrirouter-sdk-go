@@ -10,6 +10,7 @@ import (
 	"net/url"
 
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/oapi"
+	"github.com/google/uuid"
 )
 
 var (
@@ -143,6 +144,41 @@ func (c *Client) SendMessages(
 	}
 
 	return fmt.Errorf("%w: unexpected status code %d, body: %s", ErrFailedStatusCode, res.StatusCode(), string(res.Body))
+}
+
+// ListAuthorizedTenants returns all tenants for which the current application
+// has an existing authorization, together with the related endpoints known
+// for each tenant.
+//
+// This is intended as the primary global synchronization endpoint, for example
+// when an application starts or recovers and needs to rebuild its complete
+// tenant state.
+func (c *Client) ListAuthorizedTenants(ctx context.Context) ([]TenantInfo, error) {
+	res, err := c.oapiClient.ListAuthorizedTenantsWithResponse(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrAPICallFailed, err)
+	}
+	if res.JSON200 != nil {
+		return res.JSON200.Tenants, nil
+	}
+	return nil, fmt.Errorf("%w: %w", ErrAPICallFailed, httpResponseToErr(res.HTTPResponse, res.Body))
+}
+
+// ListTenantEndpoints returns the current list of endpoints in a single tenant
+// together with their capability information.
+//
+// For endpoints owned by the authorized application, the result also includes
+// route-derived maps describing which endpoints they can send to and receive
+// from for each message type.
+func (c *Client) ListTenantEndpoints(ctx context.Context, tenantID uuid.UUID) ([]TenantEndpointInfo, error) {
+	res, err := c.oapiClient.ListTenantEndpointsWithResponse(ctx, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrAPICallFailed, err)
+	}
+	if res.JSON200 != nil {
+		return res.JSON200.Endpoints, nil
+	}
+	return nil, fmt.Errorf("%w: %w", ErrAPICallFailed, httpResponseToErr(res.HTTPResponse, res.Body))
 }
 
 // ConfirmMessages confirms that messages have been received and processed.

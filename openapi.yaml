@@ -178,7 +178,7 @@ paths:
           description: |
             Events type filter, if provided would limit the events returned to only those of the specified types.
             If not provided, all supported events will be streamed.
-          example: ["MESSAGE_RECEIVED", "FILE_RECEIVED"]
+          example: ["MESSAGE_RECEIVED", "FILE_RECEIVED", "AUTHORIZATION_ADDED"]
           schema:
             type: array
             items:
@@ -187,6 +187,9 @@ paths:
                 - MESSAGE_RECEIVED
                 - FILE_RECEIVED
                 - ENDPOINT_DELETED
+                - ENDPOINTS_LIST_CHANGED
+                - AUTHORIZATION_ADDED
+                - AUTHORIZATION_REVOKED
       description: |
         Receive stream of events from the agrirouter outbox.
         The events are retrieved for every endpoint of an
@@ -195,6 +198,10 @@ paths:
         These are possible event types:
         - MESSAGE_RECEIVED - when one message is received
         - FILE_RECEIVED - when chunked payload has been completely received
+        - ENDPOINT_DELETED - when one of the application's endpoints is deleted
+        - ENDPOINTS_LIST_CHANGED - when the list of endpoints in a tenant changes
+        - AUTHORIZATION_ADDED - when a tenant authorization is newly added
+        - AUTHORIZATION_REVOKED - when a tenant authorization is revoked
 
         These events are sent as Server-Sent Events (SSE), where one line
         prefixed "event:" would define event type and another line
@@ -204,7 +211,7 @@ paths:
         https://html.spec.whatwg.org/multipage/server-sent-events.html#server-sent-events
 
         For example:
-        
+
         ```
         event: MESSAGE_RECEIVED
         data: {"messageId":"12345","timestamp":"2023-01-01T12:00:00Z"}
@@ -212,15 +219,18 @@ paths:
 
         In this API, `data` would always be JSON encoded object, every
         event data schema is defined in the `#/components/schemas`, with
-        schema name always ending with `EventData`. 
+        schema name always ending with `EventData`.
 
         Here is a table:
 
-        | Event Type          | Schema                                                                     |
-        |---------------------|----------------------------------------------------------------------------|
-        | MESSAGE_RECEIVED    | [MessageReceivedEventData](#/components/schemas/MessageReceivedEventData)  |
-        | FILE_RECEIVED       | [FileReceivedEventData](#/components/schemas/FileReceivedEventData)        |
-        | ENDPOINT_DELETED    | [EndpointDeletedEventData](#/components/schemas/EndpointDeletedEventData)  |
+        | Event Type             | Schema                                                                              |
+        |------------------------|-------------------------------------------------------------------------------------|
+        | MESSAGE_RECEIVED       | [MessageReceivedEventData](#/components/schemas/MessageReceivedEventData)           |
+        | FILE_RECEIVED          | [FileReceivedEventData](#/components/schemas/FileReceivedEventData)                 |
+        | ENDPOINT_DELETED       | [EndpointDeletedEventData](#/components/schemas/EndpointDeletedEventData)           |
+        | ENDPOINTS_LIST_CHANGED | [EndpointsListChangedEventData](#/components/schemas/EndpointsListChangedEventData) |
+        | AUTHORIZATION_ADDED    | [AuthorizationAddedEventData](#/components/schemas/AuthorizationAddedEventData)     |
+        | AUTHORIZATION_REVOKED  | [AuthorizationRevokedEventData](#/components/schemas/AuthorizationRevokedEventData) |
 
       # As there is no yet accepted way of defining schema for SSE data,
       # it would have to be only described in description for now.
@@ -260,6 +270,96 @@ paths:
       responses:
         '202':
           description: Confirmation is saved for processing, feed will be updated eventually
+        '400':
+          description: Request is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Server Side Error
+
+  /tenants/{tenantId}/endpoints:
+    get:
+      operationId: listTenantEndpoints
+      summary: List tenant endpoints with route information
+      description: |
+        Returns the current list of endpoints in the tenant together with their
+        capability information.
+
+        For endpoints owned by the authorized application, this operation also
+        returns route-derived maps describing which endpoints they can send to
+        and receive from for each message type.
+
+        This operation is tenant-scoped and is intended for inspecting or
+        refreshing endpoint information for one already-known tenant. Use it
+        for example if you cannot/do not want to persist information from the
+        `ENDPOINTS_LIST_CHANGED` event or if your frontend doesn't have access to
+        that data.
+
+        It is not intended as the primary application-start or global re-sync
+        operation. For that purpose, use `GET /tenants`, which returns all
+        currently authorized tenants together with their related endpoints.
+      parameters:
+        - $ref: "#/components/parameters/tenantId"
+      responses:
+        '200':
+          description: Tenant endpoints successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EndpointsListResponse"
+        '400':
+          description: Request is invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Authorization failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '500':
+          description: Server Side Error
+
+  /tenants:
+    get:
+      operationId: listAuthorizedTenants
+      summary: List all authorized tenants and their related endpoints
+      description: |
+        Returns all tenants for which the current application has an existing
+        authorization together with the related endpoints known for each tenant.
+
+        This operation is intended as the primary global synchronization
+        endpoint, for example when an application starts, recovers after a
+        crash, or otherwise needs to rebuild its complete tenant state.
+      responses:
+        '200':
+          description: Authorized tenants successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantsListResponse"
         '400':
           description: Request is invalid
           content:
@@ -412,6 +512,14 @@ components:
         type: string
         format: uuid
       description: The farmer's tenant ID in relation to which communication is done.
+    tenantId:
+      name: tenantId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: The farmer's tenant ID in relation to which this operation is performed.
     externalId:
       name: externalId
       in: path
@@ -435,6 +543,9 @@ components:
         - $ref: "#/components/schemas/MessageReceivedEventData"
         - $ref: "#/components/schemas/FileReceivedEventData"
         - $ref: "#/components/schemas/EndpointDeletedEventData"
+        - $ref: "#/components/schemas/EndpointsListChangedEventData"
+        - $ref: "#/components/schemas/AuthorizationAddedEventData"
+        - $ref: "#/components/schemas/AuthorizationRevokedEventData"
       discriminator:
         propertyName: event_type
     PayloadURI:
@@ -521,6 +632,233 @@ components:
         event_type:
           type: string
           const: ENDPOINT_DELETED
+    EndpointsListChangedEventData:
+      type: object
+      description: |
+        Data structure for ENDPOINTS_LIST_CHANGED events. This event would
+        arrive whenever the set of endpoints visible to the application, or
+        their respective capabilities and/or routes, change in a tenant.
+
+        ENDPOINTS_LIST_CHANGED is only emitted once the application has at
+        least one endpoint of its own in the target tenant. Until that first
+        application-owned endpoint exists, changes to other endpoints in the
+        tenant are not reported, even if an authorization is in place. Once
+        the first own endpoint is created, clients receive events for any
+        subsequent change to the visible endpoint set.
+      required:
+        - event_type
+        - tenant_id
+        - endpoints
+      properties:
+        event_type:
+          type: string
+          const: ENDPOINTS_LIST_CHANGED
+        tenant_id:
+          type: string
+          format: uuid
+          description: The tenant whose endpoint list changed.
+        endpoints:
+          type: array
+          description: |
+            Complete current list of endpoints in the tenant that are visible
+            to the application.
+          items:
+            $ref: "#/components/schemas/TenantEndpointInfo"
+    AuthorizationAddedEventData:
+      type: object
+      description: |
+        Data structure for AUTHORIZATION_ADDED events. This event would arrive
+        whenever a user adds an authorization for a tenant to the current
+        application.
+
+        An authorization is uniquely identified by the triple
+        (tenant_id, application_id, scope). The application_id is implicit from
+        the receiving subscription; tenant_id and scope are explicit on this
+        event. At present the only scope in use is `endpoints:manage`;
+        additional scopes may be added in the future, and clients should then
+        treat authorizations with different scopes as distinct authorizations
+        even when tenant_id matches.
+      required:
+        - event_type
+        - tenant
+        - scope
+      properties:
+        event_type:
+          type: string
+          const: AUTHORIZATION_ADDED
+        tenant:
+          $ref: "#/components/schemas/TenantInfo"
+        scope:
+          type: string
+          description: |
+            The OAuth scope that was granted with this authorization. Today
+            the only scope in use is `endpoints:manage`; additional scopes may
+            be introduced in future revisions of this API.
+          example: "endpoints:manage"
+    AuthorizationRevokedEventData:
+      type: object
+      description: |
+        Data structure for AUTHORIZATION_REVOKED events. This event would
+        arrive whenever a user revokes an authorization for a tenant from the
+        current application. When this event is delivered to you, you have
+        already lost access to the target tenant for the given scope. You
+        should clean up all information related to this tenant (for that scope)
+        and update your state accordingly.
+
+        All endpoints that were previously accessible via this authorization
+        are considered removed. You will receive distinct ENDPOINT_DELETED
+        events for all endpoints deleted as a result of the authorization
+        revocation.
+
+        Authorizations are uniquely identified by
+        (tenant_id, application_id, scope); only the authorization matching the
+        `scope` below was revoked. At present only the `endpoints:manage`
+        scope is in use, but if additional scopes are introduced later, other
+        scopes for the same tenant would remain in effect.
+      required:
+        - event_type
+        - tenant_id
+        - scope
+      properties:
+        event_type:
+          type: string
+          const: AUTHORIZATION_REVOKED
+        tenant_id:
+          type: string
+          format: uuid
+          description: The tenant whose authorization was revoked.
+        scope:
+          type: string
+          description: |
+            The OAuth scope of the authorization that was revoked. Today the
+            only scope in use is `endpoints:manage`; additional scopes may be
+            introduced in future revisions of this API.
+          example: "endpoints:manage"
+    EndpointsListResponse:
+      type: object
+      required:
+        - endpoints
+      properties:
+        endpoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/TenantEndpointInfo"
+    TenantsListResponse:
+      type: object
+      required:
+        - tenants
+      properties:
+        tenants:
+          type: array
+          items:
+            $ref: "#/components/schemas/TenantInfo"
+    TenantInfo:
+      type: object
+      required:
+        - tenant_id
+        - endpoints
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+          description: Authorized tenant ID.
+        endpoints:
+          type: array
+          description: |
+            Endpoints visible in this tenant, subject to the following
+            privacy rule:
+
+            - If the application has not yet created any endpoint of its own
+              in this tenant, this array is empty — even if other endpoints
+              exist in the tenant. This prevents exposing tenant contents to
+              applications that have not yet actively participated in it.
+            - Once the application has at least one of its own endpoints in
+              the tenant, this array contains the full set of endpoints
+              visible to the application.
+
+            An authorized tenant with no application-owned endpoint will
+            therefore still appear in `GET /tenants`, but with an empty
+            `endpoints` array. See `owned_by_your_application` on
+            `TenantEndpointInfo` for the distinction between own and other
+            endpoints.
+          items:
+            $ref: "#/components/schemas/TenantEndpointInfo"
+    TenantEndpointInfo:
+      type: object
+      required:
+        - id
+        - name
+        - endpoint_type
+        - application_id
+        - tenant_id
+        - owned_by_your_application
+        - capabilities
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: The agrirouter endpoint ID.
+        external_id:
+          type: string
+          description: External identifier of the endpoint, if available to the caller.
+        name:
+          type: string
+          description: Display name of the endpoint.
+        endpoint_type:
+          $ref: "#/components/schemas/EndpointType"
+        application_id:
+          type: string
+          format: uuid
+          description: The ID of the application that owns the endpoint.
+        tenant_id:
+          type: string
+          format: uuid
+          description: The tenant ID of the endpoint.
+        owned_by_your_application:
+          type: boolean
+          description: Indicates whether this endpoint belongs to the application that is authorized for the current request.
+        capabilities:
+          $ref: "#/components/schemas/TenantEndpointCapabilities"
+        routed_endpoints:
+          $ref: "#/components/schemas/RoutedEndpoints"
+    TenantEndpointCapabilities:
+      type: object
+      required:
+        - can_send
+        - can_receive
+      properties:
+        can_send:
+          type: array
+          description: Message types this endpoint can send.
+          items:
+            type: string
+        can_receive:
+          type: array
+          description: Message types this endpoint can receive.
+          items:
+            type: string
+    RoutedEndpoints:
+      type: object
+      description: |
+        Route-derived information for this endpoint.
+
+        This property only exists for endpoints owned by the authorized
+        application. It is omitted for all other endpoints in the tenant.
+      properties:
+        can_send_to:
+          $ref: "#/components/schemas/EndpointRouteMap"
+        can_receive_from:
+          $ref: "#/components/schemas/EndpointRouteMap"
+    EndpointRouteMap:
+      type: object
+      description: |
+        Map keyed by agrirouter endpoint ID. Each value lists the message types
+        for which routing is currently possible between the two endpoints.
+      additionalProperties:
+        type: array
+        items:
+          type: string
+          example: "iso:11783:-10:taskdata:zip"
     FileReceivedEventData:
       type: object
       description: |

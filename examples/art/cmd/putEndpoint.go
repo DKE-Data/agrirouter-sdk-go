@@ -196,7 +196,6 @@ func init() {
 			agrirouter.CloudSoftware,
 		),
 	)
-	putEndpointCmd.MarkFlagRequired(endpointTypeOpt)
 	_ = putEndpointCmd.RegisterFlagCompletionFunc(endpointTypeOpt, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return []string{
 			string(agrirouter.VirtualCommunicationUnit),

@@ -33,10 +33,63 @@ const (
 
 // Defines values for ReceiveEventsParamsTypes.
 const (
-	ENDPOINTDELETED ReceiveEventsParamsTypes = "ENDPOINT_DELETED"
-	FILERECEIVED    ReceiveEventsParamsTypes = "FILE_RECEIVED"
-	MESSAGERECEIVED ReceiveEventsParamsTypes = "MESSAGE_RECEIVED"
+	AUTHORIZATIONADDED   ReceiveEventsParamsTypes = "AUTHORIZATION_ADDED"
+	AUTHORIZATIONREVOKED ReceiveEventsParamsTypes = "AUTHORIZATION_REVOKED"
+	ENDPOINTDELETED      ReceiveEventsParamsTypes = "ENDPOINT_DELETED"
+	ENDPOINTSLISTCHANGED ReceiveEventsParamsTypes = "ENDPOINTS_LIST_CHANGED"
+	FILERECEIVED         ReceiveEventsParamsTypes = "FILE_RECEIVED"
+	MESSAGERECEIVED      ReceiveEventsParamsTypes = "MESSAGE_RECEIVED"
 )
+
+// AuthorizationAddedEventData Data structure for AUTHORIZATION_ADDED events. This event would arrive
+// whenever a user adds an authorization for a tenant to the current
+// application.
+//
+// An authorization is uniquely identified by the triple
+// (tenant_id, application_id, scope). The application_id is implicit from
+// the receiving subscription; tenant_id and scope are explicit on this
+// event. At present the only scope in use is `endpoints:manage`;
+// additional scopes may be added in the future, and clients should then
+// treat authorizations with different scopes as distinct authorizations
+// even when tenant_id matches.
+type AuthorizationAddedEventData struct {
+	EventType string `json:"event_type"`
+
+	// Scope The OAuth scope that was granted with this authorization. Today
+	// the only scope in use is `endpoints:manage`; additional scopes may
+	// be introduced in future revisions of this API.
+	Scope  string     `json:"scope"`
+	Tenant TenantInfo `json:"tenant"`
+}
+
+// AuthorizationRevokedEventData Data structure for AUTHORIZATION_REVOKED events. This event would
+// arrive whenever a user revokes an authorization for a tenant from the
+// current application. When this event is delivered to you, you have
+// already lost access to the target tenant for the given scope. You
+// should clean up all information related to this tenant (for that scope)
+// and update your state accordingly.
+//
+// All endpoints that were previously accessible via this authorization
+// are considered removed. You will receive distinct ENDPOINT_DELETED
+// events for all endpoints deleted as a result of the authorization
+// revocation.
+//
+// Authorizations are uniquely identified by
+// (tenant_id, application_id, scope); only the authorization matching the
+// `scope` below was revoked. At present only the `endpoints:manage`
+// scope is in use, but if additional scopes are introduced later, other
+// scopes for the same tenant would remain in effect.
+type AuthorizationRevokedEventData struct {
+	EventType string `json:"event_type"`
+
+	// Scope The OAuth scope of the authorization that was revoked. Today the
+	// only scope in use is `endpoints:manage`; additional scopes may be
+	// introduced in future revisions of this API.
+	Scope string `json:"scope"`
+
+	// TenantId The tenant whose authorization was revoked.
+	TenantId openapi_types.UUID `json:"tenant_id"`
+}
 
 // ConfirmMessagesRequest defines model for ConfirmMessagesRequest.
 type ConfirmMessagesRequest struct {
@@ -86,6 +139,10 @@ type EndpointDeletedEventData struct {
 	Id openapi_types.UUID `json:"id"`
 }
 
+// EndpointRouteMap Map keyed by agrirouter endpoint ID. Each value lists the message types
+// for which routing is currently possible between the two endpoints.
+type EndpointRouteMap map[string][]string
+
 // EndpointSubscription defines model for EndpointSubscription.
 type EndpointSubscription struct {
 	// MessageType The message type that the endpoint is subscribed to.
@@ -96,6 +153,31 @@ type EndpointSubscription struct {
 
 // EndpointType defines model for EndpointType.
 type EndpointType string
+
+// EndpointsListChangedEventData Data structure for ENDPOINTS_LIST_CHANGED events. This event would
+// arrive whenever the set of endpoints visible to the application, or
+// their respective capabilities and/or routes, change in a tenant.
+//
+// ENDPOINTS_LIST_CHANGED is only emitted once the application has at
+// least one endpoint of its own in the target tenant. Until that first
+// application-owned endpoint exists, changes to other endpoints in the
+// tenant are not reported, even if an authorization is in place. Once
+// the first own endpoint is created, clients receive events for any
+// subsequent change to the visible endpoint set.
+type EndpointsListChangedEventData struct {
+	// Endpoints Complete current list of endpoints in the tenant that are visible
+	// to the application.
+	Endpoints []TenantEndpointInfo `json:"endpoints"`
+	EventType string               `json:"event_type"`
+
+	// TenantId The tenant whose endpoint list changed.
+	TenantId openapi_types.UUID `json:"tenant_id"`
+}
+
+// EndpointsListResponse defines model for EndpointsListResponse.
+type EndpointsListResponse struct {
+	Endpoints []TenantEndpointInfo `json:"endpoints"`
+}
 
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
@@ -251,8 +333,92 @@ type PutEndpointRequest struct {
 	Subscriptions     []EndpointSubscription `json:"subscriptions"`
 }
 
+// RoutedEndpoints Route-derived information for this endpoint.
+//
+// This property only exists for endpoints owned by the authorized
+// application. It is omitted for all other endpoints in the tenant.
+type RoutedEndpoints struct {
+	// CanReceiveFrom Map keyed by agrirouter endpoint ID. Each value lists the message types
+	// for which routing is currently possible between the two endpoints.
+	CanReceiveFrom *EndpointRouteMap `json:"can_receive_from,omitempty"`
+
+	// CanSendTo Map keyed by agrirouter endpoint ID. Each value lists the message types
+	// for which routing is currently possible between the two endpoints.
+	CanSendTo *EndpointRouteMap `json:"can_send_to,omitempty"`
+}
+
+// TenantEndpointCapabilities defines model for TenantEndpointCapabilities.
+type TenantEndpointCapabilities struct {
+	// CanReceive Message types this endpoint can receive.
+	CanReceive []string `json:"can_receive"`
+
+	// CanSend Message types this endpoint can send.
+	CanSend []string `json:"can_send"`
+}
+
+// TenantEndpointInfo defines model for TenantEndpointInfo.
+type TenantEndpointInfo struct {
+	// ApplicationId The ID of the application that owns the endpoint.
+	ApplicationId openapi_types.UUID         `json:"application_id"`
+	Capabilities  TenantEndpointCapabilities `json:"capabilities"`
+	EndpointType  EndpointType               `json:"endpoint_type"`
+
+	// ExternalId External identifier of the endpoint, if available to the caller.
+	ExternalId *string `json:"external_id,omitempty"`
+
+	// Id The agrirouter endpoint ID.
+	Id openapi_types.UUID `json:"id"`
+
+	// Name Display name of the endpoint.
+	Name string `json:"name"`
+
+	// OwnedByYourApplication Indicates whether this endpoint belongs to the application that is authorized for the current request.
+	OwnedByYourApplication bool `json:"owned_by_your_application"`
+
+	// RoutedEndpoints Route-derived information for this endpoint.
+	//
+	// This property only exists for endpoints owned by the authorized
+	// application. It is omitted for all other endpoints in the tenant.
+	RoutedEndpoints *RoutedEndpoints `json:"routed_endpoints,omitempty"`
+
+	// TenantId The tenant ID of the endpoint.
+	TenantId openapi_types.UUID `json:"tenant_id"`
+}
+
+// TenantInfo defines model for TenantInfo.
+type TenantInfo struct {
+	// Endpoints Endpoints visible in this tenant, subject to the following
+	// privacy rule:
+	//
+	// - If the application has not yet created any endpoint of its own
+	//   in this tenant, this array is empty — even if other endpoints
+	//   exist in the tenant. This prevents exposing tenant contents to
+	//   applications that have not yet actively participated in it.
+	// - Once the application has at least one of its own endpoints in
+	//   the tenant, this array contains the full set of endpoints
+	//   visible to the application.
+	//
+	// An authorized tenant with no application-owned endpoint will
+	// therefore still appear in `GET /tenants`, but with an empty
+	// `endpoints` array. See `owned_by_your_application` on
+	// `TenantEndpointInfo` for the distinction between own and other
+	// endpoints.
+	Endpoints []TenantEndpointInfo `json:"endpoints"`
+
+	// TenantId Authorized tenant ID.
+	TenantId openapi_types.UUID `json:"tenant_id"`
+}
+
+// TenantsListResponse defines model for TenantsListResponse.
+type TenantsListResponse struct {
+	Tenants []TenantInfo `json:"tenants"`
+}
+
 // ExternalId defines model for externalId.
 type ExternalId = string
+
+// TenantId defines model for tenantId.
+type TenantId = openapi_types.UUID
 
 // XAgrirouterTenantId defines model for x-agrirouter-tenant-id.
 type XAgrirouterTenantId = openapi_types.UUID
@@ -426,6 +592,90 @@ func (t *GenericEventData) MergeEndpointDeletedEventData(v EndpointDeletedEventD
 	return err
 }
 
+// AsEndpointsListChangedEventData returns the union data inside the GenericEventData as a EndpointsListChangedEventData
+func (t GenericEventData) AsEndpointsListChangedEventData() (EndpointsListChangedEventData, error) {
+	var body EndpointsListChangedEventData
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEndpointsListChangedEventData overwrites any union data inside the GenericEventData as the provided EndpointsListChangedEventData
+func (t *GenericEventData) FromEndpointsListChangedEventData(v EndpointsListChangedEventData) error {
+	v.EventType = "EndpointsListChangedEventData"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEndpointsListChangedEventData performs a merge with any union data inside the GenericEventData, using the provided EndpointsListChangedEventData
+func (t *GenericEventData) MergeEndpointsListChangedEventData(v EndpointsListChangedEventData) error {
+	v.EventType = "EndpointsListChangedEventData"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAuthorizationAddedEventData returns the union data inside the GenericEventData as a AuthorizationAddedEventData
+func (t GenericEventData) AsAuthorizationAddedEventData() (AuthorizationAddedEventData, error) {
+	var body AuthorizationAddedEventData
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAuthorizationAddedEventData overwrites any union data inside the GenericEventData as the provided AuthorizationAddedEventData
+func (t *GenericEventData) FromAuthorizationAddedEventData(v AuthorizationAddedEventData) error {
+	v.EventType = "AuthorizationAddedEventData"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAuthorizationAddedEventData performs a merge with any union data inside the GenericEventData, using the provided AuthorizationAddedEventData
+func (t *GenericEventData) MergeAuthorizationAddedEventData(v AuthorizationAddedEventData) error {
+	v.EventType = "AuthorizationAddedEventData"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAuthorizationRevokedEventData returns the union data inside the GenericEventData as a AuthorizationRevokedEventData
+func (t GenericEventData) AsAuthorizationRevokedEventData() (AuthorizationRevokedEventData, error) {
+	var body AuthorizationRevokedEventData
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAuthorizationRevokedEventData overwrites any union data inside the GenericEventData as the provided AuthorizationRevokedEventData
+func (t *GenericEventData) FromAuthorizationRevokedEventData(v AuthorizationRevokedEventData) error {
+	v.EventType = "AuthorizationRevokedEventData"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAuthorizationRevokedEventData performs a merge with any union data inside the GenericEventData, using the provided AuthorizationRevokedEventData
+func (t *GenericEventData) MergeAuthorizationRevokedEventData(v AuthorizationRevokedEventData) error {
+	v.EventType = "AuthorizationRevokedEventData"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
 func (t GenericEventData) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"event_type"`
@@ -440,8 +690,14 @@ func (t GenericEventData) ValueByDiscriminator() (interface{}, error) {
 		return nil, err
 	}
 	switch discriminator {
+	case "AuthorizationAddedEventData":
+		return t.AsAuthorizationAddedEventData()
+	case "AuthorizationRevokedEventData":
+		return t.AsAuthorizationRevokedEventData()
 	case "EndpointDeletedEventData":
 		return t.AsEndpointDeletedEventData()
+	case "EndpointsListChangedEventData":
+		return t.AsEndpointsListChangedEventData()
 	case "FileReceivedEventData":
 		return t.AsFileReceivedEventData()
 	case "MessageReceivedEventData":

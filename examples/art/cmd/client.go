@@ -12,16 +12,31 @@ import (
 	"golang.org/x/oauth2/clientcredentials"
 )
 
+const (
+	defaultAPIURL        = "https://api.qa.agrirouter.farm"
+	defaultOAuthTokenURL = "https://oauth.qa.agrirouter.farm/token"
+)
+
 func getClient(ctx context.Context) (*agrirouter.Client, error) {
+	apiURL := viper.GetString("ART_API_URL")
+	if apiURL == "" {
+		apiURL = defaultAPIURL
+	}
+	tokenURL := viper.GetString("ART_OAUTH_TOKEN_URL")
+	if tokenURL == "" {
+		tokenURL = defaultOAuthTokenURL
+	}
+
 	slog.Debug("Creating OAuth2 client using client credentials",
 		slog.String("client_id", viper.GetString("AGRIROUTER_OAUTH_CLIENT_ID")),
-		slog.String("token_url", "https://oauth.qa.agrirouter.farm/token"),
+		slog.String("token_url", tokenURL),
+		slog.String("api_url", apiURL),
 	)
 
 	clientCredsConfig := clientcredentials.Config{
 		ClientID:     viper.GetString("AGRIROUTER_OAUTH_CLIENT_ID"),
 		ClientSecret: viper.GetString("AGRIROUTER_OAUTH_CLIENT_SECRET"),
-		TokenURL:     "https://oauth.qa.agrirouter.farm/token",
+		TokenURL:     tokenURL,
 	}
 
 	tokenSource := clientCredsConfig.TokenSource(context.Background())
@@ -32,7 +47,7 @@ func getClient(ctx context.Context) (*agrirouter.Client, error) {
 
 	httpClient := oauth2.NewClient(ctx, tokenSource)
 	client, err := agrirouter.NewClient(
-		"https://api.qa.agrirouter.farm",
+		apiURL,
 		agrirouter.WithHTTPClient(httpClient),
 	)
 	if err != nil {
