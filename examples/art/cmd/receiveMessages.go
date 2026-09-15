@@ -62,7 +62,7 @@ func getFilename(message *agrirouter.Message, savePayloadsTo string) string {
 	if extension == "" {
 		extension = ".bin"
 	}
-	return fmt.Sprintf("%s/%s%s", savePayloadsTo, message.AppMessageID, extension)
+	return fmt.Sprintf("%s/%s%s", savePayloadsTo, sanitizeFilename(message.AppMessageID), extension)
 }
 
 func messageTypeToFileExtension(messageType string) string {

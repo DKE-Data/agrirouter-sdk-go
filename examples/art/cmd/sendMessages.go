@@ -93,7 +93,6 @@ var sendMessagesCmd = &cobra.Command{
 			ContentLength:               int64(len(fileContent)),
 			XAgrirouterSentTimestamp:    time.Now(),
 			XAgrirouterMessageType:      messageType,
-			XAgrirouterContextId:        contextId,
 			XAgrirouterEndpointId:       endpointIDParsed,
 			XAgrirouterTenantId:         tenantIDParsed,
 			XAgrirouterFilename:         &filename,

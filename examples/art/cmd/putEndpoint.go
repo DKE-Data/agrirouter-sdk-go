@@ -158,7 +158,7 @@ var putEndpointCmd = &cobra.Command{
 			Name:              namePtr,
 			ApplicationId:     applicationIDParsed,
 			SoftwareVersionId: softwareVersionIDParsed,
-			EndpointType:      agrirouter.EndpointType(endpointType),
+			EndpointType:      agrirouter.EndpointTypeToCreate(endpointType),
 			Capabilities:      capabilities,
 			Subscriptions:     subscriptions,
 			AllowDeleteByUser: allowDeleteByUserPtr,

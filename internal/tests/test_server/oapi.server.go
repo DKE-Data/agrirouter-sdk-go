@@ -23,6 +23,14 @@ const (
 	AgrirouterOauthQAScopes   = "agrirouterOauthQA.Scopes"
 )
 
+// Defines values for ApplicationType.
+const (
+	COMMUNICATIONUNIT ApplicationType = "COMMUNICATION_UNIT"
+	FARMINGSOFTWARE   ApplicationType = "FARMING_SOFTWARE"
+	G4APPLICATION     ApplicationType = "G4_APPLICATION"
+	TELEMETRYPLATFORM ApplicationType = "TELEMETRY_PLATFORM"
+)
+
 // Defines values for EndpointCapabilityDirection.
 const (
 	RECEIVE     EndpointCapabilityDirection = "RECEIVE"
@@ -32,9 +40,17 @@ const (
 
 // Defines values for EndpointType.
 const (
-	CloudSoftware            EndpointType = "cloud_software"
-	FarmingSoftware          EndpointType = "farming_software"
-	VirtualCommunicationUnit EndpointType = "virtual_communication_unit"
+	EndpointTypeCloudSoftware            EndpointType = "cloud_software"
+	EndpointTypeCommunicationUnit        EndpointType = "communication_unit"
+	EndpointTypeTelemetryPlatform        EndpointType = "telemetry_platform"
+	EndpointTypeVirtualCommunicationUnit EndpointType = "virtual_communication_unit"
+)
+
+// Defines values for EndpointTypeToCreate.
+const (
+	EndpointTypeToCreateCloudSoftware            EndpointTypeToCreate = "cloud_software"
+	EndpointTypeToCreateFarmingSoftware          EndpointTypeToCreate = "farming_software"
+	EndpointTypeToCreateVirtualCommunicationUnit EndpointTypeToCreate = "virtual_communication_unit"
 )
 
 // Defines values for ReceiveEventsParamsTypes.
@@ -46,6 +62,20 @@ const (
 	FILERECEIVED         ReceiveEventsParamsTypes = "FILE_RECEIVED"
 	MESSAGERECEIVED      ReceiveEventsParamsTypes = "MESSAGE_RECEIVED"
 )
+
+// ApplicationCapabilities defines model for ApplicationCapabilities.
+type ApplicationCapabilities struct {
+	// CanReceive Message types this application can receive.
+	CanReceive []string `json:"can_receive"`
+
+	// CanSend Message types this application can send.
+	CanSend []string `json:"can_send"`
+}
+
+// ApplicationType Catalog type of an application. It determines how the application is
+// connected: a `COMMUNICATION_UNIT` is onboarded with a registration
+// code entered on the machine, every other type via its own deep URL.
+type ApplicationType string
 
 // AuthorizationAddedEventData Data structure for AUTHORIZATION_ADDED events. This event would arrive
 // whenever a user adds an authorization for a tenant to the current
@@ -64,7 +94,13 @@ type AuthorizationAddedEventData struct {
 	// Scope The OAuth scope that was granted with this authorization. Today
 	// the only scope in use is `endpoints:manage`; additional scopes may
 	// be introduced in future revisions of this API.
-	Scope  string     `json:"scope"`
+	Scope string `json:"scope"`
+
+	// State Echoes the `state` value the partner supplied on the OAuth2
+	// authorization request, allowing their backend to correlate this
+	// event to their own customer. May be absent for authorizations
+	// created before this field existed.
+	State  *string    `json:"state,omitempty"`
 	Tenant TenantInfo `json:"tenant"`
 }
 
@@ -97,6 +133,36 @@ type AuthorizationRevokedEventData struct {
 	TenantId openapi_types.UUID `json:"tenant_id"`
 }
 
+// CompatibleApplication defines model for CompatibleApplication.
+type CompatibleApplication struct {
+	// ApplicationId The catalog ID of the compatible application.
+	ApplicationId openapi_types.UUID `json:"application_id"`
+
+	// Brand Brand of the application.
+	Brand                  *string                 `json:"brand,omitempty"`
+	CompatibleCapabilities ApplicationCapabilities `json:"compatible_capabilities"`
+
+	// Description Description of the application.
+	Description *string `json:"description,omitempty"`
+
+	// LogoUrl URL of the application's logo.
+	LogoUrl *string `json:"logo_url,omitempty"`
+
+	// Name Display name of the application.
+	Name string `json:"name"`
+
+	// Type Catalog type of an application. It determines how the application is
+	// connected: a `COMMUNICATION_UNIT` is onboarded with a registration
+	// code entered on the machine, every other type via its own deep URL.
+	Type ApplicationType `json:"type"`
+}
+
+// CompatibleApplicationsResponse defines model for CompatibleApplicationsResponse.
+type CompatibleApplicationsResponse struct {
+	// CompatibleApplications Applications compatible with the initiating application.
+	CompatibleApplications []CompatibleApplication `json:"compatible_applications"`
+}
+
 // ConfirmMessagesRequest defines model for ConfirmMessagesRequest.
 type ConfirmMessagesRequest struct {
 	// Confirmations List of message confirmations.
@@ -111,11 +177,19 @@ type Endpoint struct {
 	Capabilities      []EndpointCapability `json:"capabilities"`
 
 	// ConnectionsUri URI pointing to where the user can manage the entity connected to this endpoint, e.g. to disconnect or delete equipment from an equipment vendor.
-	ConnectionsUri    *string            `json:"connections_uri,omitempty"`
-	EndpointType      EndpointType       `json:"endpoint_type"`
-	ExternalId        string             `json:"external_id"`
-	Id                openapi_types.UUID `json:"id"`
-	SoftwareVersionId openapi_types.UUID `json:"software_version_id"`
+	ConnectionsUri *string `json:"connections_uri,omitempty"`
+
+	// EndpointType Type of an endpoint that can be observed in the system. This includes
+	// types that can be created via this G4 API as well as legacy types that
+	// can only be created via the G2/G3 APIs. For values accepted when
+	// creating an endpoint, see `EndpointTypeToCreate`.
+	EndpointType EndpointType       `json:"endpoint_type"`
+	ExternalId   string             `json:"external_id"`
+	Id           openapi_types.UUID `json:"id"`
+
+	// OwnerEndpointExternalId External ID of the endpoint that owns (is the parent of) this endpoint, if any.
+	OwnerEndpointExternalId *string            `json:"owner_endpoint_external_id,omitempty"`
+	SoftwareVersionId       openapi_types.UUID `json:"software_version_id"`
 
 	// TenantId The tenant ID of the endpoint
 	TenantId string `json:"tenant_id"`
@@ -157,8 +231,19 @@ type EndpointSubscription struct {
 	MessageType string `json:"message_type"`
 }
 
-// EndpointType defines model for EndpointType.
+// EndpointType Type of an endpoint that can be observed in the system. This includes
+// types that can be created via this G4 API as well as legacy types that
+// can only be created via the G2/G3 APIs. For values accepted when
+// creating an endpoint, see `EndpointTypeToCreate`.
 type EndpointType string
+
+// EndpointTypeToCreate Type of an endpoint that can be created via this G4 API. Legacy types
+// such as `communication_unit` and `telemetry_platform` cannot be
+// created here; see `EndpointType` for the full set that may be observed.
+//
+// `farming_software` is accepted as a deprecated alias for
+// `cloud_software` and will be removed in a future revision.
+type EndpointTypeToCreate string
 
 // EndpointsListChangedEventData Data structure for ENDPOINTS_LIST_CHANGED events. This event would
 // arrive whenever the set of endpoints visible to the application, or
@@ -208,7 +293,8 @@ type FileReceivedEventData struct {
 	Filename *string `json:"filename,omitempty"`
 
 	// MessageIds List of agrirouter message IDs of the messages that carried the file payload chunks.
-	// This is useful for confirming the messages after processing the file.
+	// To confirm the file, all of these IDs must be confirmed via `POST /confirmations`,
+	// since a file may be a concatenation of chunks from the sender.
 	MessageIds []openapi_types.UUID `json:"message_ids"`
 
 	// MessageType The message type of the received payload.
@@ -228,6 +314,17 @@ type FileReceivedEventData struct {
 
 	// ReceivingEndpointId Internally-generated agrirouter ID of the receiving endpoint.
 	ReceivingEndpointId openapi_types.UUID `json:"receiving_endpoint_id"`
+
+	// SendingEndpointId The agrirouter endpoint ID of the endpoint that sent the file.
+	// May be absent if the sender could not be determined for this file.
+	SendingEndpointId *openapi_types.UUID `json:"sending_endpoint_id,omitempty"`
+
+	// SentAt The timestamp when the sending application started transmitting the file,
+	// as reported by sending application.
+	//
+	// It reflects the client-provided send time and
+	// may be absent if the sender did not supply a sent timestamp.
+	SentAt *time.Time `json:"sent_at,omitempty"`
 
 	// Size The size of file payload in bytes.
 	Size int64 `json:"size"`
@@ -256,7 +353,10 @@ type MessageConfirmation struct {
 // MessageReceivedEventData Data structure for MESSAGE_RECEIVED events. This event would arrive whenever application
 // got a message routed to one of its endpoints.
 type MessageReceivedEventData struct {
-	// AppMessageId The application message ID of the received message, generated based on application input.
+	// AppMessageId The application message ID of the received message.
+	// This is not guaranteed to be a UUID in any case and should not be
+	// relied upon as a stable or unique identifier. It only provides
+	// troubleshooting information in collaboration with the agrirouter team.
 	AppMessageId string `json:"app_message_id"`
 	EventType    string `json:"event_type"`
 
@@ -264,6 +364,7 @@ type MessageReceivedEventData struct {
 	Filename *string `json:"filename,omitempty"`
 
 	// Id The agrirouter message ID of the received message, generated by agrirouter.
+	// Use this value as `message_id` when confirming the message via `POST /confirmations`.
 	Id openapi_types.UUID `json:"id"`
 
 	// MessageType The message type of the received message.
@@ -285,6 +386,10 @@ type MessageReceivedEventData struct {
 
 	// ReceivingEndpointId Internally-generated agrirouter ID of the receiving endpoint.
 	ReceivingEndpointId openapi_types.UUID `json:"receiving_endpoint_id"`
+
+	// SendingEndpointId The agrirouter endpoint ID of the endpoint that sent the message.
+	// May be absent if the sender could not be determined for this message.
+	SendingEndpointId *openapi_types.UUID `json:"sending_endpoint_id,omitempty"`
 
 	// SentAt The timestamp when the message was sent by sending application.
 	SentAt time.Time `json:"sent_at"`
@@ -315,15 +420,22 @@ type PutEndpointRequest struct {
 	Capabilities []EndpointCapability `json:"capabilities"`
 
 	// ConnectionsUri URI pointing to where the user can manage the entity connected to this endpoint, e.g. to disconnect or delete equipment from an equipment vendor. When provided, this URI will be shown when the user attempts to delete the endpoint, instead of the usual deletion dialog, directing them to the vendor's management page.
-	ConnectionsUri *string      `json:"connections_uri,omitempty"`
-	EndpointType   EndpointType `json:"endpoint_type"`
+	ConnectionsUri *string `json:"connections_uri,omitempty"`
+
+	// EndpointType Type of an endpoint that can be created via this G4 API. Legacy types
+	// such as `communication_unit` and `telemetry_platform` cannot be
+	// created here; see `EndpointType` for the full set that may be observed.
+	//
+	// `farming_software` is accepted as a deprecated alias for
+	// `cloud_software` and will be removed in a future revision.
+	EndpointType EndpointTypeToCreate `json:"endpoint_type"`
 
 	// Name Optional name of the endpoint, for easier identification in agrirouter web interface.
 	// Does not have to be unique.
 	// If not specified, the name would be generated automatically.
 	//
 	// When provided, must be 1-200 characters long and may contain letters from any
-	// script, digits, spaces, and the following special characters: `-`, `_`, `.`, `,`, `:`.
+	// script, digits, spaces, and the following special characters: `-`, `_`, `.`, `,`, `:`, `@`.
 	// Names consisting only of whitespace are not allowed as well, which is not
 	// expressed in the regex pattern.
 	//
@@ -333,6 +445,11 @@ type PutEndpointRequest struct {
 	// it can update "application-set" name at any time and user can choose to
 	// switch name back to "application-set".
 	Name *string `json:"name,omitempty"`
+
+	// OwnerEndpointExternalId Optional external ID of the endpoint that should own (be the parent of) this endpoint. The referenced owner endpoint must belong to the same tenant and the same application as this endpoint, otherwise the request is rejected.
+	// When the owner endpoint is deleted, the endpoints it owns are deleted as well.
+	// Note that the owner endpoint must already be processed internally. Since endpoint state is propagated asynchronously, an owner endpoint that was just created may not yet be resolvable
+	OwnerEndpointExternalId *string `json:"owner_endpoint_external_id,omitempty"`
 
 	// SoftwareVersionId The ID of the software version that owns the endpoint
 	SoftwareVersionId openapi_types.UUID     `json:"software_version_id"`
@@ -367,7 +484,12 @@ type TenantEndpointInfo struct {
 	// ApplicationId The ID of the application that owns the endpoint.
 	ApplicationId openapi_types.UUID         `json:"application_id"`
 	Capabilities  TenantEndpointCapabilities `json:"capabilities"`
-	EndpointType  EndpointType               `json:"endpoint_type"`
+
+	// EndpointType Type of an endpoint that can be observed in the system. This includes
+	// types that can be created via this G4 API as well as legacy types that
+	// can only be created via the G2/G3 APIs. For values accepted when
+	// creating an endpoint, see `EndpointTypeToCreate`.
+	EndpointType EndpointType `json:"endpoint_type"`
 
 	// ExternalId External identifier of the endpoint, if available to the caller.
 	ExternalId *string `json:"external_id,omitempty"`
@@ -378,7 +500,8 @@ type TenantEndpointInfo struct {
 	// Name Display name of the endpoint.
 	Name string `json:"name"`
 
-	// OwnedByYourApplication Indicates whether this endpoint belongs to the application that is authorized for the current request.
+	// OwnedByYourApplication Indicates whether this endpoint belongs to the application that is
+	// authorized for the current request.
 	OwnedByYourApplication bool `json:"owned_by_your_application"`
 
 	// RoutedEndpoints Route-derived information for this endpoint.
@@ -428,6 +551,12 @@ type TenantId = openapi_types.UUID
 
 // XAgrirouterTenantId defines model for x-agrirouter-tenant-id.
 type XAgrirouterTenantId = openapi_types.UUID
+
+// ListCompatibleApplicationsParams defines parameters for ListCompatibleApplications.
+type ListCompatibleApplicationsParams struct {
+	// InitiatingApplicationId The initiating application to find compatible applications for.
+	InitiatingApplicationId openapi_types.UUID `form:"initiating_application_id" json:"initiating_application_id"`
+}
 
 // ConfirmMessagesParams defines parameters for ConfirmMessages.
 type ConfirmMessagesParams struct {
@@ -493,16 +622,6 @@ type SendMessagesParams struct {
 
 	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
 	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
-
-	// XAgrirouterContextId Application side identifier of the sent data.
-	// agrirouter will use this to generate application message id
-	// and also will pass it on as chunk context id in case if the payload
-	// had to be split into several messages.
-	// This has to be generated by the application and be unique for
-	// every sent payload. Applications may want to reuse the same id
-	// in case if they are resending the same payload again, when f.e
-	// retrying after a failure.
-	XAgrirouterContextId string `json:"x-agrirouter-context-id"`
 
 	// XAgrirouterFilename Optional name of the file that is attached to messages as metadata.
 	XAgrirouterFilename *string `json:"x-agrirouter-filename,omitempty"`
@@ -725,6 +844,9 @@ func (t *GenericEventData) UnmarshalJSON(b []byte) error {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List applications compatible with an initiating application
+	// (GET /compatible-applications)
+	ListCompatibleApplications(ctx echo.Context, params ListCompatibleApplicationsParams) error
 	// Confirm received messages
 	// (POST /confirmations)
 	ConfirmMessages(ctx echo.Context, params ConfirmMessagesParams) error
@@ -751,6 +873,28 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// ListCompatibleApplications converts echo context to params.
+func (w *ServerInterfaceWrapper) ListCompatibleApplications(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCompatibleApplicationsParams
+	// ------------- Required query parameter "initiating_application_id" -------------
+
+	err = runtime.BindQueryParameter("form", true, true, "initiating_application_id", ctx.QueryParams(), &params.InitiatingApplicationId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter initiating_application_id: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ListCompatibleApplications(ctx, params)
+	return err
 }
 
 // ConfirmMessages converts echo context to params.
@@ -1038,23 +1182,6 @@ func (w *ServerInterfaceWrapper) SendMessages(ctx echo.Context) error {
 	} else {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
 	}
-	// ------------- Required header parameter "x-agrirouter-context-id" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-context-id")]; found {
-		var XAgrirouterContextId string
-		n := len(valueList)
-		if n != 1 {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-context-id, got %d", n))
-		}
-
-		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-context-id", valueList[0], &XAgrirouterContextId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-context-id: %s", err))
-		}
-
-		params.XAgrirouterContextId = XAgrirouterContextId
-	} else {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-context-id is required, but not found"))
-	}
 	// ------------- Optional header parameter "x-agrirouter-filename" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-filename")]; found {
 		var XAgrirouterFilename string
@@ -1137,6 +1264,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/compatible-applications", wrapper.ListCompatibleApplications)
 	router.POST(baseURL+"/confirmations", wrapper.ConfirmMessages)
 	router.DELETE(baseURL+"/endpoints/:externalId", wrapper.DeleteEndpoint)
 	router.PUT(baseURL+"/endpoints/:externalId", wrapper.PutEndpoint)
@@ -1145,6 +1273,56 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/tenants", wrapper.ListAuthorizedTenants)
 	router.GET(baseURL+"/tenants/:tenantId/endpoints", wrapper.ListTenantEndpoints)
 
+}
+
+type ListCompatibleApplicationsRequestObject struct {
+	Params ListCompatibleApplicationsParams
+}
+
+type ListCompatibleApplicationsResponseObject interface {
+	VisitListCompatibleApplicationsResponse(w http.ResponseWriter) error
+}
+
+type ListCompatibleApplications200JSONResponse CompatibleApplicationsResponse
+
+func (response ListCompatibleApplications200JSONResponse) VisitListCompatibleApplicationsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListCompatibleApplications400JSONResponse ErrorResponse
+
+func (response ListCompatibleApplications400JSONResponse) VisitListCompatibleApplicationsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type ListCompatibleApplications403Response struct {
+}
+
+func (response ListCompatibleApplications403Response) VisitListCompatibleApplicationsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
+}
+
+type ListCompatibleApplications429Response struct {
+}
+
+func (response ListCompatibleApplications429Response) VisitListCompatibleApplicationsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(429)
+	return nil
+}
+
+type ListCompatibleApplications500Response struct {
+}
+
+func (response ListCompatibleApplications500Response) VisitListCompatibleApplicationsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
 }
 
 type ConfirmMessagesRequestObject struct {
@@ -1581,6 +1759,9 @@ func (response ListTenantEndpoints500Response) VisitListTenantEndpointsResponse(
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// List applications compatible with an initiating application
+	// (GET /compatible-applications)
+	ListCompatibleApplications(ctx context.Context, request ListCompatibleApplicationsRequestObject) (ListCompatibleApplicationsResponseObject, error)
 	// Confirm received messages
 	// (POST /confirmations)
 	ConfirmMessages(ctx context.Context, request ConfirmMessagesRequestObject) (ConfirmMessagesResponseObject, error)
@@ -1614,6 +1795,31 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// ListCompatibleApplications operation middleware
+func (sh *strictHandler) ListCompatibleApplications(ctx echo.Context, params ListCompatibleApplicationsParams) error {
+	var request ListCompatibleApplicationsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCompatibleApplications(ctx.Request().Context(), request.(ListCompatibleApplicationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCompatibleApplications")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(ListCompatibleApplicationsResponseObject); ok {
+		return validResponse.VisitListCompatibleApplicationsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
 }
 
 // ConfirmMessages operation middleware

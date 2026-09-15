@@ -56,7 +56,7 @@ const CapabilityDirectionSendReceive = internal_models.SENDRECEIVE
 // Virtual communication units like usual communication units represent devices
 // that can send and receive agrirouter messages, but they are doing so indirectly
 // via their own cloud service, which is not installed inside of a vehicle or a machine.
-const VirtualCommunicationUnit = internal_models.VirtualCommunicationUnit
+const VirtualCommunicationUnit = internal_models.EndpointTypeVirtualCommunicationUnit
 
 // FarmingSoftware is an endpoint type representing farming software applications.
 //
@@ -64,14 +64,27 @@ const VirtualCommunicationUnit = internal_models.VirtualCommunicationUnit
 // and they are typically cloud deployed applications that manage agricultural data
 // and provide farmers with their own typically web-based user interface.
 // Deprecated: use CloudSoftware instead as industry agnostic term for same thing.
-const FarmingSoftware = internal_models.FarmingSoftware
+const FarmingSoftware = internal_models.EndpointTypeToCreateFarmingSoftware
 
 // CloudSoftware is an endpoint type representing cloud software applications.
 //
 // Cloud software applications can send and receive agrirouter messages,
 // and they are typically backend applications that could manage data from
 // specific industry (i.e agriculture) and provide users with their own UI.
-const CloudSoftware = internal_models.CloudSoftware
+const CloudSoftware = internal_models.EndpointTypeCloudSoftware
+
+// CloudSoftwareToCreate is the CloudSoftware endpoint type as accepted when creating an endpoint.
+//
+// Endpoint creation only accepts the subset of endpoint types listed in EndpointTypeToCreate,
+// so use this constant instead of CloudSoftware in PutEndpointRequest.
+const CloudSoftwareToCreate = internal_models.EndpointTypeToCreateCloudSoftware
+
+// VirtualCommunicationUnitToCreate is the VirtualCommunicationUnit endpoint type as accepted
+// when creating an endpoint.
+//
+// Endpoint creation only accepts the subset of endpoint types listed in EndpointTypeToCreate,
+// so use this constant instead of VirtualCommunicationUnit in PutEndpointRequest.
+const VirtualCommunicationUnitToCreate = internal_models.EndpointTypeToCreateVirtualCommunicationUnit
 
 // ConfirmMessagesParams contains parameters to confirm messages.
 type ConfirmMessagesParams = internal_models.ConfirmMessagesParams
@@ -135,3 +148,6 @@ type EndpointRouteMap = internal_models.EndpointRouteMap
 // 2. virtual_communication_unit: Represents virtual devices communicating via their own cloud services.
 // 3. farming_software: Represents farming software applications, typically cloud-based.
 type EndpointType = internal_models.EndpointType
+
+// EndpointTypeToCreate represents the type of an agrirouter endpoint to be created.
+type EndpointTypeToCreate = internal_models.EndpointTypeToCreate

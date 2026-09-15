@@ -233,7 +233,6 @@ func TestSendMessages(t *testing.T) {
 		XAgrirouterSentTimestamp:    time.Now(),
 		XAgrirouterMessageType:      "gps:info",
 		XAgrirouterTenantId:         tenantID,
-		XAgrirouterContextId:        "test-context",
 		XAgrirouterTeamsetContextId: &teamsetContextID,
 	}
 
@@ -247,7 +246,6 @@ func TestSendMessages(t *testing.T) {
       "endpointId":"`+endpointID.String()+`",
       "messageType":"gps:info",
       "payload":"`+payload.encodedB64+`",
-	  "appMessageId":"test-context-0",
 	  "tenantId":"`+tenantID.String()+`",
 	  "teamsetContextId":"my-teamset-123"
     }`)
@@ -295,7 +293,6 @@ func TestSendAndReceiveMessages(t *testing.T) {
 		XAgrirouterSentTimestamp:    time.Now(),
 		XAgrirouterMessageType:      "gps:info",
 		XAgrirouterTenantId:         tenantID,
-		XAgrirouterContextId:        "test-context",
 		XAgrirouterTeamsetContextId: &teamsetContextID,
 	}
 	payload := newTestPayload(100)
@@ -306,7 +303,6 @@ func TestSendAndReceiveMessages(t *testing.T) {
 		`{  "endpointId":"`+endpointID.String()+`",
             "messageType":"gps:info",
             "payload":"`+payload.encodedB64+`",
-            "appMessageId":"test-context-0",
             "tenantId":"`+tenantID.String()+`",
             "teamsetContextId":"my-teamset-456"
 	     }`)
@@ -318,7 +314,6 @@ func TestSendAndReceiveMessages(t *testing.T) {
 		if assert.Len(c, receivedMessages, 1, "Should have received exactly one message") {
 			assert.Equal(c, "gps:info", receivedMessages[0].MessageType, "Message type should match")
 			assert.Equal(c, payload.bytes, receivedMessages[0].Payload, "Payload should match")
-			assert.Equal(c, "test-context-0", receivedMessages[0].AppMessageID, "AppMessageId should match")
 			assert.Equal(c, endpointID, receivedMessages[0].ReceivingEndpointID, "ReceivingEndpointID should match")
 			assert.NotNil(c, receivedMessages[0].TenantID, "TenantID should not be nil")
 			assert.Equal(c, tenantID.String(), *receivedMessages[0].TenantID, "TenantID should match")
@@ -366,7 +361,6 @@ func TestSendAndReceiveFiles(t *testing.T) {
 		XAgrirouterSentTimestamp:    time.Now(),
 		XAgrirouterMessageType:      "img:png",
 		XAgrirouterTenantId:         tenantID,
-		XAgrirouterContextId:        "test-context",
 		XAgrirouterFilename:         &filename,
 		XAgrirouterTeamsetContextId: &teamsetContextID,
 	}
@@ -378,7 +372,6 @@ func TestSendAndReceiveFiles(t *testing.T) {
 		`{  "endpointId":"`+endpointID.String()+`",
             "messageType":"img:png",
             "payload":"`+payload.encodedB64+`",
-            "appMessageId":"test-context-0",
             "filename":"test.png",
             "tenantId":"`+tenantID.String()+`",
             "teamsetContextId":"my-teamset-789"

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 
 	"github.com/DKE-Data/agrirouter-sdk-go"
 	"github.com/spf13/cobra"
@@ -42,6 +43,9 @@ var receiveFilesCmd = &cobra.Command{
 			if file.Filename != nil {
 				fmt.Printf("  Filename: %s\n", *file.Filename)
 			}
+			if file.SentAt != nil {
+				fmt.Printf("  Sent At: %s\n", *file.SentAt)
+			}
 			fmt.Printf("  MessageIDs: %v\n", file.MessageIDs)
 			if savePayloadsTo != "" {
 				filename := getFileFilename(file, savePayloadsTo)
@@ -65,18 +69,24 @@ func getFileFilename(file *agrirouter.File, savePayloadsTo string) string {
 	// If the sender provided a filename, use it as-is (it typically already
 	// carries an extension).
 	if file.Filename != nil && *file.Filename != "" {
-		return fmt.Sprintf("%s/%s", savePayloadsTo, *file.Filename)
+		return fmt.Sprintf("%s/%s", savePayloadsTo, sanitizeFilename(*file.Filename))
 	}
 
 	name := "file"
 	if len(file.MessageIDs) > 0 {
 		name = file.MessageIDs[0].String()
 	}
+	name = sanitizeFilename(name)
 	extension := messageTypeToFileExtension(file.MessageType)
 	if extension == "" {
 		extension = ".bin"
 	}
 	return fmt.Sprintf("%s/%s%s", savePayloadsTo, name, extension)
+}
+
+func sanitizeFilename(name string) string {
+	re := regexp.MustCompile(`[<>:"/\\|?*]`)
+	return re.ReplaceAllString(name, "_")
 }
 
 func saveFilePayload(filename string, payload io.Reader) error {

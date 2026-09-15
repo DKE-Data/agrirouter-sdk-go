@@ -90,6 +90,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// ListCompatibleApplications request
+	ListCompatibleApplications(ctx context.Context, params *ListCompatibleApplicationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ConfirmMessagesWithBody request with any body
 	ConfirmMessagesWithBody(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -114,6 +117,18 @@ type ClientInterface interface {
 
 	// ListTenantEndpoints request
 	ListTenantEndpoints(ctx context.Context, tenantId TenantId, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) ListCompatibleApplications(ctx context.Context, params *ListCompatibleApplicationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListCompatibleApplicationsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) ConfirmMessagesWithBody(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -222,6 +237,51 @@ func (c *Client) ListTenantEndpoints(ctx context.Context, tenantId TenantId, req
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewListCompatibleApplicationsRequest generates requests for ListCompatibleApplications
+func NewListCompatibleApplicationsRequest(server string, params *ListCompatibleApplicationsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/compatible-applications")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "initiating_application_id", runtime.ParamLocationQuery, params.InitiatingApplicationId); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewConfirmMessagesRequest calls the generic ConfirmMessages builder with application/json body
@@ -537,24 +597,15 @@ func NewSendMessagesRequestWithBody(server string, params *SendMessagesParams, c
 
 		req.Header.Set("x-agrirouter-tenant-id", headerParam7)
 
-		var headerParam8 string
-
-		headerParam8, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-context-id", runtime.ParamLocationHeader, params.XAgrirouterContextId)
-		if err != nil {
-			return nil, err
-		}
-
-		req.Header.Set("x-agrirouter-context-id", headerParam8)
-
 		if params.XAgrirouterFilename != nil {
-			var headerParam9 string
+			var headerParam8 string
 
-			headerParam9, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-filename", runtime.ParamLocationHeader, *params.XAgrirouterFilename)
+			headerParam8, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-filename", runtime.ParamLocationHeader, *params.XAgrirouterFilename)
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("x-agrirouter-filename", headerParam9)
+			req.Header.Set("x-agrirouter-filename", headerParam8)
 		}
 
 	}
@@ -666,6 +717,9 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// ListCompatibleApplicationsWithResponse request
+	ListCompatibleApplicationsWithResponse(ctx context.Context, params *ListCompatibleApplicationsParams, reqEditors ...RequestEditorFn) (*ListCompatibleApplicationsResponse, error)
+
 	// ConfirmMessagesWithBodyWithResponse request with any body
 	ConfirmMessagesWithBodyWithResponse(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error)
 
@@ -690,6 +744,29 @@ type ClientWithResponsesInterface interface {
 
 	// ListTenantEndpointsWithResponse request
 	ListTenantEndpointsWithResponse(ctx context.Context, tenantId TenantId, reqEditors ...RequestEditorFn) (*ListTenantEndpointsResponse, error)
+}
+
+type ListCompatibleApplicationsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *CompatibleApplicationsResponse
+	JSON400      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r ListCompatibleApplicationsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListCompatibleApplicationsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type ConfirmMessagesResponse struct {
@@ -864,6 +941,15 @@ func (r ListTenantEndpointsResponse) StatusCode() int {
 	return 0
 }
 
+// ListCompatibleApplicationsWithResponse request returning *ListCompatibleApplicationsResponse
+func (c *ClientWithResponses) ListCompatibleApplicationsWithResponse(ctx context.Context, params *ListCompatibleApplicationsParams, reqEditors ...RequestEditorFn) (*ListCompatibleApplicationsResponse, error) {
+	rsp, err := c.ListCompatibleApplications(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListCompatibleApplicationsResponse(rsp)
+}
+
 // ConfirmMessagesWithBodyWithResponse request with arbitrary body returning *ConfirmMessagesResponse
 func (c *ClientWithResponses) ConfirmMessagesWithBodyWithResponse(ctx context.Context, params *ConfirmMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error) {
 	rsp, err := c.ConfirmMessagesWithBody(ctx, params, contentType, body, reqEditors...)
@@ -941,6 +1027,39 @@ func (c *ClientWithResponses) ListTenantEndpointsWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParseListTenantEndpointsResponse(rsp)
+}
+
+// ParseListCompatibleApplicationsResponse parses an HTTP response from a ListCompatibleApplicationsWithResponse call
+func ParseListCompatibleApplicationsResponse(rsp *http.Response) (*ListCompatibleApplicationsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListCompatibleApplicationsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest CompatibleApplicationsResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseConfirmMessagesResponse parses an HTTP response from a ConfirmMessagesWithResponse call

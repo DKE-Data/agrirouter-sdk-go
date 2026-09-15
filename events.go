@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/oapi"
 	internal_models "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
@@ -528,6 +529,7 @@ type File struct {
 	MessageIDs          []uuid.UUID // MessageIDs are the agrirouter message IDs of the messages that carried the file payload chunks
 	TenantID            *string     // TenantID is the tenant to which the receiving endpoint belongs
 	TeamsetContextID    *string     // TeamsetContextID is the teamset context ID provided by the sending application, if any
+	SentAt              *time.Time  // SentAt is the timestamp when the file was sent by the sender endpoint
 }
 
 // ReceiveFiles listens for incoming files from the agrirouter API and
@@ -570,6 +572,7 @@ func (c *Client) ReceiveFiles(
 			MessageIDs:          fileReceivedEvent.MessageIds,
 			TenantID:            fileReceivedEvent.TenantId,
 			TeamsetContextID:    fileReceivedEvent.TeamsetContextId,
+			SentAt:              fileReceivedEvent.SentAt,
 		})
 	}, errorHandler)
 }
