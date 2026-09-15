@@ -53,6 +53,14 @@ const (
 	EndpointTypeToCreateVirtualCommunicationUnit EndpointTypeToCreate = "virtual_communication_unit"
 )
 
+// Defines values for InitialLoadState.
+const (
+	COMPLETED             InitialLoadState = "COMPLETED"
+	LOADINGFROMAGRIROUTER InitialLoadState = "LOADING_FROM_AGRIROUTER"
+	LOADINGTOAGRIROUTER   InitialLoadState = "LOADING_TO_AGRIROUTER"
+	RECONCILING           InitialLoadState = "RECONCILING"
+)
+
 // Defines values for ReceiveEventsParamsTypes.
 const (
 	AUTHORIZATIONADDED   ReceiveEventsParamsTypes = "AUTHORIZATION_ADDED"
@@ -62,6 +70,18 @@ const (
 	FILERECEIVED         ReceiveEventsParamsTypes = "FILE_RECEIVED"
 	MESSAGERECEIVED      ReceiveEventsParamsTypes = "MESSAGE_RECEIVED"
 )
+
+// Address defines model for Address.
+type Address struct {
+	City *string `json:"city,omitempty"`
+
+	// Country ISO 3166-1 alpha-2 country code.
+	Country    *string `json:"country,omitempty"`
+	PoBox      *string `json:"poBox,omitempty"`
+	PostalCode *string `json:"postalCode,omitempty"`
+	State      *string `json:"state,omitempty"`
+	Street     *string `json:"street,omitempty"`
+}
 
 // ApplicationCapabilities defines model for ApplicationCapabilities.
 type ApplicationCapabilities struct {
@@ -169,6 +189,13 @@ type ConfirmMessagesRequest struct {
 	Confirmations []MessageConfirmation `json:"confirmations"`
 }
 
+// Contact defines model for Contact.
+type Contact struct {
+	Email  *openapi_types.Email `json:"email,omitempty"`
+	Mobile *string              `json:"mobile,omitempty"`
+	Phone  *string              `json:"phone,omitempty"`
+}
+
 // Endpoint defines model for Endpoint.
 type Endpoint struct {
 	// AllowDeleteByUser Flag indicating whether the user is allowed to delete this endpoint.
@@ -270,10 +297,186 @@ type EndpointsListResponse struct {
 	Endpoints []TenantEndpointInfo `json:"endpoints"`
 }
 
+// EntityReference A reference to another master-data entity by canonical and/or local id. On send either identifier suffices: a localId is resolved against the sender's own mapping and is rejected if the target has not been sent yet. On delivery agrirouter populates agrirouterId, since the sender's localId does not resolve in the receiver's namespace.
+type EntityReference struct {
+	AgrirouterId *openapi_types.UUID `json:"agrirouterId,omitempty"`
+	LocalId      *string             `json:"localId,omitempty"`
+	union        json.RawMessage
+}
+
+// EntityReference0 defines model for .
+type EntityReference0 = interface{}
+
+// EntityReference1 defines model for .
+type EntityReference1 = interface{}
+
+// EntityRequest A lazy-loading request for a single canonical master-data object.
+type EntityRequest struct {
+	// AgrirouterId The canonical identifier of the wanted entity.
+	AgrirouterId openapi_types.UUID `json:"agrirouterId"`
+}
+
+// EntityTypeToggle defines model for EntityTypeToggle.
+type EntityTypeToggle struct {
+	// EntityType Extensible enum: the entity type this toggle applies to. New values may be added over time; callers must accept unknown values.
+	EntityType string `json:"entityType"`
+}
+
+// Envelope Fields common to every master-data entity. The concrete entity type follows from the path.
+type Envelope struct {
+	Active *bool `json:"active,omitempty"`
+
+	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send.
+	AgrirouterId *openapi_types.UUID `json:"agrirouterId,omitempty"`
+
+	// LocalId The calling application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — meaning the application does not yet hold this object.
+	LocalId    *string    `json:"localId,omitempty"`
+	ModifiedAt *time.Time `json:"modifiedAt,omitempty"`
+
+	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the x-agrirouter-base-revision header, where it is compared and discarded.
+	Revision *int `json:"revision,omitempty"`
+
+	// SourceEndpointId The agrirouter identifier of the endpoint whose change produced this revision.
+	SourceEndpointId *openapi_types.UUID `json:"sourceEndpointId,omitempty"`
+
+	// TenantId The tenant the object belongs to. Assigned by agrirouter; a value sent by a participant is ignored.
+	TenantId *openapi_types.UUID `json:"tenantId,omitempty"`
+}
+
 // ErrorResponse defines model for ErrorResponse.
 type ErrorResponse struct {
 	// Message A human-readable error message describing what went wrong.
 	Message string `json:"message"`
+}
+
+// Farm defines model for Farm.
+type Farm struct {
+	Active  *bool    `json:"active,omitempty"`
+	Address *Address `json:"address,omitempty"`
+
+	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send.
+	AgrirouterId *openapi_types.UUID `json:"agrirouterId,omitempty"`
+
+	// GeoReference A GeoJSON geometry (RFC 7946). Positions are [longitude, latitude] and, optionally, altitude.
+	GeoReference *Geometry `json:"geoReference,omitempty"`
+
+	// LocalId The calling application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — meaning the application does not yet hold this object.
+	LocalId    *string    `json:"localId,omitempty"`
+	ModifiedAt *time.Time `json:"modifiedAt,omitempty"`
+	Name       string     `json:"name"`
+
+	// Owner A reference to a party. The slot admits both organizations and persons, so the entity type is required: a receiver that does not hold the target must lazy-load it from the matching per-type request operation.
+	Owner PartyReference `json:"owner"`
+
+	// Partners Parties holding a role on this farm, such as the contractor that works it or the advisor that reads it.
+	Partners *[]Partner `json:"partners,omitempty"`
+
+	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the x-agrirouter-base-revision header, where it is compared and discarded.
+	Revision *int `json:"revision,omitempty"`
+
+	// SourceEndpointId The agrirouter identifier of the endpoint whose change produced this revision.
+	SourceEndpointId *openapi_types.UUID `json:"sourceEndpointId,omitempty"`
+
+	// SpecialisedUsageType Production orientation of the farm (e.g. arable farming, dairy, vineyard, orchard). Free-form.
+	SpecialisedUsageType *string `json:"specialisedUsageType,omitempty"`
+
+	// TenantId The tenant the object belongs to. Assigned by agrirouter; a value sent by a participant is ignored.
+	TenantId *openapi_types.UUID `json:"tenantId,omitempty"`
+
+	// Type Discriminator, set by agrirouter. Implied by the path on send.
+	Type *interface{} `json:"type,omitempty"`
+}
+
+// Field defines model for Field.
+type Field struct {
+	Active *bool `json:"active,omitempty"`
+
+	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send.
+	AgrirouterId *openapi_types.UUID `json:"agrirouterId,omitempty"`
+
+	// Area Nominal area in square metres.
+	Area *float32 `json:"area,omitempty"`
+
+	// Farm A reference to another master-data entity by canonical and/or local id. On send either identifier suffices: a localId is resolved against the sender's own mapping and is rejected if the target has not been sent yet. On delivery agrirouter populates agrirouterId, since the sender's localId does not resolve in the receiver's namespace.
+	Farm *EntityReference `json:"farm,omitempty"`
+
+	// FieldBoundaries References to the field's boundaries.
+	FieldBoundaries *[]EntityReference `json:"fieldBoundaries,omitempty"`
+
+	// HarvestPeriod A harvest period as an interval. A discrete year is mapped to an interval on send; label may round-trip the native presentation.
+	HarvestPeriod *HarvestPeriod `json:"harvestPeriod,omitempty"`
+
+	// LocalId The calling application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — meaning the application does not yet hold this object.
+	LocalId *string `json:"localId,omitempty"`
+
+	// Metadata Additional key/value metadata. Callers must preserve and relay metadata they do not understand.
+	Metadata   *map[string]interface{} `json:"metadata,omitempty"`
+	ModifiedAt *time.Time              `json:"modifiedAt,omitempty"`
+	Name       string                  `json:"name"`
+
+	// Owner A reference to a party. The slot admits both organizations and persons, so the entity type is required: a receiver that does not hold the target must lazy-load it from the matching per-type request operation.
+	Owner *PartyReference `json:"owner,omitempty"`
+
+	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the x-agrirouter-base-revision header, where it is compared and discarded.
+	Revision *int `json:"revision,omitempty"`
+
+	// Soil Soil characteristics of a field.
+	Soil *SoilInfo `json:"soil,omitempty"`
+
+	// SourceEndpointId The agrirouter identifier of the endpoint whose change produced this revision.
+	SourceEndpointId *openapi_types.UUID `json:"sourceEndpointId,omitempty"`
+
+	// TenantId The tenant the object belongs to. Assigned by agrirouter; a value sent by a participant is ignored.
+	TenantId *openapi_types.UUID `json:"tenantId,omitempty"`
+
+	// Topography Slope / gradient, e.g. 7 (degrees).
+	Topography *float32 `json:"topography,omitempty"`
+
+	// Type Discriminator, set by agrirouter. Implied by the path on send.
+	Type *interface{} `json:"type,omitempty"`
+}
+
+// FieldBoundary defines model for FieldBoundary.
+type FieldBoundary struct {
+	Active *bool `json:"active,omitempty"`
+
+	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send.
+	AgrirouterId *openapi_types.UUID `json:"agrirouterId,omitempty"`
+
+	// Boundary A GeoJSON geometry (RFC 7946). Positions are [longitude, latitude] and, optionally, altitude.
+	Boundary Geometry `json:"boundary"`
+
+	// BoundaryType Extensible enum: the boundary classification. New values may be added over time; callers must accept unknown values.
+	BoundaryType *string `json:"boundaryType,omitempty"`
+
+	// CreationMethod Extensible enum: how the boundary was produced. New values may be added over time; callers must accept unknown values.
+	CreationMethod *string `json:"creationMethod,omitempty"`
+
+	// HarvestPeriod A harvest period as an interval. A discrete year is mapped to an interval on send; label may round-trip the native presentation.
+	HarvestPeriod *HarvestPeriod `json:"harvestPeriod,omitempty"`
+
+	// LocalId The calling application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — meaning the application does not yet hold this object.
+	LocalId *string `json:"localId,omitempty"`
+
+	// Metadata Additional key/value metadata. Callers must preserve and relay metadata they do not understand.
+	Metadata   *map[string]interface{} `json:"metadata,omitempty"`
+	ModifiedAt *time.Time              `json:"modifiedAt,omitempty"`
+	Obstacles  *[]Obstacle             `json:"obstacles,omitempty"`
+
+	// RegulatoryRequirements Extensible enum: a regulatory constraint applying to the boundary. New values may be added over time; callers must accept unknown values.
+	RegulatoryRequirements *string `json:"regulatoryRequirements,omitempty"`
+
+	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the x-agrirouter-base-revision header, where it is compared and discarded.
+	Revision *int `json:"revision,omitempty"`
+
+	// SourceEndpointId The agrirouter identifier of the endpoint whose change produced this revision.
+	SourceEndpointId *openapi_types.UUID `json:"sourceEndpointId,omitempty"`
+
+	// TenantId The tenant the object belongs to. Assigned by agrirouter; a value sent by a participant is ignored.
+	TenantId *openapi_types.UUID `json:"tenantId,omitempty"`
+
+	// Type Discriminator, set by agrirouter. Implied by the path on send.
+	Type *interface{} `json:"type,omitempty"`
 }
 
 // FileReceivedEventData Data structure for FILE_RECEIVED events. This event shall arrive whenever a big file transfer
@@ -341,6 +544,152 @@ type GenericEventData struct {
 	union json.RawMessage
 }
 
+// Geometry A GeoJSON geometry (RFC 7946). Positions are [longitude, latitude] and, optionally, altitude.
+type Geometry struct {
+	// Coordinates Nesting depth depends on type.
+	Coordinates interface{} `json:"coordinates"`
+
+	// Type Extensible enum: the GeoJSON geometry type. New values may be added over time; callers must accept unknown values.
+	Type string `json:"type"`
+}
+
+// HarvestPeriod A harvest period as an interval. A discrete year is mapped to an interval on send; label may round-trip the native presentation.
+type HarvestPeriod struct {
+	// Label Human-facing designation, e.g. "2026" or "2025/2026".
+	Label     *string            `json:"label,omitempty"`
+	ValidFrom openapi_types.Date `json:"validFrom"`
+
+	// ValidTo Absent means open / current.
+	ValidTo *openapi_types.Date `json:"validTo,omitempty"`
+}
+
+// IdMappingBinding One binding of a local identifier to a canonical object, as carried in bulk on the initial-load confirmation.
+type IdMappingBinding struct {
+	AgrirouterId openapi_types.UUID `json:"agrirouterId"`
+	LocalId      string             `json:"localId"`
+}
+
+// IdMappingRejection defines model for IdMappingRejection.
+type IdMappingRejection struct {
+	AgrirouterId openapi_types.UUID `json:"agrirouterId"`
+
+	// ExistingMapping One binding of a local identifier to a canonical object, as carried in bulk on the initial-load confirmation.
+	ExistingMapping *IdMappingBinding `json:"existingMapping,omitempty"`
+	LocalId         string            `json:"localId"`
+
+	// Reason Extensible enum: why a binding could not be recorded. New values may be added over time; callers must accept unknown values.
+	//
+	// LOCAL_ID_ALREADY_BOUND — this endpoint already knows a different canonical object by that localId. existingMapping names it.
+	//
+	// AGRIROUTER_ID_ALREADY_BOUND — this endpoint already knows that canonical object by a different localId. existingMapping names it.
+	//
+	// UNKNOWN_OBJECT — no such canonical object, or the endpoint is not entitled to it.
+	//
+	// DUPLICATE_IN_REQUEST — the same localId or the same agrirouterId appears in more than one pair of the same request, which would make the outcome depend on the order pairs were applied in. Every pair involved is rejected and none is applied.
+	Reason IdMappingRejectionReason `json:"reason"`
+}
+
+// IdMappingRejectionReason Extensible enum: why a binding could not be recorded. New values may be added over time; callers must accept unknown values.
+//
+// LOCAL_ID_ALREADY_BOUND — this endpoint already knows a different canonical object by that localId. existingMapping names it.
+//
+// AGRIROUTER_ID_ALREADY_BOUND — this endpoint already knows that canonical object by a different localId. existingMapping names it.
+//
+// UNKNOWN_OBJECT — no such canonical object, or the endpoint is not entitled to it.
+//
+// DUPLICATE_IN_REQUEST — the same localId or the same agrirouterId appears in more than one pair of the same request, which would make the outcome depend on the order pairs were applied in. Every pair involved is rejected and none is applied.
+type IdMappingRejectionReason = string
+
+// InitialLoadState Per-endpoint initial-load state, covering every entity type the endpoint is opted into.
+//
+// LOADING_FROM_AGRIROUTER — agrirouter is still sending the canonical set. Entered by opting the endpoint into its first entity type, again whenever a further entity type is added, and by the endpoint asking for the set again through this status resource.
+//
+// RECONCILING — the whole canonical set has been delivered and the initial-load stream closed. The endpoint is now working through whatever conflicts reconciling surfaced.
+//
+// LOADING_TO_AGRIROUTER — the endpoint has confirmed it reconciled, and is sending the objects it holds that the canonical set did not contain.
+//
+// COMPLETED — steady-state synchronization applies.
+type InitialLoadState string
+
+// InitialLoadStateUpdate The target initial-load state for the endpoint. States are accepted in order, plus LOADING_FROM_AGRIROUTER from any state, which asks for the canonical set again.
+type InitialLoadStateUpdate struct {
+	// AwaitingUser Set to true when the endpoint's reconciliation needs user action, so agrirouter can show the endpoint as waiting rather than as still working. Omitting it leaves the current value untouched.
+	AwaitingUser *bool `json:"awaitingUser,omitempty"`
+
+	// IdMappings The bindings reconciliation produced: one entry per canonical object the endpoint matched to something it already held. Pairs that cannot be recorded come back in rejectedIdMappings rather than failing the transition.
+	IdMappings *[]IdMappingBinding `json:"idMappings,omitempty"`
+
+	// State Per-endpoint initial-load state, covering every entity type the endpoint is opted into.
+	//
+	// LOADING_FROM_AGRIROUTER — agrirouter is still sending the canonical set. Entered by opting the endpoint into its first entity type, again whenever a further entity type is added, and by the endpoint asking for the set again through this status resource.
+	//
+	// RECONCILING — the whole canonical set has been delivered and the initial-load stream closed. The endpoint is now working through whatever conflicts reconciling surfaced.
+	//
+	// LOADING_TO_AGRIROUTER — the endpoint has confirmed it reconciled, and is sending the objects it holds that the canonical set did not contain.
+	//
+	// COMPLETED — steady-state synchronization applies.
+	State InitialLoadState `json:"state"`
+}
+
+// InitialLoadStatus The endpoint's initial-load state. One per endpoint, covering every entity type it is opted into; an endpoint opted into no entity type has none.
+type InitialLoadStatus struct {
+	// AwaitingUser Whether the endpoint's own software needs user action — a conflict, a missing required attribute, a granularity mismatch. Raised by the endpoint and cleared by agrirouter on the two endpoint-driven transitions.
+	AwaitingUser *bool `json:"awaitingUser,omitempty"`
+
+	// EndpointId The agrirouter identifier of the endpoint this resource belongs to. The path addresses it by the participant's own externalEndpointId.
+	EndpointId *openapi_types.UUID `json:"endpointId,omitempty"`
+
+	// PreviousLoadCompletedAt When this endpoint last reached COMPLETED, present only if it has. Its presence means the canonical set now arriving is a repeat load, so the endpoint must not treat its arrival as evidence of a first connection.
+	PreviousLoadCompletedAt *time.Time `json:"previousLoadCompletedAt,omitempty"`
+
+	// RejectedIdMappings Bindings supplied on this request that could not be recorded, each with its reason and, where one exists, the mapping that stands in its way. They do not fail the transition.
+	RejectedIdMappings *[]IdMappingRejection `json:"rejectedIdMappings,omitempty"`
+
+	// State Per-endpoint initial-load state, covering every entity type the endpoint is opted into.
+	//
+	// LOADING_FROM_AGRIROUTER — agrirouter is still sending the canonical set. Entered by opting the endpoint into its first entity type, again whenever a further entity type is added, and by the endpoint asking for the set again through this status resource.
+	//
+	// RECONCILING — the whole canonical set has been delivered and the initial-load stream closed. The endpoint is now working through whatever conflicts reconciling surfaced.
+	//
+	// LOADING_TO_AGRIROUTER — the endpoint has confirmed it reconciled, and is sending the objects it holds that the canonical set did not contain.
+	//
+	// COMPLETED — steady-state synchronization applies.
+	State     InitialLoadState `json:"state"`
+	UpdatedAt *time.Time       `json:"updatedAt,omitempty"`
+}
+
+// MappingConflictError defines model for MappingConflictError.
+type MappingConflictError struct {
+	Message string `json:"message"`
+
+	// Rejection A binding that could not be recorded: the pair as submitted, why, and the mapping standing in its way.
+	Rejection IdMappingRejection `json:"rejection"`
+}
+
+// MasterdataCapabilities Per-endpoint, per-entity opt-in for master-data exchange. Absence of a toggle for an entity type means the endpoint is not opted in for it.
+type MasterdataCapabilities struct {
+	// EndpointId The agrirouter identifier of the endpoint this resource belongs to. The path addresses it by the participant's own externalEndpointId.
+	EndpointId *openapi_types.UUID `json:"endpointId,omitempty"`
+
+	// ResolutionUrl Where the user resolves initial-load conflicts in the endpoint's own software. Optional and rendered as a link while the endpoint has awaitingUser set.
+	ResolutionUrl *string            `json:"resolutionUrl,omitempty"`
+	Toggles       []EntityTypeToggle `json:"toggles"`
+}
+
+// MasterdataError An error from a master-data operation.
+type MasterdataError struct {
+	Message string `json:"message"`
+}
+
+// Membership A role held by a person in one organization.
+type Membership struct {
+	// MemberRole Extensible enum: a role drawn from the ADAPT Role data type. New values may be added over time; callers must accept unknown values.
+	MemberRole Role `json:"memberRole"`
+
+	// OrganizationId A reference to another master-data entity by canonical and/or local id. On send either identifier suffices: a localId is resolved against the sender's own mapping and is rejected if the target has not been sent yet. On delivery agrirouter populates agrirouterId, since the sender's localId does not resolve in the receiver's namespace.
+	OrganizationId EntityReference `json:"organizationId"`
+}
+
 // MessageConfirmation defines model for MessageConfirmation.
 type MessageConfirmation struct {
 	// EndpointId The agrirouter endpoint ID that received the message.
@@ -401,11 +750,136 @@ type MessageReceivedEventData struct {
 	TenantId *string `json:"tenant_id,omitempty"`
 }
 
+// Obstacle A GeoJSON Feature describing an in-field obstacle whose geometry is a Point, LineString, or Polygon.
+type Obstacle struct {
+	// Geometry A GeoJSON geometry (RFC 7946). Positions are [longitude, latitude] and, optionally, altitude.
+	Geometry   Geometry `json:"geometry"`
+	Properties struct {
+		// Kind Obstacle kind, e.g. "pole", "tree", "waterhole".
+		Kind string `json:"kind"`
+	} `json:"properties"`
+	Type interface{} `json:"type"`
+}
+
+// Organization defines model for Organization.
+type Organization struct {
+	Active  *bool    `json:"active,omitempty"`
+	Address *Address `json:"address,omitempty"`
+
+	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send.
+	AgrirouterId   *openapi_types.UUID `json:"agrirouterId,omitempty"`
+	BillingAddress *Address            `json:"billingAddress,omitempty"`
+
+	// CommercialRegistryNumber Identifier from the commercial register.
+	CommercialRegistryNumber *string  `json:"commercialRegistryNumber,omitempty"`
+	Contact                  *Contact `json:"contact,omitempty"`
+
+	// LocalId The calling application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — meaning the application does not yet hold this object.
+	LocalId    *string    `json:"localId,omitempty"`
+	ModifiedAt *time.Time `json:"modifiedAt,omitempty"`
+	Name       string     `json:"name"`
+
+	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the x-agrirouter-base-revision header, where it is compared and discarded.
+	Revision *int `json:"revision,omitempty"`
+
+	// SourceEndpointId The agrirouter identifier of the endpoint whose change produced this revision.
+	SourceEndpointId *openapi_types.UUID `json:"sourceEndpointId,omitempty"`
+
+	// TaxId Numerical identifier assigned by tax authorities.
+	TaxId *string `json:"taxId,omitempty"`
+
+	// TaxNumber Identifier assigned by tax authorities.
+	TaxNumber *string `json:"taxNumber,omitempty"`
+
+	// TenantId The tenant the object belongs to. Assigned by agrirouter; a value sent by a participant is ignored.
+	TenantId *openapi_types.UUID `json:"tenantId,omitempty"`
+
+	// TradeId Numerical identifier assigned by public authorities.
+	TradeId *string `json:"tradeId,omitempty"`
+
+	// Type Discriminator, set by agrirouter. Implied by the path on send.
+	Type *interface{} `json:"type,omitempty"`
+}
+
+// Partner A party holding a role on a farm — the contractor that works it, the advisor that reads it. Records a business relationship only; it does not by itself grant visibility of the farm.
+type Partner struct {
+	// PartnerId A reference to a party. The slot admits both organizations and persons, so the entity type is required: a receiver that does not hold the target must lazy-load it from the matching per-type request operation.
+	PartnerId PartyReference `json:"partnerId"`
+
+	// PartnerRole Extensible enum: a role drawn from the ADAPT Role data type. New values may be added over time; callers must accept unknown values.
+	PartnerRole Role `json:"partnerRole"`
+}
+
+// Party Attributes common to every party, whether an organization or a natural person.
+type Party struct {
+	Address        *Address `json:"address,omitempty"`
+	BillingAddress *Address `json:"billingAddress,omitempty"`
+	Contact        *Contact `json:"contact,omitempty"`
+
+	// TaxId Numerical identifier assigned by tax authorities.
+	TaxId *string `json:"taxId,omitempty"`
+
+	// TaxNumber Identifier assigned by tax authorities.
+	TaxNumber *string `json:"taxNumber,omitempty"`
+
+	// TradeId Numerical identifier assigned by public authorities.
+	TradeId *string `json:"tradeId,omitempty"`
+}
+
+// PartyReference defines model for PartyReference.
+type PartyReference struct {
+	AgrirouterId *openapi_types.UUID `json:"agrirouterId,omitempty"`
+	LocalId      *string             `json:"localId,omitempty"`
+	Type         interface{}         `json:"type"`
+}
+
 // PayloadURI The URI to access the payload. May have hostname that is different from
 // the API server, as payloads may be served from a different server or CDN.
 // Clients MUST use provided URI as is without any modifications.
 // If event embeds payload directly, this field would be absent.
 type PayloadURI = string
+
+// Person defines model for Person.
+type Person struct {
+	Active  *bool    `json:"active,omitempty"`
+	Address *Address `json:"address,omitempty"`
+
+	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send.
+	AgrirouterId   *openapi_types.UUID `json:"agrirouterId,omitempty"`
+	BillingAddress *Address            `json:"billingAddress,omitempty"`
+	Contact        *Contact            `json:"contact,omitempty"`
+	FirstName      *string             `json:"firstName,omitempty"`
+	LastName       string              `json:"lastName"`
+
+	// LocalId The calling application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — meaning the application does not yet hold this object.
+	LocalId *string `json:"localId,omitempty"`
+
+	// Memberships The organizations this person belongs to, each with the role held there.
+	Memberships *[]Membership `json:"memberships,omitempty"`
+	ModifiedAt  *time.Time    `json:"modifiedAt,omitempty"`
+
+	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the x-agrirouter-base-revision header, where it is compared and discarded.
+	Revision *int `json:"revision,omitempty"`
+
+	// SourceEndpointId The agrirouter identifier of the endpoint whose change produced this revision.
+	SourceEndpointId *openapi_types.UUID `json:"sourceEndpointId,omitempty"`
+
+	// TaxId Numerical identifier assigned by tax authorities.
+	TaxId *string `json:"taxId,omitempty"`
+
+	// TaxNumber Identifier assigned by tax authorities.
+	TaxNumber *string `json:"taxNumber,omitempty"`
+
+	// TenantId The tenant the object belongs to. Assigned by agrirouter; a value sent by a participant is ignored.
+	TenantId *openapi_types.UUID `json:"tenantId,omitempty"`
+	Title    *string             `json:"title,omitempty"`
+
+	// TradeId Numerical identifier assigned by public authorities.
+	TradeId *string `json:"tradeId,omitempty"`
+
+	// Type Discriminator, set by agrirouter. Implied by the path on send.
+	Type *interface{} `json:"type,omitempty"`
+}
 
 // PutEndpointRequest defines model for PutEndpointRequest.
 type PutEndpointRequest struct {
@@ -429,6 +903,9 @@ type PutEndpointRequest struct {
 	// `farming_software` is accepted as a deprecated alias for
 	// `cloud_software` and will be removed in a future revision.
 	EndpointType EndpointTypeToCreate `json:"endpoint_type"`
+
+	// MasterdataCapabilities Per-endpoint, per-entity opt-in for master-data exchange. Absence of a toggle for an entity type means the endpoint is not opted in for it.
+	MasterdataCapabilities *MasterdataCapabilities `json:"masterdata_capabilities,omitempty"`
 
 	// Name Optional name of the endpoint, for easier identification in agrirouter web interface.
 	// Does not have to be unique.
@@ -456,6 +933,16 @@ type PutEndpointRequest struct {
 	Subscriptions     []EndpointSubscription `json:"subscriptions"`
 }
 
+// RevisionConflictError defines model for RevisionConflictError.
+type RevisionConflictError struct {
+	// CurrentRevision The canonical object's current revision.
+	CurrentRevision int    `json:"currentRevision"`
+	Message         string `json:"message"`
+}
+
+// Role Extensible enum: a role drawn from the ADAPT Role data type. New values may be added over time; callers must accept unknown values.
+type Role = string
+
 // RoutedEndpoints Route-derived information for this endpoint.
 //
 // This property only exists for endpoints owned by the authorized
@@ -468,6 +955,15 @@ type RoutedEndpoints struct {
 	// CanSendTo Map keyed by agrirouter endpoint ID. Each value lists the message types
 	// for which routing is currently possible between the two endpoints.
 	CanSendTo *EndpointRouteMap `json:"can_send_to,omitempty"`
+}
+
+// SoilInfo Soil characteristics of a field.
+type SoilInfo struct {
+	// RatingPoints Soil rating points (Bodenzahl / Ackerzahl). Germany only.
+	RatingPoints *int `json:"ratingPoints,omitempty"`
+
+	// Type Extensible enum: the soil classification. New values may be added over time; callers must accept unknown values.
+	Type *string `json:"type,omitempty"`
 }
 
 // TenantEndpointCapabilities defines model for TenantEndpointCapabilities.
@@ -543,6 +1039,24 @@ type TenantsListResponse struct {
 	Tenants []TenantInfo `json:"tenants"`
 }
 
+// AgrirouterEndpointId defines model for AgrirouterEndpointId.
+type AgrirouterEndpointId = openapi_types.UUID
+
+// BaseRevision defines model for BaseRevision.
+type BaseRevision = int
+
+// ExternalEndpointId defines model for ExternalEndpointId.
+type ExternalEndpointId = string
+
+// IdMappingAgrirouterId defines model for IdMappingAgrirouterId.
+type IdMappingAgrirouterId = openapi_types.UUID
+
+// LastEventId defines model for LastEventId.
+type LastEventId = string
+
+// LocalId defines model for LocalId.
+type LocalId = string
+
 // ExternalId defines model for externalId.
 type ExternalId = string
 
@@ -552,6 +1066,27 @@ type TenantId = openapi_types.UUID
 // XAgrirouterTenantId defines model for x-agrirouter-tenant-id.
 type XAgrirouterTenantId = openapi_types.UUID
 
+// BaseRevisionRequired The 412 or 428 of a write: a MasterdataError carrying the revision the object is currently at, so the client has the answer a rejected write would otherwise have to fetch separately.
+type BaseRevisionRequired = RevisionConflictError
+
+// Forbidden An error from a master-data operation.
+type Forbidden = MasterdataError
+
+// InitialLoadConflict An error from a master-data operation.
+type InitialLoadConflict = MasterdataError
+
+// MappingConflict The 409 of a binding: a MasterdataError carrying the rejection that caused it. The outcome is carried by rejection.reason; the message of the MasterdataError is diagnostic and must not be branched on.
+type MappingConflict = MappingConflictError
+
+// NotFound An error from a master-data operation.
+type NotFound = MasterdataError
+
+// RevisionConflict The 412 or 428 of a write: a MasterdataError carrying the revision the object is currently at, so the client has the answer a rejected write would otherwise have to fetch separately.
+type RevisionConflict = RevisionConflictError
+
+// ValidationError An error from a master-data operation.
+type ValidationError = MasterdataError
+
 // ListCompatibleApplicationsParams defines parameters for ListCompatibleApplications.
 type ListCompatibleApplicationsParams struct {
 	// InitiatingApplicationId The initiating application to find compatible applications for.
@@ -560,6 +1095,24 @@ type ListCompatibleApplicationsParams struct {
 
 // ConfirmMessagesParams defines parameters for ConfirmMessages.
 type ConfirmMessagesParams struct {
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// StreamInitialLoadEventsParams defines parameters for StreamInitialLoadEvents.
+type StreamInitialLoadEventsParams struct {
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// GetInitialLoadStatusParams defines parameters for GetInitialLoadStatus.
+type GetInitialLoadStatusParams struct {
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// SetInitialLoadStateParams defines parameters for SetInitialLoadState.
+type SetInitialLoadStateParams struct {
 	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
 	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
 }
@@ -585,6 +1138,361 @@ type ReceiveEventsParams struct {
 
 // ReceiveEventsParamsTypes defines parameters for ReceiveEvents.
 type ReceiveEventsParamsTypes string
+
+// StreamMasterdataEventsParams defines parameters for StreamMasterdataEvents.
+type StreamMasterdataEventsParams struct {
+	// LastEventID The event id the calling application last saved from the /masterdata/events stream, as agrirouter issued it in the id: field of an SSE frame. Send it back exactly as issued: it is an opaque string that must not be interpreted, compared, constructed, or modified in any way, and it does not always advance on every frame.
+	//
+	// Save it from what the application has durably applied rather than from whatever its stream client last read, since delivery is at-least-once and everything after it is sent again on reconnect. It does not expire.
+	//
+	// Omitted, or present and one agrirouter cannot validate, is served as a first connection on this stream: everything the application is entitled to, ending with a CAUGHT_UP frame. This parameter applies to /masterdata/events only; the initial-load stream carries no position and does not accept it.
+	LastEventID *LastEventId `json:"Last-Event-ID,omitempty"`
+}
+
+// RequestFarmParams defines parameters for RequestFarm.
+type RequestFarmParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// PutFarmParams defines parameters for PutFarm.
+type PutFarmParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterBaseRevision The revision the client edited from — the base of this write. It travels as a header because it is a precondition on the request, not part of the entity: revision in the body stays read-only and server-assigned.
+	//
+	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that localId.
+	//
+	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
+}
+
+// DeactivateFarmParams defines parameters for DeactivateFarm.
+type DeactivateFarmParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterBaseRevision The revision the client edited from — the base of this write. It travels as a header because it is a precondition on the request, not part of the entity: revision in the body stays read-only and server-assigned.
+	//
+	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that localId.
+	//
+	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
+}
+
+// UnbindFarmMappingParams defines parameters for UnbindFarmMapping.
+type UnbindFarmMappingParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// BindFarmMappingParams defines parameters for BindFarmMapping.
+type BindFarmMappingParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// RequestFieldBoundaryParams defines parameters for RequestFieldBoundary.
+type RequestFieldBoundaryParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// PutFieldBoundaryParams defines parameters for PutFieldBoundary.
+type PutFieldBoundaryParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterBaseRevision The revision the client edited from — the base of this write. It travels as a header because it is a precondition on the request, not part of the entity: revision in the body stays read-only and server-assigned.
+	//
+	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that localId.
+	//
+	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
+}
+
+// DeactivateFieldBoundaryParams defines parameters for DeactivateFieldBoundary.
+type DeactivateFieldBoundaryParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterBaseRevision The revision the client edited from — the base of this write. It travels as a header because it is a precondition on the request, not part of the entity: revision in the body stays read-only and server-assigned.
+	//
+	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that localId.
+	//
+	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
+}
+
+// UnbindFieldBoundaryMappingParams defines parameters for UnbindFieldBoundaryMapping.
+type UnbindFieldBoundaryMappingParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// BindFieldBoundaryMappingParams defines parameters for BindFieldBoundaryMapping.
+type BindFieldBoundaryMappingParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// RequestFieldParams defines parameters for RequestField.
+type RequestFieldParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// PutFieldParams defines parameters for PutField.
+type PutFieldParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterBaseRevision The revision the client edited from — the base of this write. It travels as a header because it is a precondition on the request, not part of the entity: revision in the body stays read-only and server-assigned.
+	//
+	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that localId.
+	//
+	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
+}
+
+// DeactivateFieldParams defines parameters for DeactivateField.
+type DeactivateFieldParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterBaseRevision The revision the client edited from — the base of this write. It travels as a header because it is a precondition on the request, not part of the entity: revision in the body stays read-only and server-assigned.
+	//
+	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that localId.
+	//
+	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
+}
+
+// UnbindFieldMappingParams defines parameters for UnbindFieldMapping.
+type UnbindFieldMappingParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// BindFieldMappingParams defines parameters for BindFieldMapping.
+type BindFieldMappingParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// RequestOrganizationParams defines parameters for RequestOrganization.
+type RequestOrganizationParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// PutOrganizationParams defines parameters for PutOrganization.
+type PutOrganizationParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterBaseRevision The revision the client edited from — the base of this write. It travels as a header because it is a precondition on the request, not part of the entity: revision in the body stays read-only and server-assigned.
+	//
+	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that localId.
+	//
+	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
+}
+
+// DeactivateOrganizationParams defines parameters for DeactivateOrganization.
+type DeactivateOrganizationParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterBaseRevision The revision the client edited from — the base of this write. It travels as a header because it is a precondition on the request, not part of the entity: revision in the body stays read-only and server-assigned.
+	//
+	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that localId.
+	//
+	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
+}
+
+// UnbindOrganizationMappingParams defines parameters for UnbindOrganizationMapping.
+type UnbindOrganizationMappingParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// BindOrganizationMappingParams defines parameters for BindOrganizationMapping.
+type BindOrganizationMappingParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// RequestPersonParams defines parameters for RequestPerson.
+type RequestPersonParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// PutPersonParams defines parameters for PutPerson.
+type PutPersonParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterBaseRevision The revision the client edited from — the base of this write. It travels as a header because it is a precondition on the request, not part of the entity: revision in the body stays read-only and server-assigned.
+	//
+	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that localId.
+	//
+	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
+}
+
+// DeactivatePersonParams defines parameters for DeactivatePerson.
+type DeactivatePersonParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+
+	// XAgrirouterBaseRevision The revision the client edited from — the base of this write. It travels as a header because it is a precondition on the request, not part of the entity: revision in the body stays read-only and server-assigned.
+	//
+	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that localId.
+	//
+	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
+}
+
+// UnbindPersonMappingParams defines parameters for UnbindPersonMapping.
+type UnbindPersonMappingParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
+
+// BindPersonMappingParams defines parameters for BindPersonMapping.
+type BindPersonMappingParams struct {
+	// XAgrirouterEndpointId The endpoint acting on this request — the sender of an entity, the caller of a request, the holder of a binding. It decides entitlement and the tenant, and it becomes the source endpoint of any revision produced. It does not scope localId, which resolves in the application's namespace.
+	//
+	// This is the agrirouter endpoint ID, not the externalId the application chose for it. An application already holds it: it is returned when the endpoint is created or updated, listed with the tenant's endpoints, and carried on the endpoint events.
+	XAgrirouterEndpointId AgrirouterEndpointId `json:"x-agrirouter-endpoint-id"`
+
+	// XAgrirouterTenantId The farmer's tenant ID in relation to which communication is done.
+	XAgrirouterTenantId XAgrirouterTenantId `json:"x-agrirouter-tenant-id"`
+}
 
 // SendMessagesParams defines parameters for SendMessages.
 type SendMessagesParams struct {
@@ -630,8 +1538,151 @@ type SendMessagesParams struct {
 // ConfirmMessagesJSONRequestBody defines body for ConfirmMessages for application/json ContentType.
 type ConfirmMessagesJSONRequestBody = ConfirmMessagesRequest
 
+// SetInitialLoadStateJSONRequestBody defines body for SetInitialLoadState for application/json ContentType.
+type SetInitialLoadStateJSONRequestBody = InitialLoadStateUpdate
+
 // PutEndpointJSONRequestBody defines body for PutEndpoint for application/json ContentType.
 type PutEndpointJSONRequestBody = PutEndpointRequest
+
+// RequestFarmJSONRequestBody defines body for RequestFarm for application/json ContentType.
+type RequestFarmJSONRequestBody = EntityRequest
+
+// PutFarmJSONRequestBody defines body for PutFarm for application/json ContentType.
+type PutFarmJSONRequestBody = Farm
+
+// RequestFieldBoundaryJSONRequestBody defines body for RequestFieldBoundary for application/json ContentType.
+type RequestFieldBoundaryJSONRequestBody = EntityRequest
+
+// PutFieldBoundaryJSONRequestBody defines body for PutFieldBoundary for application/json ContentType.
+type PutFieldBoundaryJSONRequestBody = FieldBoundary
+
+// RequestFieldJSONRequestBody defines body for RequestField for application/json ContentType.
+type RequestFieldJSONRequestBody = EntityRequest
+
+// PutFieldJSONRequestBody defines body for PutField for application/json ContentType.
+type PutFieldJSONRequestBody = Field
+
+// RequestOrganizationJSONRequestBody defines body for RequestOrganization for application/json ContentType.
+type RequestOrganizationJSONRequestBody = EntityRequest
+
+// PutOrganizationJSONRequestBody defines body for PutOrganization for application/json ContentType.
+type PutOrganizationJSONRequestBody = Organization
+
+// RequestPersonJSONRequestBody defines body for RequestPerson for application/json ContentType.
+type RequestPersonJSONRequestBody = EntityRequest
+
+// PutPersonJSONRequestBody defines body for PutPerson for application/json ContentType.
+type PutPersonJSONRequestBody = Person
+
+// AsEntityReference0 returns the union data inside the EntityReference as a EntityReference0
+func (t EntityReference) AsEntityReference0() (EntityReference0, error) {
+	var body EntityReference0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEntityReference0 overwrites any union data inside the EntityReference as the provided EntityReference0
+func (t *EntityReference) FromEntityReference0(v EntityReference0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEntityReference0 performs a merge with any union data inside the EntityReference, using the provided EntityReference0
+func (t *EntityReference) MergeEntityReference0(v EntityReference0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsEntityReference1 returns the union data inside the EntityReference as a EntityReference1
+func (t EntityReference) AsEntityReference1() (EntityReference1, error) {
+	var body EntityReference1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromEntityReference1 overwrites any union data inside the EntityReference as the provided EntityReference1
+func (t *EntityReference) FromEntityReference1(v EntityReference1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeEntityReference1 performs a merge with any union data inside the EntityReference, using the provided EntityReference1
+func (t *EntityReference) MergeEntityReference1(v EntityReference1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t EntityReference) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if t.AgrirouterId != nil {
+		object["agrirouterId"], err = json.Marshal(t.AgrirouterId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'agrirouterId': %w", err)
+		}
+	}
+
+	if t.LocalId != nil {
+		object["localId"], err = json.Marshal(t.LocalId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'localId': %w", err)
+		}
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *EntityReference) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["agrirouterId"]; found {
+		err = json.Unmarshal(raw, &t.AgrirouterId)
+		if err != nil {
+			return fmt.Errorf("error reading 'agrirouterId': %w", err)
+		}
+	}
+
+	if raw, found := object["localId"]; found {
+		err = json.Unmarshal(raw, &t.LocalId)
+		if err != nil {
+			return fmt.Errorf("error reading 'localId': %w", err)
+		}
+	}
+
+	return err
+}
 
 // AsMessageReceivedEventData returns the union data inside the GenericEventData as a MessageReceivedEventData
 func (t GenericEventData) AsMessageReceivedEventData() (MessageReceivedEventData, error) {
@@ -850,6 +1901,15 @@ type ServerInterface interface {
 	// Confirm received messages
 	// (POST /confirmations)
 	ConfirmMessages(ctx echo.Context, params ConfirmMessagesParams) error
+	// Receive the endpoint's canonical set (Server-Sent Events)
+	// (GET /endpoints/{externalEndpointId}/masterdata-initial-load/events)
+	StreamInitialLoadEvents(ctx echo.Context, externalEndpointId ExternalEndpointId, params StreamInitialLoadEventsParams) error
+	// Get the endpoint's initial load status
+	// (GET /endpoints/{externalEndpointId}/masterdata-initial-load/status)
+	GetInitialLoadStatus(ctx echo.Context, externalEndpointId ExternalEndpointId, params GetInitialLoadStatusParams) error
+	// Set the endpoint's initial load state
+	// (PUT /endpoints/{externalEndpointId}/masterdata-initial-load/status)
+	SetInitialLoadState(ctx echo.Context, externalEndpointId ExternalEndpointId, params SetInitialLoadStateParams) error
 	// Delete endpoint
 	// (DELETE /endpoints/{externalId})
 	DeleteEndpoint(ctx echo.Context, externalId ExternalId, params DeleteEndpointParams) error
@@ -859,6 +1919,84 @@ type ServerInterface interface {
 	// Receive events from agrirouter outbox
 	// (GET /events)
 	ReceiveEvents(ctx echo.Context, params ReceiveEventsParams) error
+	// Receive master-data changes (Server-Sent Events)
+	// (GET /masterdata/events)
+	StreamMasterdataEvents(ctx echo.Context, params StreamMasterdataEventsParams) error
+	// Request a farm (lazy loading)
+	// (POST /masterdata/farms/requests)
+	RequestFarm(ctx echo.Context, params RequestFarmParams) error
+	// Send (create or update) a farm
+	// (PUT /masterdata/farms/{localId})
+	PutFarm(ctx echo.Context, localId LocalId, params PutFarmParams) error
+	// Deactivate a farm
+	// (POST /masterdata/farms/{localId}/deactivation)
+	DeactivateFarm(ctx echo.Context, localId LocalId, params DeactivateFarmParams) error
+	// Declare that this endpoint no longer holds a farm
+	// (DELETE /masterdata/farms/{localId}/id-mapping/{agrirouterId})
+	UnbindFarmMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params UnbindFarmMappingParams) error
+	// Bind a local identifier to an existing farm
+	// (PUT /masterdata/farms/{localId}/id-mapping/{agrirouterId})
+	BindFarmMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params BindFarmMappingParams) error
+	// Request a field boundary (lazy loading)
+	// (POST /masterdata/field-boundaries/requests)
+	RequestFieldBoundary(ctx echo.Context, params RequestFieldBoundaryParams) error
+	// Send (create or update) a field boundary
+	// (PUT /masterdata/field-boundaries/{localId})
+	PutFieldBoundary(ctx echo.Context, localId LocalId, params PutFieldBoundaryParams) error
+	// Deactivate a field boundary
+	// (POST /masterdata/field-boundaries/{localId}/deactivation)
+	DeactivateFieldBoundary(ctx echo.Context, localId LocalId, params DeactivateFieldBoundaryParams) error
+	// Declare that this endpoint no longer holds a field boundary
+	// (DELETE /masterdata/field-boundaries/{localId}/id-mapping/{agrirouterId})
+	UnbindFieldBoundaryMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params UnbindFieldBoundaryMappingParams) error
+	// Bind a local identifier to an existing field boundary
+	// (PUT /masterdata/field-boundaries/{localId}/id-mapping/{agrirouterId})
+	BindFieldBoundaryMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params BindFieldBoundaryMappingParams) error
+	// Request a field (lazy loading)
+	// (POST /masterdata/fields/requests)
+	RequestField(ctx echo.Context, params RequestFieldParams) error
+	// Send (create or update) a field
+	// (PUT /masterdata/fields/{localId})
+	PutField(ctx echo.Context, localId LocalId, params PutFieldParams) error
+	// Deactivate a field
+	// (POST /masterdata/fields/{localId}/deactivation)
+	DeactivateField(ctx echo.Context, localId LocalId, params DeactivateFieldParams) error
+	// Declare that this endpoint no longer holds a field
+	// (DELETE /masterdata/fields/{localId}/id-mapping/{agrirouterId})
+	UnbindFieldMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params UnbindFieldMappingParams) error
+	// Bind a local identifier to an existing field
+	// (PUT /masterdata/fields/{localId}/id-mapping/{agrirouterId})
+	BindFieldMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params BindFieldMappingParams) error
+	// Request an organization (lazy loading)
+	// (POST /masterdata/organizations/requests)
+	RequestOrganization(ctx echo.Context, params RequestOrganizationParams) error
+	// Send (create or update) an organization
+	// (PUT /masterdata/organizations/{localId})
+	PutOrganization(ctx echo.Context, localId LocalId, params PutOrganizationParams) error
+	// Deactivate an organization
+	// (POST /masterdata/organizations/{localId}/deactivation)
+	DeactivateOrganization(ctx echo.Context, localId LocalId, params DeactivateOrganizationParams) error
+	// Declare that this endpoint no longer holds an organization
+	// (DELETE /masterdata/organizations/{localId}/id-mapping/{agrirouterId})
+	UnbindOrganizationMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params UnbindOrganizationMappingParams) error
+	// Bind a local identifier to an existing organization
+	// (PUT /masterdata/organizations/{localId}/id-mapping/{agrirouterId})
+	BindOrganizationMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params BindOrganizationMappingParams) error
+	// Request a person (lazy loading)
+	// (POST /masterdata/persons/requests)
+	RequestPerson(ctx echo.Context, params RequestPersonParams) error
+	// Send (create or update) a person
+	// (PUT /masterdata/persons/{localId})
+	PutPerson(ctx echo.Context, localId LocalId, params PutPersonParams) error
+	// Deactivate a person
+	// (POST /masterdata/persons/{localId}/deactivation)
+	DeactivatePerson(ctx echo.Context, localId LocalId, params DeactivatePersonParams) error
+	// Declare that this endpoint no longer holds a person
+	// (DELETE /masterdata/persons/{localId}/id-mapping/{agrirouterId})
+	UnbindPersonMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params UnbindPersonMappingParams) error
+	// Bind a local identifier to an existing person
+	// (PUT /masterdata/persons/{localId}/id-mapping/{agrirouterId})
+	BindPersonMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params BindPersonMappingParams) error
 	// Send one or several messages to agrirouter inbox
 	// (POST /messages)
 	SendMessages(ctx echo.Context, params SendMessagesParams) error
@@ -929,6 +2067,132 @@ func (w *ServerInterfaceWrapper) ConfirmMessages(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ConfirmMessages(ctx, params)
+	return err
+}
+
+// StreamInitialLoadEvents converts echo context to params.
+func (w *ServerInterfaceWrapper) StreamInitialLoadEvents(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "externalEndpointId" -------------
+	var externalEndpointId ExternalEndpointId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "externalEndpointId", ctx.Param("externalEndpointId"), &externalEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter externalEndpointId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params StreamInitialLoadEventsParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.StreamInitialLoadEvents(ctx, externalEndpointId, params)
+	return err
+}
+
+// GetInitialLoadStatus converts echo context to params.
+func (w *ServerInterfaceWrapper) GetInitialLoadStatus(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "externalEndpointId" -------------
+	var externalEndpointId ExternalEndpointId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "externalEndpointId", ctx.Param("externalEndpointId"), &externalEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter externalEndpointId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetInitialLoadStatusParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetInitialLoadStatus(ctx, externalEndpointId, params)
+	return err
+}
+
+// SetInitialLoadState converts echo context to params.
+func (w *ServerInterfaceWrapper) SetInitialLoadState(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "externalEndpointId" -------------
+	var externalEndpointId ExternalEndpointId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "externalEndpointId", ctx.Param("externalEndpointId"), &externalEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter externalEndpointId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SetInitialLoadStateParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.SetInitialLoadState(ctx, externalEndpointId, params)
 	return err
 }
 
@@ -1035,6 +2299,1709 @@ func (w *ServerInterfaceWrapper) ReceiveEvents(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ReceiveEvents(ctx, params)
+	return err
+}
+
+// StreamMasterdataEvents converts echo context to params.
+func (w *ServerInterfaceWrapper) StreamMasterdataEvents(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params StreamMasterdataEventsParams
+
+	headers := ctx.Request().Header
+	// ------------- Optional header parameter "Last-Event-ID" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("Last-Event-ID")]; found {
+		var LastEventID LastEventId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for Last-Event-ID, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "Last-Event-ID", valueList[0], &LastEventID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter Last-Event-ID: %s", err))
+		}
+
+		params.LastEventID = &LastEventID
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.StreamMasterdataEvents(ctx, params)
+	return err
+}
+
+// RequestFarm converts echo context to params.
+func (w *ServerInterfaceWrapper) RequestFarm(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RequestFarmParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.RequestFarm(ctx, params)
+	return err
+}
+
+// PutFarm converts echo context to params.
+func (w *ServerInterfaceWrapper) PutFarm(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PutFarmParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+	// ------------- Optional header parameter "x-agrirouter-base-revision" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-base-revision")]; found {
+		var XAgrirouterBaseRevision BaseRevision
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-base-revision, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-base-revision", valueList[0], &XAgrirouterBaseRevision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-base-revision: %s", err))
+		}
+
+		params.XAgrirouterBaseRevision = &XAgrirouterBaseRevision
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.PutFarm(ctx, localId, params)
+	return err
+}
+
+// DeactivateFarm converts echo context to params.
+func (w *ServerInterfaceWrapper) DeactivateFarm(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeactivateFarmParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+	// ------------- Optional header parameter "x-agrirouter-base-revision" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-base-revision")]; found {
+		var XAgrirouterBaseRevision BaseRevision
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-base-revision, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-base-revision", valueList[0], &XAgrirouterBaseRevision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-base-revision: %s", err))
+		}
+
+		params.XAgrirouterBaseRevision = &XAgrirouterBaseRevision
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeactivateFarm(ctx, localId, params)
+	return err
+}
+
+// UnbindFarmMapping converts echo context to params.
+func (w *ServerInterfaceWrapper) UnbindFarmMapping(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	// ------------- Path parameter "agrirouterId" -------------
+	var agrirouterId IdMappingAgrirouterId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agrirouterId", ctx.Param("agrirouterId"), &agrirouterId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter agrirouterId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UnbindFarmMappingParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UnbindFarmMapping(ctx, localId, agrirouterId, params)
+	return err
+}
+
+// BindFarmMapping converts echo context to params.
+func (w *ServerInterfaceWrapper) BindFarmMapping(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	// ------------- Path parameter "agrirouterId" -------------
+	var agrirouterId IdMappingAgrirouterId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agrirouterId", ctx.Param("agrirouterId"), &agrirouterId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter agrirouterId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params BindFarmMappingParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.BindFarmMapping(ctx, localId, agrirouterId, params)
+	return err
+}
+
+// RequestFieldBoundary converts echo context to params.
+func (w *ServerInterfaceWrapper) RequestFieldBoundary(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RequestFieldBoundaryParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.RequestFieldBoundary(ctx, params)
+	return err
+}
+
+// PutFieldBoundary converts echo context to params.
+func (w *ServerInterfaceWrapper) PutFieldBoundary(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PutFieldBoundaryParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+	// ------------- Optional header parameter "x-agrirouter-base-revision" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-base-revision")]; found {
+		var XAgrirouterBaseRevision BaseRevision
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-base-revision, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-base-revision", valueList[0], &XAgrirouterBaseRevision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-base-revision: %s", err))
+		}
+
+		params.XAgrirouterBaseRevision = &XAgrirouterBaseRevision
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.PutFieldBoundary(ctx, localId, params)
+	return err
+}
+
+// DeactivateFieldBoundary converts echo context to params.
+func (w *ServerInterfaceWrapper) DeactivateFieldBoundary(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeactivateFieldBoundaryParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+	// ------------- Optional header parameter "x-agrirouter-base-revision" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-base-revision")]; found {
+		var XAgrirouterBaseRevision BaseRevision
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-base-revision, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-base-revision", valueList[0], &XAgrirouterBaseRevision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-base-revision: %s", err))
+		}
+
+		params.XAgrirouterBaseRevision = &XAgrirouterBaseRevision
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeactivateFieldBoundary(ctx, localId, params)
+	return err
+}
+
+// UnbindFieldBoundaryMapping converts echo context to params.
+func (w *ServerInterfaceWrapper) UnbindFieldBoundaryMapping(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	// ------------- Path parameter "agrirouterId" -------------
+	var agrirouterId IdMappingAgrirouterId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agrirouterId", ctx.Param("agrirouterId"), &agrirouterId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter agrirouterId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UnbindFieldBoundaryMappingParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UnbindFieldBoundaryMapping(ctx, localId, agrirouterId, params)
+	return err
+}
+
+// BindFieldBoundaryMapping converts echo context to params.
+func (w *ServerInterfaceWrapper) BindFieldBoundaryMapping(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	// ------------- Path parameter "agrirouterId" -------------
+	var agrirouterId IdMappingAgrirouterId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agrirouterId", ctx.Param("agrirouterId"), &agrirouterId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter agrirouterId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params BindFieldBoundaryMappingParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.BindFieldBoundaryMapping(ctx, localId, agrirouterId, params)
+	return err
+}
+
+// RequestField converts echo context to params.
+func (w *ServerInterfaceWrapper) RequestField(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RequestFieldParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.RequestField(ctx, params)
+	return err
+}
+
+// PutField converts echo context to params.
+func (w *ServerInterfaceWrapper) PutField(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PutFieldParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+	// ------------- Optional header parameter "x-agrirouter-base-revision" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-base-revision")]; found {
+		var XAgrirouterBaseRevision BaseRevision
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-base-revision, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-base-revision", valueList[0], &XAgrirouterBaseRevision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-base-revision: %s", err))
+		}
+
+		params.XAgrirouterBaseRevision = &XAgrirouterBaseRevision
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.PutField(ctx, localId, params)
+	return err
+}
+
+// DeactivateField converts echo context to params.
+func (w *ServerInterfaceWrapper) DeactivateField(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeactivateFieldParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+	// ------------- Optional header parameter "x-agrirouter-base-revision" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-base-revision")]; found {
+		var XAgrirouterBaseRevision BaseRevision
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-base-revision, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-base-revision", valueList[0], &XAgrirouterBaseRevision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-base-revision: %s", err))
+		}
+
+		params.XAgrirouterBaseRevision = &XAgrirouterBaseRevision
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeactivateField(ctx, localId, params)
+	return err
+}
+
+// UnbindFieldMapping converts echo context to params.
+func (w *ServerInterfaceWrapper) UnbindFieldMapping(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	// ------------- Path parameter "agrirouterId" -------------
+	var agrirouterId IdMappingAgrirouterId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agrirouterId", ctx.Param("agrirouterId"), &agrirouterId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter agrirouterId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UnbindFieldMappingParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UnbindFieldMapping(ctx, localId, agrirouterId, params)
+	return err
+}
+
+// BindFieldMapping converts echo context to params.
+func (w *ServerInterfaceWrapper) BindFieldMapping(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	// ------------- Path parameter "agrirouterId" -------------
+	var agrirouterId IdMappingAgrirouterId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agrirouterId", ctx.Param("agrirouterId"), &agrirouterId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter agrirouterId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params BindFieldMappingParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.BindFieldMapping(ctx, localId, agrirouterId, params)
+	return err
+}
+
+// RequestOrganization converts echo context to params.
+func (w *ServerInterfaceWrapper) RequestOrganization(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RequestOrganizationParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.RequestOrganization(ctx, params)
+	return err
+}
+
+// PutOrganization converts echo context to params.
+func (w *ServerInterfaceWrapper) PutOrganization(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PutOrganizationParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+	// ------------- Optional header parameter "x-agrirouter-base-revision" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-base-revision")]; found {
+		var XAgrirouterBaseRevision BaseRevision
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-base-revision, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-base-revision", valueList[0], &XAgrirouterBaseRevision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-base-revision: %s", err))
+		}
+
+		params.XAgrirouterBaseRevision = &XAgrirouterBaseRevision
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.PutOrganization(ctx, localId, params)
+	return err
+}
+
+// DeactivateOrganization converts echo context to params.
+func (w *ServerInterfaceWrapper) DeactivateOrganization(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeactivateOrganizationParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+	// ------------- Optional header parameter "x-agrirouter-base-revision" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-base-revision")]; found {
+		var XAgrirouterBaseRevision BaseRevision
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-base-revision, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-base-revision", valueList[0], &XAgrirouterBaseRevision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-base-revision: %s", err))
+		}
+
+		params.XAgrirouterBaseRevision = &XAgrirouterBaseRevision
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeactivateOrganization(ctx, localId, params)
+	return err
+}
+
+// UnbindOrganizationMapping converts echo context to params.
+func (w *ServerInterfaceWrapper) UnbindOrganizationMapping(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	// ------------- Path parameter "agrirouterId" -------------
+	var agrirouterId IdMappingAgrirouterId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agrirouterId", ctx.Param("agrirouterId"), &agrirouterId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter agrirouterId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UnbindOrganizationMappingParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UnbindOrganizationMapping(ctx, localId, agrirouterId, params)
+	return err
+}
+
+// BindOrganizationMapping converts echo context to params.
+func (w *ServerInterfaceWrapper) BindOrganizationMapping(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	// ------------- Path parameter "agrirouterId" -------------
+	var agrirouterId IdMappingAgrirouterId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agrirouterId", ctx.Param("agrirouterId"), &agrirouterId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter agrirouterId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params BindOrganizationMappingParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.BindOrganizationMapping(ctx, localId, agrirouterId, params)
+	return err
+}
+
+// RequestPerson converts echo context to params.
+func (w *ServerInterfaceWrapper) RequestPerson(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RequestPersonParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.RequestPerson(ctx, params)
+	return err
+}
+
+// PutPerson converts echo context to params.
+func (w *ServerInterfaceWrapper) PutPerson(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PutPersonParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+	// ------------- Optional header parameter "x-agrirouter-base-revision" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-base-revision")]; found {
+		var XAgrirouterBaseRevision BaseRevision
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-base-revision, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-base-revision", valueList[0], &XAgrirouterBaseRevision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-base-revision: %s", err))
+		}
+
+		params.XAgrirouterBaseRevision = &XAgrirouterBaseRevision
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.PutPerson(ctx, localId, params)
+	return err
+}
+
+// DeactivatePerson converts echo context to params.
+func (w *ServerInterfaceWrapper) DeactivatePerson(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeactivatePersonParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+	// ------------- Optional header parameter "x-agrirouter-base-revision" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-base-revision")]; found {
+		var XAgrirouterBaseRevision BaseRevision
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-base-revision, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-base-revision", valueList[0], &XAgrirouterBaseRevision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-base-revision: %s", err))
+		}
+
+		params.XAgrirouterBaseRevision = &XAgrirouterBaseRevision
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeactivatePerson(ctx, localId, params)
+	return err
+}
+
+// UnbindPersonMapping converts echo context to params.
+func (w *ServerInterfaceWrapper) UnbindPersonMapping(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	// ------------- Path parameter "agrirouterId" -------------
+	var agrirouterId IdMappingAgrirouterId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agrirouterId", ctx.Param("agrirouterId"), &agrirouterId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter agrirouterId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UnbindPersonMappingParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UnbindPersonMapping(ctx, localId, agrirouterId, params)
+	return err
+}
+
+// BindPersonMapping converts echo context to params.
+func (w *ServerInterfaceWrapper) BindPersonMapping(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "localId" -------------
+	var localId LocalId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "localId", ctx.Param("localId"), &localId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter localId: %s", err))
+	}
+
+	// ------------- Path parameter "agrirouterId" -------------
+	var agrirouterId IdMappingAgrirouterId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "agrirouterId", ctx.Param("agrirouterId"), &agrirouterId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter agrirouterId: %s", err))
+	}
+
+	ctx.Set(AgrirouterOauthQAScopes, []string{"endpoints:manage"})
+
+	ctx.Set(AgrirouterOauthPRODScopes, []string{"endpoints:manage"})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params BindPersonMappingParams
+
+	headers := ctx.Request().Header
+	// ------------- Required header parameter "x-agrirouter-endpoint-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-endpoint-id")]; found {
+		var XAgrirouterEndpointId AgrirouterEndpointId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-endpoint-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-endpoint-id", valueList[0], &XAgrirouterEndpointId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-endpoint-id: %s", err))
+		}
+
+		params.XAgrirouterEndpointId = XAgrirouterEndpointId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-endpoint-id is required, but not found"))
+	}
+	// ------------- Required header parameter "x-agrirouter-tenant-id" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("x-agrirouter-tenant-id")]; found {
+		var XAgrirouterTenantId XAgrirouterTenantId
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for x-agrirouter-tenant-id, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "x-agrirouter-tenant-id", valueList[0], &XAgrirouterTenantId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter x-agrirouter-tenant-id: %s", err))
+		}
+
+		params.XAgrirouterTenantId = XAgrirouterTenantId
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter x-agrirouter-tenant-id is required, but not found"))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.BindPersonMapping(ctx, localId, agrirouterId, params)
 	return err
 }
 
@@ -1266,14 +4233,60 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.GET(baseURL+"/compatible-applications", wrapper.ListCompatibleApplications)
 	router.POST(baseURL+"/confirmations", wrapper.ConfirmMessages)
+	router.GET(baseURL+"/endpoints/:externalEndpointId/masterdata-initial-load/events", wrapper.StreamInitialLoadEvents)
+	router.GET(baseURL+"/endpoints/:externalEndpointId/masterdata-initial-load/status", wrapper.GetInitialLoadStatus)
+	router.PUT(baseURL+"/endpoints/:externalEndpointId/masterdata-initial-load/status", wrapper.SetInitialLoadState)
 	router.DELETE(baseURL+"/endpoints/:externalId", wrapper.DeleteEndpoint)
 	router.PUT(baseURL+"/endpoints/:externalId", wrapper.PutEndpoint)
 	router.GET(baseURL+"/events", wrapper.ReceiveEvents)
+	router.GET(baseURL+"/masterdata/events", wrapper.StreamMasterdataEvents)
+	router.POST(baseURL+"/masterdata/farms/requests", wrapper.RequestFarm)
+	router.PUT(baseURL+"/masterdata/farms/:localId", wrapper.PutFarm)
+	router.POST(baseURL+"/masterdata/farms/:localId/deactivation", wrapper.DeactivateFarm)
+	router.DELETE(baseURL+"/masterdata/farms/:localId/id-mapping/:agrirouterId", wrapper.UnbindFarmMapping)
+	router.PUT(baseURL+"/masterdata/farms/:localId/id-mapping/:agrirouterId", wrapper.BindFarmMapping)
+	router.POST(baseURL+"/masterdata/field-boundaries/requests", wrapper.RequestFieldBoundary)
+	router.PUT(baseURL+"/masterdata/field-boundaries/:localId", wrapper.PutFieldBoundary)
+	router.POST(baseURL+"/masterdata/field-boundaries/:localId/deactivation", wrapper.DeactivateFieldBoundary)
+	router.DELETE(baseURL+"/masterdata/field-boundaries/:localId/id-mapping/:agrirouterId", wrapper.UnbindFieldBoundaryMapping)
+	router.PUT(baseURL+"/masterdata/field-boundaries/:localId/id-mapping/:agrirouterId", wrapper.BindFieldBoundaryMapping)
+	router.POST(baseURL+"/masterdata/fields/requests", wrapper.RequestField)
+	router.PUT(baseURL+"/masterdata/fields/:localId", wrapper.PutField)
+	router.POST(baseURL+"/masterdata/fields/:localId/deactivation", wrapper.DeactivateField)
+	router.DELETE(baseURL+"/masterdata/fields/:localId/id-mapping/:agrirouterId", wrapper.UnbindFieldMapping)
+	router.PUT(baseURL+"/masterdata/fields/:localId/id-mapping/:agrirouterId", wrapper.BindFieldMapping)
+	router.POST(baseURL+"/masterdata/organizations/requests", wrapper.RequestOrganization)
+	router.PUT(baseURL+"/masterdata/organizations/:localId", wrapper.PutOrganization)
+	router.POST(baseURL+"/masterdata/organizations/:localId/deactivation", wrapper.DeactivateOrganization)
+	router.DELETE(baseURL+"/masterdata/organizations/:localId/id-mapping/:agrirouterId", wrapper.UnbindOrganizationMapping)
+	router.PUT(baseURL+"/masterdata/organizations/:localId/id-mapping/:agrirouterId", wrapper.BindOrganizationMapping)
+	router.POST(baseURL+"/masterdata/persons/requests", wrapper.RequestPerson)
+	router.PUT(baseURL+"/masterdata/persons/:localId", wrapper.PutPerson)
+	router.POST(baseURL+"/masterdata/persons/:localId/deactivation", wrapper.DeactivatePerson)
+	router.DELETE(baseURL+"/masterdata/persons/:localId/id-mapping/:agrirouterId", wrapper.UnbindPersonMapping)
+	router.PUT(baseURL+"/masterdata/persons/:localId/id-mapping/:agrirouterId", wrapper.BindPersonMapping)
 	router.POST(baseURL+"/messages", wrapper.SendMessages)
 	router.GET(baseURL+"/tenants", wrapper.ListAuthorizedTenants)
 	router.GET(baseURL+"/tenants/:tenantId/endpoints", wrapper.ListTenantEndpoints)
 
 }
+
+type BaseRevisionRequiredJSONResponse RevisionConflictError
+
+type ForbiddenJSONResponse MasterdataError
+
+type InitialLoadConflictJSONResponse MasterdataError
+
+type MappingConflictJSONResponse MappingConflictError
+
+type NotFoundJSONResponse MasterdataError
+
+type RequestAcceptedResponse struct {
+}
+
+type RevisionConflictJSONResponse RevisionConflictError
+
+type ValidationErrorJSONResponse MasterdataError
 
 type ListCompatibleApplicationsRequestObject struct {
 	Params ListCompatibleApplicationsParams
@@ -1374,6 +4387,241 @@ type ConfirmMessages500Response struct {
 
 func (response ConfirmMessages500Response) VisitConfirmMessagesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(500)
+	return nil
+}
+
+type StreamInitialLoadEventsRequestObject struct {
+	ExternalEndpointId ExternalEndpointId `json:"externalEndpointId"`
+	Params             StreamInitialLoadEventsParams
+}
+
+type StreamInitialLoadEventsResponseObject interface {
+	VisitStreamInitialLoadEventsResponse(w http.ResponseWriter) error
+}
+
+type StreamInitialLoadEvents200TexteventStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response StreamInitialLoadEvents200TexteventStreamResponse) VisitStreamInitialLoadEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/event-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type StreamInitialLoadEvents403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response StreamInitialLoadEvents403JSONResponse) VisitStreamInitialLoadEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StreamInitialLoadEvents404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response StreamInitialLoadEvents404JSONResponse) VisitStreamInitialLoadEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type StreamInitialLoadEvents500Response struct {
+}
+
+func (response StreamInitialLoadEvents500Response) VisitStreamInitialLoadEventsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type StreamInitialLoadEvents502Response struct {
+}
+
+func (response StreamInitialLoadEvents502Response) VisitStreamInitialLoadEventsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type StreamInitialLoadEvents503Response struct {
+}
+
+func (response StreamInitialLoadEvents503Response) VisitStreamInitialLoadEventsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type StreamInitialLoadEvents504Response struct {
+}
+
+func (response StreamInitialLoadEvents504Response) VisitStreamInitialLoadEventsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type GetInitialLoadStatusRequestObject struct {
+	ExternalEndpointId ExternalEndpointId `json:"externalEndpointId"`
+	Params             GetInitialLoadStatusParams
+}
+
+type GetInitialLoadStatusResponseObject interface {
+	VisitGetInitialLoadStatusResponse(w http.ResponseWriter) error
+}
+
+type GetInitialLoadStatus200JSONResponse InitialLoadStatus
+
+func (response GetInitialLoadStatus200JSONResponse) VisitGetInitialLoadStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetInitialLoadStatus403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response GetInitialLoadStatus403JSONResponse) VisitGetInitialLoadStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetInitialLoadStatus404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response GetInitialLoadStatus404JSONResponse) VisitGetInitialLoadStatusResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetInitialLoadStatus500Response struct {
+}
+
+func (response GetInitialLoadStatus500Response) VisitGetInitialLoadStatusResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type GetInitialLoadStatus502Response struct {
+}
+
+func (response GetInitialLoadStatus502Response) VisitGetInitialLoadStatusResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type GetInitialLoadStatus503Response struct {
+}
+
+func (response GetInitialLoadStatus503Response) VisitGetInitialLoadStatusResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type GetInitialLoadStatus504Response struct {
+}
+
+func (response GetInitialLoadStatus504Response) VisitGetInitialLoadStatusResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type SetInitialLoadStateRequestObject struct {
+	ExternalEndpointId ExternalEndpointId `json:"externalEndpointId"`
+	Params             SetInitialLoadStateParams
+	Body               *SetInitialLoadStateJSONRequestBody
+}
+
+type SetInitialLoadStateResponseObject interface {
+	VisitSetInitialLoadStateResponse(w http.ResponseWriter) error
+}
+
+type SetInitialLoadState200JSONResponse InitialLoadStatus
+
+func (response SetInitialLoadState200JSONResponse) VisitSetInitialLoadStateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SetInitialLoadState400JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response SetInitialLoadState400JSONResponse) VisitSetInitialLoadStateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SetInitialLoadState403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response SetInitialLoadState403JSONResponse) VisitSetInitialLoadStateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SetInitialLoadState404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response SetInitialLoadState404JSONResponse) VisitSetInitialLoadStateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SetInitialLoadState409JSONResponse struct {
+	InitialLoadConflictJSONResponse
+}
+
+func (response SetInitialLoadState409JSONResponse) VisitSetInitialLoadStateResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type SetInitialLoadState500Response struct {
+}
+
+func (response SetInitialLoadState500Response) VisitSetInitialLoadStateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type SetInitialLoadState502Response struct {
+}
+
+func (response SetInitialLoadState502Response) VisitSetInitialLoadStateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type SetInitialLoadState503Response struct {
+}
+
+func (response SetInitialLoadState503Response) VisitSetInitialLoadStateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type SetInitialLoadState504Response struct {
+}
+
+func (response SetInitialLoadState504Response) VisitSetInitialLoadStateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
 	return nil
 }
 
@@ -1593,6 +4841,2095 @@ func (response ReceiveEvents500Response) VisitReceiveEventsResponse(w http.Respo
 	return nil
 }
 
+type StreamMasterdataEventsRequestObject struct {
+	Params StreamMasterdataEventsParams
+}
+
+type StreamMasterdataEventsResponseObject interface {
+	VisitStreamMasterdataEventsResponse(w http.ResponseWriter) error
+}
+
+type StreamMasterdataEvents200TexteventStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response StreamMasterdataEvents200TexteventStreamResponse) VisitStreamMasterdataEventsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/event-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type StreamMasterdataEvents500Response struct {
+}
+
+func (response StreamMasterdataEvents500Response) VisitStreamMasterdataEventsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type StreamMasterdataEvents502Response struct {
+}
+
+func (response StreamMasterdataEvents502Response) VisitStreamMasterdataEventsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type StreamMasterdataEvents503Response struct {
+}
+
+func (response StreamMasterdataEvents503Response) VisitStreamMasterdataEventsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type StreamMasterdataEvents504Response struct {
+}
+
+func (response StreamMasterdataEvents504Response) VisitStreamMasterdataEventsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type RequestFarmRequestObject struct {
+	Params RequestFarmParams
+	Body   *RequestFarmJSONRequestBody
+}
+
+type RequestFarmResponseObject interface {
+	VisitRequestFarmResponse(w http.ResponseWriter) error
+}
+
+type RequestFarm202Response = RequestAcceptedResponse
+
+func (response RequestFarm202Response) VisitRequestFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type RequestFarm403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RequestFarm403JSONResponse) VisitRequestFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequestFarm404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RequestFarm404JSONResponse) VisitRequestFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequestFarm500Response struct {
+}
+
+func (response RequestFarm500Response) VisitRequestFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type RequestFarm502Response struct {
+}
+
+func (response RequestFarm502Response) VisitRequestFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type RequestFarm503Response struct {
+}
+
+func (response RequestFarm503Response) VisitRequestFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type RequestFarm504Response struct {
+}
+
+func (response RequestFarm504Response) VisitRequestFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type PutFarmRequestObject struct {
+	LocalId LocalId `json:"localId"`
+	Params  PutFarmParams
+	Body    *PutFarmJSONRequestBody
+}
+
+type PutFarmResponseObject interface {
+	VisitPutFarmResponse(w http.ResponseWriter) error
+}
+
+type PutFarm200JSONResponse Farm
+
+func (response PutFarm200JSONResponse) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFarm201JSONResponse Farm
+
+func (response PutFarm201JSONResponse) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFarm400JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response PutFarm400JSONResponse) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFarm403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response PutFarm403JSONResponse) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFarm409JSONResponse struct{ MappingConflictJSONResponse }
+
+func (response PutFarm409JSONResponse) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFarm412JSONResponse struct{ RevisionConflictJSONResponse }
+
+func (response PutFarm412JSONResponse) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFarm428JSONResponse struct {
+	BaseRevisionRequiredJSONResponse
+}
+
+func (response PutFarm428JSONResponse) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(428)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFarm500Response struct {
+}
+
+func (response PutFarm500Response) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type PutFarm502Response struct {
+}
+
+func (response PutFarm502Response) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type PutFarm503Response struct {
+}
+
+func (response PutFarm503Response) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type PutFarm504Response struct {
+}
+
+func (response PutFarm504Response) VisitPutFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type DeactivateFarmRequestObject struct {
+	LocalId LocalId `json:"localId"`
+	Params  DeactivateFarmParams
+}
+
+type DeactivateFarmResponseObject interface {
+	VisitDeactivateFarmResponse(w http.ResponseWriter) error
+}
+
+type DeactivateFarm200JSONResponse Farm
+
+func (response DeactivateFarm200JSONResponse) VisitDeactivateFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateFarm403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeactivateFarm403JSONResponse) VisitDeactivateFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateFarm404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeactivateFarm404JSONResponse) VisitDeactivateFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateFarm412JSONResponse struct{ RevisionConflictJSONResponse }
+
+func (response DeactivateFarm412JSONResponse) VisitDeactivateFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateFarm428JSONResponse struct {
+	BaseRevisionRequiredJSONResponse
+}
+
+func (response DeactivateFarm428JSONResponse) VisitDeactivateFarmResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(428)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateFarm500Response struct {
+}
+
+func (response DeactivateFarm500Response) VisitDeactivateFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type DeactivateFarm502Response struct {
+}
+
+func (response DeactivateFarm502Response) VisitDeactivateFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type DeactivateFarm503Response struct {
+}
+
+func (response DeactivateFarm503Response) VisitDeactivateFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type DeactivateFarm504Response struct {
+}
+
+func (response DeactivateFarm504Response) VisitDeactivateFarmResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type UnbindFarmMappingRequestObject struct {
+	LocalId      LocalId               `json:"localId"`
+	AgrirouterId IdMappingAgrirouterId `json:"agrirouterId"`
+	Params       UnbindFarmMappingParams
+}
+
+type UnbindFarmMappingResponseObject interface {
+	VisitUnbindFarmMappingResponse(w http.ResponseWriter) error
+}
+
+type UnbindFarmMapping204Response struct {
+}
+
+func (response UnbindFarmMapping204Response) VisitUnbindFarmMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnbindFarmMapping403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UnbindFarmMapping403JSONResponse) VisitUnbindFarmMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnbindFarmMapping404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UnbindFarmMapping404JSONResponse) VisitUnbindFarmMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnbindFarmMapping500Response struct {
+}
+
+func (response UnbindFarmMapping500Response) VisitUnbindFarmMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type UnbindFarmMapping502Response struct {
+}
+
+func (response UnbindFarmMapping502Response) VisitUnbindFarmMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type UnbindFarmMapping503Response struct {
+}
+
+func (response UnbindFarmMapping503Response) VisitUnbindFarmMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type UnbindFarmMapping504Response struct {
+}
+
+func (response UnbindFarmMapping504Response) VisitUnbindFarmMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type BindFarmMappingRequestObject struct {
+	LocalId      LocalId               `json:"localId"`
+	AgrirouterId IdMappingAgrirouterId `json:"agrirouterId"`
+	Params       BindFarmMappingParams
+}
+
+type BindFarmMappingResponseObject interface {
+	VisitBindFarmMappingResponse(w http.ResponseWriter) error
+}
+
+type BindFarmMapping204Response struct {
+}
+
+func (response BindFarmMapping204Response) VisitBindFarmMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type BindFarmMapping403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response BindFarmMapping403JSONResponse) VisitBindFarmMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindFarmMapping404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response BindFarmMapping404JSONResponse) VisitBindFarmMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindFarmMapping409JSONResponse struct{ MappingConflictJSONResponse }
+
+func (response BindFarmMapping409JSONResponse) VisitBindFarmMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindFarmMapping500Response struct {
+}
+
+func (response BindFarmMapping500Response) VisitBindFarmMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type BindFarmMapping502Response struct {
+}
+
+func (response BindFarmMapping502Response) VisitBindFarmMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type BindFarmMapping503Response struct {
+}
+
+func (response BindFarmMapping503Response) VisitBindFarmMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type BindFarmMapping504Response struct {
+}
+
+func (response BindFarmMapping504Response) VisitBindFarmMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type RequestFieldBoundaryRequestObject struct {
+	Params RequestFieldBoundaryParams
+	Body   *RequestFieldBoundaryJSONRequestBody
+}
+
+type RequestFieldBoundaryResponseObject interface {
+	VisitRequestFieldBoundaryResponse(w http.ResponseWriter) error
+}
+
+type RequestFieldBoundary202Response = RequestAcceptedResponse
+
+func (response RequestFieldBoundary202Response) VisitRequestFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type RequestFieldBoundary403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RequestFieldBoundary403JSONResponse) VisitRequestFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequestFieldBoundary404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RequestFieldBoundary404JSONResponse) VisitRequestFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequestFieldBoundary500Response struct {
+}
+
+func (response RequestFieldBoundary500Response) VisitRequestFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type RequestFieldBoundary502Response struct {
+}
+
+func (response RequestFieldBoundary502Response) VisitRequestFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type RequestFieldBoundary503Response struct {
+}
+
+func (response RequestFieldBoundary503Response) VisitRequestFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type RequestFieldBoundary504Response struct {
+}
+
+func (response RequestFieldBoundary504Response) VisitRequestFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type PutFieldBoundaryRequestObject struct {
+	LocalId LocalId `json:"localId"`
+	Params  PutFieldBoundaryParams
+	Body    *PutFieldBoundaryJSONRequestBody
+}
+
+type PutFieldBoundaryResponseObject interface {
+	VisitPutFieldBoundaryResponse(w http.ResponseWriter) error
+}
+
+type PutFieldBoundary200JSONResponse FieldBoundary
+
+func (response PutFieldBoundary200JSONResponse) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFieldBoundary201JSONResponse FieldBoundary
+
+func (response PutFieldBoundary201JSONResponse) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFieldBoundary400JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response PutFieldBoundary400JSONResponse) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFieldBoundary403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response PutFieldBoundary403JSONResponse) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFieldBoundary409JSONResponse struct{ MappingConflictJSONResponse }
+
+func (response PutFieldBoundary409JSONResponse) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFieldBoundary412JSONResponse struct{ RevisionConflictJSONResponse }
+
+func (response PutFieldBoundary412JSONResponse) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFieldBoundary428JSONResponse struct {
+	BaseRevisionRequiredJSONResponse
+}
+
+func (response PutFieldBoundary428JSONResponse) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(428)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutFieldBoundary500Response struct {
+}
+
+func (response PutFieldBoundary500Response) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type PutFieldBoundary502Response struct {
+}
+
+func (response PutFieldBoundary502Response) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type PutFieldBoundary503Response struct {
+}
+
+func (response PutFieldBoundary503Response) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type PutFieldBoundary504Response struct {
+}
+
+func (response PutFieldBoundary504Response) VisitPutFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type DeactivateFieldBoundaryRequestObject struct {
+	LocalId LocalId `json:"localId"`
+	Params  DeactivateFieldBoundaryParams
+}
+
+type DeactivateFieldBoundaryResponseObject interface {
+	VisitDeactivateFieldBoundaryResponse(w http.ResponseWriter) error
+}
+
+type DeactivateFieldBoundary200JSONResponse FieldBoundary
+
+func (response DeactivateFieldBoundary200JSONResponse) VisitDeactivateFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateFieldBoundary403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeactivateFieldBoundary403JSONResponse) VisitDeactivateFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateFieldBoundary404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeactivateFieldBoundary404JSONResponse) VisitDeactivateFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateFieldBoundary412JSONResponse struct{ RevisionConflictJSONResponse }
+
+func (response DeactivateFieldBoundary412JSONResponse) VisitDeactivateFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateFieldBoundary428JSONResponse struct {
+	BaseRevisionRequiredJSONResponse
+}
+
+func (response DeactivateFieldBoundary428JSONResponse) VisitDeactivateFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(428)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateFieldBoundary500Response struct {
+}
+
+func (response DeactivateFieldBoundary500Response) VisitDeactivateFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type DeactivateFieldBoundary502Response struct {
+}
+
+func (response DeactivateFieldBoundary502Response) VisitDeactivateFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type DeactivateFieldBoundary503Response struct {
+}
+
+func (response DeactivateFieldBoundary503Response) VisitDeactivateFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type DeactivateFieldBoundary504Response struct {
+}
+
+func (response DeactivateFieldBoundary504Response) VisitDeactivateFieldBoundaryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type UnbindFieldBoundaryMappingRequestObject struct {
+	LocalId      LocalId               `json:"localId"`
+	AgrirouterId IdMappingAgrirouterId `json:"agrirouterId"`
+	Params       UnbindFieldBoundaryMappingParams
+}
+
+type UnbindFieldBoundaryMappingResponseObject interface {
+	VisitUnbindFieldBoundaryMappingResponse(w http.ResponseWriter) error
+}
+
+type UnbindFieldBoundaryMapping204Response struct {
+}
+
+func (response UnbindFieldBoundaryMapping204Response) VisitUnbindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnbindFieldBoundaryMapping403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UnbindFieldBoundaryMapping403JSONResponse) VisitUnbindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnbindFieldBoundaryMapping404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UnbindFieldBoundaryMapping404JSONResponse) VisitUnbindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnbindFieldBoundaryMapping500Response struct {
+}
+
+func (response UnbindFieldBoundaryMapping500Response) VisitUnbindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type UnbindFieldBoundaryMapping502Response struct {
+}
+
+func (response UnbindFieldBoundaryMapping502Response) VisitUnbindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type UnbindFieldBoundaryMapping503Response struct {
+}
+
+func (response UnbindFieldBoundaryMapping503Response) VisitUnbindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type UnbindFieldBoundaryMapping504Response struct {
+}
+
+func (response UnbindFieldBoundaryMapping504Response) VisitUnbindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type BindFieldBoundaryMappingRequestObject struct {
+	LocalId      LocalId               `json:"localId"`
+	AgrirouterId IdMappingAgrirouterId `json:"agrirouterId"`
+	Params       BindFieldBoundaryMappingParams
+}
+
+type BindFieldBoundaryMappingResponseObject interface {
+	VisitBindFieldBoundaryMappingResponse(w http.ResponseWriter) error
+}
+
+type BindFieldBoundaryMapping204Response struct {
+}
+
+func (response BindFieldBoundaryMapping204Response) VisitBindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type BindFieldBoundaryMapping403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response BindFieldBoundaryMapping403JSONResponse) VisitBindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindFieldBoundaryMapping404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response BindFieldBoundaryMapping404JSONResponse) VisitBindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindFieldBoundaryMapping409JSONResponse struct{ MappingConflictJSONResponse }
+
+func (response BindFieldBoundaryMapping409JSONResponse) VisitBindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindFieldBoundaryMapping500Response struct {
+}
+
+func (response BindFieldBoundaryMapping500Response) VisitBindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type BindFieldBoundaryMapping502Response struct {
+}
+
+func (response BindFieldBoundaryMapping502Response) VisitBindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type BindFieldBoundaryMapping503Response struct {
+}
+
+func (response BindFieldBoundaryMapping503Response) VisitBindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type BindFieldBoundaryMapping504Response struct {
+}
+
+func (response BindFieldBoundaryMapping504Response) VisitBindFieldBoundaryMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type RequestFieldRequestObject struct {
+	Params RequestFieldParams
+	Body   *RequestFieldJSONRequestBody
+}
+
+type RequestFieldResponseObject interface {
+	VisitRequestFieldResponse(w http.ResponseWriter) error
+}
+
+type RequestField202Response = RequestAcceptedResponse
+
+func (response RequestField202Response) VisitRequestFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type RequestField403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RequestField403JSONResponse) VisitRequestFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequestField404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RequestField404JSONResponse) VisitRequestFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequestField500Response struct {
+}
+
+func (response RequestField500Response) VisitRequestFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type RequestField502Response struct {
+}
+
+func (response RequestField502Response) VisitRequestFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type RequestField503Response struct {
+}
+
+func (response RequestField503Response) VisitRequestFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type RequestField504Response struct {
+}
+
+func (response RequestField504Response) VisitRequestFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type PutFieldRequestObject struct {
+	LocalId LocalId `json:"localId"`
+	Params  PutFieldParams
+	Body    *PutFieldJSONRequestBody
+}
+
+type PutFieldResponseObject interface {
+	VisitPutFieldResponse(w http.ResponseWriter) error
+}
+
+type PutField200JSONResponse Field
+
+func (response PutField200JSONResponse) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutField201JSONResponse Field
+
+func (response PutField201JSONResponse) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutField400JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response PutField400JSONResponse) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutField403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response PutField403JSONResponse) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutField409JSONResponse struct{ MappingConflictJSONResponse }
+
+func (response PutField409JSONResponse) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutField412JSONResponse struct{ RevisionConflictJSONResponse }
+
+func (response PutField412JSONResponse) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutField428JSONResponse struct {
+	BaseRevisionRequiredJSONResponse
+}
+
+func (response PutField428JSONResponse) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(428)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutField500Response struct {
+}
+
+func (response PutField500Response) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type PutField502Response struct {
+}
+
+func (response PutField502Response) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type PutField503Response struct {
+}
+
+func (response PutField503Response) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type PutField504Response struct {
+}
+
+func (response PutField504Response) VisitPutFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type DeactivateFieldRequestObject struct {
+	LocalId LocalId `json:"localId"`
+	Params  DeactivateFieldParams
+}
+
+type DeactivateFieldResponseObject interface {
+	VisitDeactivateFieldResponse(w http.ResponseWriter) error
+}
+
+type DeactivateField200JSONResponse Field
+
+func (response DeactivateField200JSONResponse) VisitDeactivateFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateField403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeactivateField403JSONResponse) VisitDeactivateFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateField404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeactivateField404JSONResponse) VisitDeactivateFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateField412JSONResponse struct{ RevisionConflictJSONResponse }
+
+func (response DeactivateField412JSONResponse) VisitDeactivateFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateField428JSONResponse struct {
+	BaseRevisionRequiredJSONResponse
+}
+
+func (response DeactivateField428JSONResponse) VisitDeactivateFieldResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(428)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateField500Response struct {
+}
+
+func (response DeactivateField500Response) VisitDeactivateFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type DeactivateField502Response struct {
+}
+
+func (response DeactivateField502Response) VisitDeactivateFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type DeactivateField503Response struct {
+}
+
+func (response DeactivateField503Response) VisitDeactivateFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type DeactivateField504Response struct {
+}
+
+func (response DeactivateField504Response) VisitDeactivateFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type UnbindFieldMappingRequestObject struct {
+	LocalId      LocalId               `json:"localId"`
+	AgrirouterId IdMappingAgrirouterId `json:"agrirouterId"`
+	Params       UnbindFieldMappingParams
+}
+
+type UnbindFieldMappingResponseObject interface {
+	VisitUnbindFieldMappingResponse(w http.ResponseWriter) error
+}
+
+type UnbindFieldMapping204Response struct {
+}
+
+func (response UnbindFieldMapping204Response) VisitUnbindFieldMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnbindFieldMapping403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UnbindFieldMapping403JSONResponse) VisitUnbindFieldMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnbindFieldMapping404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UnbindFieldMapping404JSONResponse) VisitUnbindFieldMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnbindFieldMapping500Response struct {
+}
+
+func (response UnbindFieldMapping500Response) VisitUnbindFieldMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type UnbindFieldMapping502Response struct {
+}
+
+func (response UnbindFieldMapping502Response) VisitUnbindFieldMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type UnbindFieldMapping503Response struct {
+}
+
+func (response UnbindFieldMapping503Response) VisitUnbindFieldMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type UnbindFieldMapping504Response struct {
+}
+
+func (response UnbindFieldMapping504Response) VisitUnbindFieldMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type BindFieldMappingRequestObject struct {
+	LocalId      LocalId               `json:"localId"`
+	AgrirouterId IdMappingAgrirouterId `json:"agrirouterId"`
+	Params       BindFieldMappingParams
+}
+
+type BindFieldMappingResponseObject interface {
+	VisitBindFieldMappingResponse(w http.ResponseWriter) error
+}
+
+type BindFieldMapping204Response struct {
+}
+
+func (response BindFieldMapping204Response) VisitBindFieldMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type BindFieldMapping403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response BindFieldMapping403JSONResponse) VisitBindFieldMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindFieldMapping404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response BindFieldMapping404JSONResponse) VisitBindFieldMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindFieldMapping409JSONResponse struct{ MappingConflictJSONResponse }
+
+func (response BindFieldMapping409JSONResponse) VisitBindFieldMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindFieldMapping500Response struct {
+}
+
+func (response BindFieldMapping500Response) VisitBindFieldMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type BindFieldMapping502Response struct {
+}
+
+func (response BindFieldMapping502Response) VisitBindFieldMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type BindFieldMapping503Response struct {
+}
+
+func (response BindFieldMapping503Response) VisitBindFieldMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type BindFieldMapping504Response struct {
+}
+
+func (response BindFieldMapping504Response) VisitBindFieldMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type RequestOrganizationRequestObject struct {
+	Params RequestOrganizationParams
+	Body   *RequestOrganizationJSONRequestBody
+}
+
+type RequestOrganizationResponseObject interface {
+	VisitRequestOrganizationResponse(w http.ResponseWriter) error
+}
+
+type RequestOrganization202Response = RequestAcceptedResponse
+
+func (response RequestOrganization202Response) VisitRequestOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type RequestOrganization403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RequestOrganization403JSONResponse) VisitRequestOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequestOrganization404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RequestOrganization404JSONResponse) VisitRequestOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequestOrganization500Response struct {
+}
+
+func (response RequestOrganization500Response) VisitRequestOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type RequestOrganization502Response struct {
+}
+
+func (response RequestOrganization502Response) VisitRequestOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type RequestOrganization503Response struct {
+}
+
+func (response RequestOrganization503Response) VisitRequestOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type RequestOrganization504Response struct {
+}
+
+func (response RequestOrganization504Response) VisitRequestOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type PutOrganizationRequestObject struct {
+	LocalId LocalId `json:"localId"`
+	Params  PutOrganizationParams
+	Body    *PutOrganizationJSONRequestBody
+}
+
+type PutOrganizationResponseObject interface {
+	VisitPutOrganizationResponse(w http.ResponseWriter) error
+}
+
+type PutOrganization200JSONResponse Organization
+
+func (response PutOrganization200JSONResponse) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutOrganization201JSONResponse Organization
+
+func (response PutOrganization201JSONResponse) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutOrganization400JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response PutOrganization400JSONResponse) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutOrganization403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response PutOrganization403JSONResponse) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutOrganization409JSONResponse struct{ MappingConflictJSONResponse }
+
+func (response PutOrganization409JSONResponse) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutOrganization412JSONResponse struct{ RevisionConflictJSONResponse }
+
+func (response PutOrganization412JSONResponse) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutOrganization428JSONResponse struct {
+	BaseRevisionRequiredJSONResponse
+}
+
+func (response PutOrganization428JSONResponse) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(428)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutOrganization500Response struct {
+}
+
+func (response PutOrganization500Response) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type PutOrganization502Response struct {
+}
+
+func (response PutOrganization502Response) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type PutOrganization503Response struct {
+}
+
+func (response PutOrganization503Response) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type PutOrganization504Response struct {
+}
+
+func (response PutOrganization504Response) VisitPutOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type DeactivateOrganizationRequestObject struct {
+	LocalId LocalId `json:"localId"`
+	Params  DeactivateOrganizationParams
+}
+
+type DeactivateOrganizationResponseObject interface {
+	VisitDeactivateOrganizationResponse(w http.ResponseWriter) error
+}
+
+type DeactivateOrganization200JSONResponse Organization
+
+func (response DeactivateOrganization200JSONResponse) VisitDeactivateOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateOrganization403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeactivateOrganization403JSONResponse) VisitDeactivateOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateOrganization404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeactivateOrganization404JSONResponse) VisitDeactivateOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateOrganization412JSONResponse struct{ RevisionConflictJSONResponse }
+
+func (response DeactivateOrganization412JSONResponse) VisitDeactivateOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateOrganization428JSONResponse struct {
+	BaseRevisionRequiredJSONResponse
+}
+
+func (response DeactivateOrganization428JSONResponse) VisitDeactivateOrganizationResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(428)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivateOrganization500Response struct {
+}
+
+func (response DeactivateOrganization500Response) VisitDeactivateOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type DeactivateOrganization502Response struct {
+}
+
+func (response DeactivateOrganization502Response) VisitDeactivateOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type DeactivateOrganization503Response struct {
+}
+
+func (response DeactivateOrganization503Response) VisitDeactivateOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type DeactivateOrganization504Response struct {
+}
+
+func (response DeactivateOrganization504Response) VisitDeactivateOrganizationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type UnbindOrganizationMappingRequestObject struct {
+	LocalId      LocalId               `json:"localId"`
+	AgrirouterId IdMappingAgrirouterId `json:"agrirouterId"`
+	Params       UnbindOrganizationMappingParams
+}
+
+type UnbindOrganizationMappingResponseObject interface {
+	VisitUnbindOrganizationMappingResponse(w http.ResponseWriter) error
+}
+
+type UnbindOrganizationMapping204Response struct {
+}
+
+func (response UnbindOrganizationMapping204Response) VisitUnbindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnbindOrganizationMapping403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UnbindOrganizationMapping403JSONResponse) VisitUnbindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnbindOrganizationMapping404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UnbindOrganizationMapping404JSONResponse) VisitUnbindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnbindOrganizationMapping500Response struct {
+}
+
+func (response UnbindOrganizationMapping500Response) VisitUnbindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type UnbindOrganizationMapping502Response struct {
+}
+
+func (response UnbindOrganizationMapping502Response) VisitUnbindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type UnbindOrganizationMapping503Response struct {
+}
+
+func (response UnbindOrganizationMapping503Response) VisitUnbindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type UnbindOrganizationMapping504Response struct {
+}
+
+func (response UnbindOrganizationMapping504Response) VisitUnbindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type BindOrganizationMappingRequestObject struct {
+	LocalId      LocalId               `json:"localId"`
+	AgrirouterId IdMappingAgrirouterId `json:"agrirouterId"`
+	Params       BindOrganizationMappingParams
+}
+
+type BindOrganizationMappingResponseObject interface {
+	VisitBindOrganizationMappingResponse(w http.ResponseWriter) error
+}
+
+type BindOrganizationMapping204Response struct {
+}
+
+func (response BindOrganizationMapping204Response) VisitBindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type BindOrganizationMapping403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response BindOrganizationMapping403JSONResponse) VisitBindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindOrganizationMapping404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response BindOrganizationMapping404JSONResponse) VisitBindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindOrganizationMapping409JSONResponse struct{ MappingConflictJSONResponse }
+
+func (response BindOrganizationMapping409JSONResponse) VisitBindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindOrganizationMapping500Response struct {
+}
+
+func (response BindOrganizationMapping500Response) VisitBindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type BindOrganizationMapping502Response struct {
+}
+
+func (response BindOrganizationMapping502Response) VisitBindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type BindOrganizationMapping503Response struct {
+}
+
+func (response BindOrganizationMapping503Response) VisitBindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type BindOrganizationMapping504Response struct {
+}
+
+func (response BindOrganizationMapping504Response) VisitBindOrganizationMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type RequestPersonRequestObject struct {
+	Params RequestPersonParams
+	Body   *RequestPersonJSONRequestBody
+}
+
+type RequestPersonResponseObject interface {
+	VisitRequestPersonResponse(w http.ResponseWriter) error
+}
+
+type RequestPerson202Response = RequestAcceptedResponse
+
+func (response RequestPerson202Response) VisitRequestPersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type RequestPerson403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response RequestPerson403JSONResponse) VisitRequestPersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequestPerson404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response RequestPerson404JSONResponse) VisitRequestPersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequestPerson500Response struct {
+}
+
+func (response RequestPerson500Response) VisitRequestPersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type RequestPerson502Response struct {
+}
+
+func (response RequestPerson502Response) VisitRequestPersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type RequestPerson503Response struct {
+}
+
+func (response RequestPerson503Response) VisitRequestPersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type RequestPerson504Response struct {
+}
+
+func (response RequestPerson504Response) VisitRequestPersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type PutPersonRequestObject struct {
+	LocalId LocalId `json:"localId"`
+	Params  PutPersonParams
+	Body    *PutPersonJSONRequestBody
+}
+
+type PutPersonResponseObject interface {
+	VisitPutPersonResponse(w http.ResponseWriter) error
+}
+
+type PutPerson200JSONResponse Person
+
+func (response PutPerson200JSONResponse) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutPerson201JSONResponse Person
+
+func (response PutPerson201JSONResponse) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutPerson400JSONResponse struct{ ValidationErrorJSONResponse }
+
+func (response PutPerson400JSONResponse) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutPerson403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response PutPerson403JSONResponse) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutPerson409JSONResponse struct{ MappingConflictJSONResponse }
+
+func (response PutPerson409JSONResponse) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutPerson412JSONResponse struct{ RevisionConflictJSONResponse }
+
+func (response PutPerson412JSONResponse) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutPerson428JSONResponse struct {
+	BaseRevisionRequiredJSONResponse
+}
+
+func (response PutPerson428JSONResponse) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(428)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PutPerson500Response struct {
+}
+
+func (response PutPerson500Response) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type PutPerson502Response struct {
+}
+
+func (response PutPerson502Response) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type PutPerson503Response struct {
+}
+
+func (response PutPerson503Response) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type PutPerson504Response struct {
+}
+
+func (response PutPerson504Response) VisitPutPersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type DeactivatePersonRequestObject struct {
+	LocalId LocalId `json:"localId"`
+	Params  DeactivatePersonParams
+}
+
+type DeactivatePersonResponseObject interface {
+	VisitDeactivatePersonResponse(w http.ResponseWriter) error
+}
+
+type DeactivatePerson200JSONResponse Person
+
+func (response DeactivatePerson200JSONResponse) VisitDeactivatePersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivatePerson403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response DeactivatePerson403JSONResponse) VisitDeactivatePersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivatePerson404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response DeactivatePerson404JSONResponse) VisitDeactivatePersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivatePerson412JSONResponse struct{ RevisionConflictJSONResponse }
+
+func (response DeactivatePerson412JSONResponse) VisitDeactivatePersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(412)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivatePerson428JSONResponse struct {
+	BaseRevisionRequiredJSONResponse
+}
+
+func (response DeactivatePerson428JSONResponse) VisitDeactivatePersonResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(428)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type DeactivatePerson500Response struct {
+}
+
+func (response DeactivatePerson500Response) VisitDeactivatePersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type DeactivatePerson502Response struct {
+}
+
+func (response DeactivatePerson502Response) VisitDeactivatePersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type DeactivatePerson503Response struct {
+}
+
+func (response DeactivatePerson503Response) VisitDeactivatePersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type DeactivatePerson504Response struct {
+}
+
+func (response DeactivatePerson504Response) VisitDeactivatePersonResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type UnbindPersonMappingRequestObject struct {
+	LocalId      LocalId               `json:"localId"`
+	AgrirouterId IdMappingAgrirouterId `json:"agrirouterId"`
+	Params       UnbindPersonMappingParams
+}
+
+type UnbindPersonMappingResponseObject interface {
+	VisitUnbindPersonMappingResponse(w http.ResponseWriter) error
+}
+
+type UnbindPersonMapping204Response struct {
+}
+
+func (response UnbindPersonMapping204Response) VisitUnbindPersonMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnbindPersonMapping403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response UnbindPersonMapping403JSONResponse) VisitUnbindPersonMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnbindPersonMapping404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response UnbindPersonMapping404JSONResponse) VisitUnbindPersonMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UnbindPersonMapping500Response struct {
+}
+
+func (response UnbindPersonMapping500Response) VisitUnbindPersonMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type UnbindPersonMapping502Response struct {
+}
+
+func (response UnbindPersonMapping502Response) VisitUnbindPersonMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type UnbindPersonMapping503Response struct {
+}
+
+func (response UnbindPersonMapping503Response) VisitUnbindPersonMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type UnbindPersonMapping504Response struct {
+}
+
+func (response UnbindPersonMapping504Response) VisitUnbindPersonMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
+type BindPersonMappingRequestObject struct {
+	LocalId      LocalId               `json:"localId"`
+	AgrirouterId IdMappingAgrirouterId `json:"agrirouterId"`
+	Params       BindPersonMappingParams
+}
+
+type BindPersonMappingResponseObject interface {
+	VisitBindPersonMappingResponse(w http.ResponseWriter) error
+}
+
+type BindPersonMapping204Response struct {
+}
+
+func (response BindPersonMapping204Response) VisitBindPersonMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type BindPersonMapping403JSONResponse struct{ ForbiddenJSONResponse }
+
+func (response BindPersonMapping403JSONResponse) VisitBindPersonMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(403)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindPersonMapping404JSONResponse struct{ NotFoundJSONResponse }
+
+func (response BindPersonMapping404JSONResponse) VisitBindPersonMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindPersonMapping409JSONResponse struct{ MappingConflictJSONResponse }
+
+func (response BindPersonMapping409JSONResponse) VisitBindPersonMappingResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type BindPersonMapping500Response struct {
+}
+
+func (response BindPersonMapping500Response) VisitBindPersonMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(500)
+	return nil
+}
+
+type BindPersonMapping502Response struct {
+}
+
+func (response BindPersonMapping502Response) VisitBindPersonMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(502)
+	return nil
+}
+
+type BindPersonMapping503Response struct {
+}
+
+func (response BindPersonMapping503Response) VisitBindPersonMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(503)
+	return nil
+}
+
+type BindPersonMapping504Response struct {
+}
+
+func (response BindPersonMapping504Response) VisitBindPersonMappingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(504)
+	return nil
+}
+
 type SendMessagesRequestObject struct {
 	Params SendMessagesParams
 	Body   io.Reader
@@ -1765,6 +7102,15 @@ type StrictServerInterface interface {
 	// Confirm received messages
 	// (POST /confirmations)
 	ConfirmMessages(ctx context.Context, request ConfirmMessagesRequestObject) (ConfirmMessagesResponseObject, error)
+	// Receive the endpoint's canonical set (Server-Sent Events)
+	// (GET /endpoints/{externalEndpointId}/masterdata-initial-load/events)
+	StreamInitialLoadEvents(ctx context.Context, request StreamInitialLoadEventsRequestObject) (StreamInitialLoadEventsResponseObject, error)
+	// Get the endpoint's initial load status
+	// (GET /endpoints/{externalEndpointId}/masterdata-initial-load/status)
+	GetInitialLoadStatus(ctx context.Context, request GetInitialLoadStatusRequestObject) (GetInitialLoadStatusResponseObject, error)
+	// Set the endpoint's initial load state
+	// (PUT /endpoints/{externalEndpointId}/masterdata-initial-load/status)
+	SetInitialLoadState(ctx context.Context, request SetInitialLoadStateRequestObject) (SetInitialLoadStateResponseObject, error)
 	// Delete endpoint
 	// (DELETE /endpoints/{externalId})
 	DeleteEndpoint(ctx context.Context, request DeleteEndpointRequestObject) (DeleteEndpointResponseObject, error)
@@ -1774,6 +7120,84 @@ type StrictServerInterface interface {
 	// Receive events from agrirouter outbox
 	// (GET /events)
 	ReceiveEvents(ctx context.Context, request ReceiveEventsRequestObject) (ReceiveEventsResponseObject, error)
+	// Receive master-data changes (Server-Sent Events)
+	// (GET /masterdata/events)
+	StreamMasterdataEvents(ctx context.Context, request StreamMasterdataEventsRequestObject) (StreamMasterdataEventsResponseObject, error)
+	// Request a farm (lazy loading)
+	// (POST /masterdata/farms/requests)
+	RequestFarm(ctx context.Context, request RequestFarmRequestObject) (RequestFarmResponseObject, error)
+	// Send (create or update) a farm
+	// (PUT /masterdata/farms/{localId})
+	PutFarm(ctx context.Context, request PutFarmRequestObject) (PutFarmResponseObject, error)
+	// Deactivate a farm
+	// (POST /masterdata/farms/{localId}/deactivation)
+	DeactivateFarm(ctx context.Context, request DeactivateFarmRequestObject) (DeactivateFarmResponseObject, error)
+	// Declare that this endpoint no longer holds a farm
+	// (DELETE /masterdata/farms/{localId}/id-mapping/{agrirouterId})
+	UnbindFarmMapping(ctx context.Context, request UnbindFarmMappingRequestObject) (UnbindFarmMappingResponseObject, error)
+	// Bind a local identifier to an existing farm
+	// (PUT /masterdata/farms/{localId}/id-mapping/{agrirouterId})
+	BindFarmMapping(ctx context.Context, request BindFarmMappingRequestObject) (BindFarmMappingResponseObject, error)
+	// Request a field boundary (lazy loading)
+	// (POST /masterdata/field-boundaries/requests)
+	RequestFieldBoundary(ctx context.Context, request RequestFieldBoundaryRequestObject) (RequestFieldBoundaryResponseObject, error)
+	// Send (create or update) a field boundary
+	// (PUT /masterdata/field-boundaries/{localId})
+	PutFieldBoundary(ctx context.Context, request PutFieldBoundaryRequestObject) (PutFieldBoundaryResponseObject, error)
+	// Deactivate a field boundary
+	// (POST /masterdata/field-boundaries/{localId}/deactivation)
+	DeactivateFieldBoundary(ctx context.Context, request DeactivateFieldBoundaryRequestObject) (DeactivateFieldBoundaryResponseObject, error)
+	// Declare that this endpoint no longer holds a field boundary
+	// (DELETE /masterdata/field-boundaries/{localId}/id-mapping/{agrirouterId})
+	UnbindFieldBoundaryMapping(ctx context.Context, request UnbindFieldBoundaryMappingRequestObject) (UnbindFieldBoundaryMappingResponseObject, error)
+	// Bind a local identifier to an existing field boundary
+	// (PUT /masterdata/field-boundaries/{localId}/id-mapping/{agrirouterId})
+	BindFieldBoundaryMapping(ctx context.Context, request BindFieldBoundaryMappingRequestObject) (BindFieldBoundaryMappingResponseObject, error)
+	// Request a field (lazy loading)
+	// (POST /masterdata/fields/requests)
+	RequestField(ctx context.Context, request RequestFieldRequestObject) (RequestFieldResponseObject, error)
+	// Send (create or update) a field
+	// (PUT /masterdata/fields/{localId})
+	PutField(ctx context.Context, request PutFieldRequestObject) (PutFieldResponseObject, error)
+	// Deactivate a field
+	// (POST /masterdata/fields/{localId}/deactivation)
+	DeactivateField(ctx context.Context, request DeactivateFieldRequestObject) (DeactivateFieldResponseObject, error)
+	// Declare that this endpoint no longer holds a field
+	// (DELETE /masterdata/fields/{localId}/id-mapping/{agrirouterId})
+	UnbindFieldMapping(ctx context.Context, request UnbindFieldMappingRequestObject) (UnbindFieldMappingResponseObject, error)
+	// Bind a local identifier to an existing field
+	// (PUT /masterdata/fields/{localId}/id-mapping/{agrirouterId})
+	BindFieldMapping(ctx context.Context, request BindFieldMappingRequestObject) (BindFieldMappingResponseObject, error)
+	// Request an organization (lazy loading)
+	// (POST /masterdata/organizations/requests)
+	RequestOrganization(ctx context.Context, request RequestOrganizationRequestObject) (RequestOrganizationResponseObject, error)
+	// Send (create or update) an organization
+	// (PUT /masterdata/organizations/{localId})
+	PutOrganization(ctx context.Context, request PutOrganizationRequestObject) (PutOrganizationResponseObject, error)
+	// Deactivate an organization
+	// (POST /masterdata/organizations/{localId}/deactivation)
+	DeactivateOrganization(ctx context.Context, request DeactivateOrganizationRequestObject) (DeactivateOrganizationResponseObject, error)
+	// Declare that this endpoint no longer holds an organization
+	// (DELETE /masterdata/organizations/{localId}/id-mapping/{agrirouterId})
+	UnbindOrganizationMapping(ctx context.Context, request UnbindOrganizationMappingRequestObject) (UnbindOrganizationMappingResponseObject, error)
+	// Bind a local identifier to an existing organization
+	// (PUT /masterdata/organizations/{localId}/id-mapping/{agrirouterId})
+	BindOrganizationMapping(ctx context.Context, request BindOrganizationMappingRequestObject) (BindOrganizationMappingResponseObject, error)
+	// Request a person (lazy loading)
+	// (POST /masterdata/persons/requests)
+	RequestPerson(ctx context.Context, request RequestPersonRequestObject) (RequestPersonResponseObject, error)
+	// Send (create or update) a person
+	// (PUT /masterdata/persons/{localId})
+	PutPerson(ctx context.Context, request PutPersonRequestObject) (PutPersonResponseObject, error)
+	// Deactivate a person
+	// (POST /masterdata/persons/{localId}/deactivation)
+	DeactivatePerson(ctx context.Context, request DeactivatePersonRequestObject) (DeactivatePersonResponseObject, error)
+	// Declare that this endpoint no longer holds a person
+	// (DELETE /masterdata/persons/{localId}/id-mapping/{agrirouterId})
+	UnbindPersonMapping(ctx context.Context, request UnbindPersonMappingRequestObject) (UnbindPersonMappingResponseObject, error)
+	// Bind a local identifier to an existing person
+	// (PUT /masterdata/persons/{localId}/id-mapping/{agrirouterId})
+	BindPersonMapping(ctx context.Context, request BindPersonMappingRequestObject) (BindPersonMappingResponseObject, error)
 	// Send one or several messages to agrirouter inbox
 	// (POST /messages)
 	SendMessages(ctx context.Context, request SendMessagesRequestObject) (SendMessagesResponseObject, error)
@@ -1847,6 +7271,90 @@ func (sh *strictHandler) ConfirmMessages(ctx echo.Context, params ConfirmMessage
 		return err
 	} else if validResponse, ok := response.(ConfirmMessagesResponseObject); ok {
 		return validResponse.VisitConfirmMessagesResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// StreamInitialLoadEvents operation middleware
+func (sh *strictHandler) StreamInitialLoadEvents(ctx echo.Context, externalEndpointId ExternalEndpointId, params StreamInitialLoadEventsParams) error {
+	var request StreamInitialLoadEventsRequestObject
+
+	request.ExternalEndpointId = externalEndpointId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.StreamInitialLoadEvents(ctx.Request().Context(), request.(StreamInitialLoadEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StreamInitialLoadEvents")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(StreamInitialLoadEventsResponseObject); ok {
+		return validResponse.VisitStreamInitialLoadEventsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetInitialLoadStatus operation middleware
+func (sh *strictHandler) GetInitialLoadStatus(ctx echo.Context, externalEndpointId ExternalEndpointId, params GetInitialLoadStatusParams) error {
+	var request GetInitialLoadStatusRequestObject
+
+	request.ExternalEndpointId = externalEndpointId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetInitialLoadStatus(ctx.Request().Context(), request.(GetInitialLoadStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetInitialLoadStatus")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetInitialLoadStatusResponseObject); ok {
+		return validResponse.VisitGetInitialLoadStatusResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// SetInitialLoadState operation middleware
+func (sh *strictHandler) SetInitialLoadState(ctx echo.Context, externalEndpointId ExternalEndpointId, params SetInitialLoadStateParams) error {
+	var request SetInitialLoadStateRequestObject
+
+	request.ExternalEndpointId = externalEndpointId
+	request.Params = params
+
+	var body SetInitialLoadStateJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.SetInitialLoadState(ctx.Request().Context(), request.(SetInitialLoadStateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetInitialLoadState")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(SetInitialLoadStateResponseObject); ok {
+		return validResponse.VisitSetInitialLoadStateResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -1930,6 +7438,746 @@ func (sh *strictHandler) ReceiveEvents(ctx echo.Context, params ReceiveEventsPar
 		return err
 	} else if validResponse, ok := response.(ReceiveEventsResponseObject); ok {
 		return validResponse.VisitReceiveEventsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// StreamMasterdataEvents operation middleware
+func (sh *strictHandler) StreamMasterdataEvents(ctx echo.Context, params StreamMasterdataEventsParams) error {
+	var request StreamMasterdataEventsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.StreamMasterdataEvents(ctx.Request().Context(), request.(StreamMasterdataEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StreamMasterdataEvents")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(StreamMasterdataEventsResponseObject); ok {
+		return validResponse.VisitStreamMasterdataEventsResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// RequestFarm operation middleware
+func (sh *strictHandler) RequestFarm(ctx echo.Context, params RequestFarmParams) error {
+	var request RequestFarmRequestObject
+
+	request.Params = params
+
+	var body RequestFarmJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RequestFarm(ctx.Request().Context(), request.(RequestFarmRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequestFarm")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(RequestFarmResponseObject); ok {
+		return validResponse.VisitRequestFarmResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// PutFarm operation middleware
+func (sh *strictHandler) PutFarm(ctx echo.Context, localId LocalId, params PutFarmParams) error {
+	var request PutFarmRequestObject
+
+	request.LocalId = localId
+	request.Params = params
+
+	var body PutFarmJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PutFarm(ctx.Request().Context(), request.(PutFarmRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutFarm")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(PutFarmResponseObject); ok {
+		return validResponse.VisitPutFarmResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// DeactivateFarm operation middleware
+func (sh *strictHandler) DeactivateFarm(ctx echo.Context, localId LocalId, params DeactivateFarmParams) error {
+	var request DeactivateFarmRequestObject
+
+	request.LocalId = localId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeactivateFarm(ctx.Request().Context(), request.(DeactivateFarmRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeactivateFarm")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DeactivateFarmResponseObject); ok {
+		return validResponse.VisitDeactivateFarmResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// UnbindFarmMapping operation middleware
+func (sh *strictHandler) UnbindFarmMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params UnbindFarmMappingParams) error {
+	var request UnbindFarmMappingRequestObject
+
+	request.LocalId = localId
+	request.AgrirouterId = agrirouterId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UnbindFarmMapping(ctx.Request().Context(), request.(UnbindFarmMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnbindFarmMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UnbindFarmMappingResponseObject); ok {
+		return validResponse.VisitUnbindFarmMappingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// BindFarmMapping operation middleware
+func (sh *strictHandler) BindFarmMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params BindFarmMappingParams) error {
+	var request BindFarmMappingRequestObject
+
+	request.LocalId = localId
+	request.AgrirouterId = agrirouterId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.BindFarmMapping(ctx.Request().Context(), request.(BindFarmMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BindFarmMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(BindFarmMappingResponseObject); ok {
+		return validResponse.VisitBindFarmMappingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// RequestFieldBoundary operation middleware
+func (sh *strictHandler) RequestFieldBoundary(ctx echo.Context, params RequestFieldBoundaryParams) error {
+	var request RequestFieldBoundaryRequestObject
+
+	request.Params = params
+
+	var body RequestFieldBoundaryJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RequestFieldBoundary(ctx.Request().Context(), request.(RequestFieldBoundaryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequestFieldBoundary")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(RequestFieldBoundaryResponseObject); ok {
+		return validResponse.VisitRequestFieldBoundaryResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// PutFieldBoundary operation middleware
+func (sh *strictHandler) PutFieldBoundary(ctx echo.Context, localId LocalId, params PutFieldBoundaryParams) error {
+	var request PutFieldBoundaryRequestObject
+
+	request.LocalId = localId
+	request.Params = params
+
+	var body PutFieldBoundaryJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PutFieldBoundary(ctx.Request().Context(), request.(PutFieldBoundaryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutFieldBoundary")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(PutFieldBoundaryResponseObject); ok {
+		return validResponse.VisitPutFieldBoundaryResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// DeactivateFieldBoundary operation middleware
+func (sh *strictHandler) DeactivateFieldBoundary(ctx echo.Context, localId LocalId, params DeactivateFieldBoundaryParams) error {
+	var request DeactivateFieldBoundaryRequestObject
+
+	request.LocalId = localId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeactivateFieldBoundary(ctx.Request().Context(), request.(DeactivateFieldBoundaryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeactivateFieldBoundary")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DeactivateFieldBoundaryResponseObject); ok {
+		return validResponse.VisitDeactivateFieldBoundaryResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// UnbindFieldBoundaryMapping operation middleware
+func (sh *strictHandler) UnbindFieldBoundaryMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params UnbindFieldBoundaryMappingParams) error {
+	var request UnbindFieldBoundaryMappingRequestObject
+
+	request.LocalId = localId
+	request.AgrirouterId = agrirouterId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UnbindFieldBoundaryMapping(ctx.Request().Context(), request.(UnbindFieldBoundaryMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnbindFieldBoundaryMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UnbindFieldBoundaryMappingResponseObject); ok {
+		return validResponse.VisitUnbindFieldBoundaryMappingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// BindFieldBoundaryMapping operation middleware
+func (sh *strictHandler) BindFieldBoundaryMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params BindFieldBoundaryMappingParams) error {
+	var request BindFieldBoundaryMappingRequestObject
+
+	request.LocalId = localId
+	request.AgrirouterId = agrirouterId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.BindFieldBoundaryMapping(ctx.Request().Context(), request.(BindFieldBoundaryMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BindFieldBoundaryMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(BindFieldBoundaryMappingResponseObject); ok {
+		return validResponse.VisitBindFieldBoundaryMappingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// RequestField operation middleware
+func (sh *strictHandler) RequestField(ctx echo.Context, params RequestFieldParams) error {
+	var request RequestFieldRequestObject
+
+	request.Params = params
+
+	var body RequestFieldJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RequestField(ctx.Request().Context(), request.(RequestFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequestField")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(RequestFieldResponseObject); ok {
+		return validResponse.VisitRequestFieldResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// PutField operation middleware
+func (sh *strictHandler) PutField(ctx echo.Context, localId LocalId, params PutFieldParams) error {
+	var request PutFieldRequestObject
+
+	request.LocalId = localId
+	request.Params = params
+
+	var body PutFieldJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PutField(ctx.Request().Context(), request.(PutFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutField")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(PutFieldResponseObject); ok {
+		return validResponse.VisitPutFieldResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// DeactivateField operation middleware
+func (sh *strictHandler) DeactivateField(ctx echo.Context, localId LocalId, params DeactivateFieldParams) error {
+	var request DeactivateFieldRequestObject
+
+	request.LocalId = localId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeactivateField(ctx.Request().Context(), request.(DeactivateFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeactivateField")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DeactivateFieldResponseObject); ok {
+		return validResponse.VisitDeactivateFieldResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// UnbindFieldMapping operation middleware
+func (sh *strictHandler) UnbindFieldMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params UnbindFieldMappingParams) error {
+	var request UnbindFieldMappingRequestObject
+
+	request.LocalId = localId
+	request.AgrirouterId = agrirouterId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UnbindFieldMapping(ctx.Request().Context(), request.(UnbindFieldMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnbindFieldMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UnbindFieldMappingResponseObject); ok {
+		return validResponse.VisitUnbindFieldMappingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// BindFieldMapping operation middleware
+func (sh *strictHandler) BindFieldMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params BindFieldMappingParams) error {
+	var request BindFieldMappingRequestObject
+
+	request.LocalId = localId
+	request.AgrirouterId = agrirouterId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.BindFieldMapping(ctx.Request().Context(), request.(BindFieldMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BindFieldMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(BindFieldMappingResponseObject); ok {
+		return validResponse.VisitBindFieldMappingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// RequestOrganization operation middleware
+func (sh *strictHandler) RequestOrganization(ctx echo.Context, params RequestOrganizationParams) error {
+	var request RequestOrganizationRequestObject
+
+	request.Params = params
+
+	var body RequestOrganizationJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RequestOrganization(ctx.Request().Context(), request.(RequestOrganizationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequestOrganization")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(RequestOrganizationResponseObject); ok {
+		return validResponse.VisitRequestOrganizationResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// PutOrganization operation middleware
+func (sh *strictHandler) PutOrganization(ctx echo.Context, localId LocalId, params PutOrganizationParams) error {
+	var request PutOrganizationRequestObject
+
+	request.LocalId = localId
+	request.Params = params
+
+	var body PutOrganizationJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PutOrganization(ctx.Request().Context(), request.(PutOrganizationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutOrganization")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(PutOrganizationResponseObject); ok {
+		return validResponse.VisitPutOrganizationResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// DeactivateOrganization operation middleware
+func (sh *strictHandler) DeactivateOrganization(ctx echo.Context, localId LocalId, params DeactivateOrganizationParams) error {
+	var request DeactivateOrganizationRequestObject
+
+	request.LocalId = localId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeactivateOrganization(ctx.Request().Context(), request.(DeactivateOrganizationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeactivateOrganization")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DeactivateOrganizationResponseObject); ok {
+		return validResponse.VisitDeactivateOrganizationResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// UnbindOrganizationMapping operation middleware
+func (sh *strictHandler) UnbindOrganizationMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params UnbindOrganizationMappingParams) error {
+	var request UnbindOrganizationMappingRequestObject
+
+	request.LocalId = localId
+	request.AgrirouterId = agrirouterId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UnbindOrganizationMapping(ctx.Request().Context(), request.(UnbindOrganizationMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnbindOrganizationMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UnbindOrganizationMappingResponseObject); ok {
+		return validResponse.VisitUnbindOrganizationMappingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// BindOrganizationMapping operation middleware
+func (sh *strictHandler) BindOrganizationMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params BindOrganizationMappingParams) error {
+	var request BindOrganizationMappingRequestObject
+
+	request.LocalId = localId
+	request.AgrirouterId = agrirouterId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.BindOrganizationMapping(ctx.Request().Context(), request.(BindOrganizationMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BindOrganizationMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(BindOrganizationMappingResponseObject); ok {
+		return validResponse.VisitBindOrganizationMappingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// RequestPerson operation middleware
+func (sh *strictHandler) RequestPerson(ctx echo.Context, params RequestPersonParams) error {
+	var request RequestPersonRequestObject
+
+	request.Params = params
+
+	var body RequestPersonJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RequestPerson(ctx.Request().Context(), request.(RequestPersonRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequestPerson")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(RequestPersonResponseObject); ok {
+		return validResponse.VisitRequestPersonResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// PutPerson operation middleware
+func (sh *strictHandler) PutPerson(ctx echo.Context, localId LocalId, params PutPersonParams) error {
+	var request PutPersonRequestObject
+
+	request.LocalId = localId
+	request.Params = params
+
+	var body PutPersonJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PutPerson(ctx.Request().Context(), request.(PutPersonRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutPerson")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(PutPersonResponseObject); ok {
+		return validResponse.VisitPutPersonResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// DeactivatePerson operation middleware
+func (sh *strictHandler) DeactivatePerson(ctx echo.Context, localId LocalId, params DeactivatePersonParams) error {
+	var request DeactivatePersonRequestObject
+
+	request.LocalId = localId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.DeactivatePerson(ctx.Request().Context(), request.(DeactivatePersonRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeactivatePerson")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(DeactivatePersonResponseObject); ok {
+		return validResponse.VisitDeactivatePersonResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// UnbindPersonMapping operation middleware
+func (sh *strictHandler) UnbindPersonMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params UnbindPersonMappingParams) error {
+	var request UnbindPersonMappingRequestObject
+
+	request.LocalId = localId
+	request.AgrirouterId = agrirouterId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UnbindPersonMapping(ctx.Request().Context(), request.(UnbindPersonMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnbindPersonMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UnbindPersonMappingResponseObject); ok {
+		return validResponse.VisitUnbindPersonMappingResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// BindPersonMapping operation middleware
+func (sh *strictHandler) BindPersonMapping(ctx echo.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params BindPersonMappingParams) error {
+	var request BindPersonMappingRequestObject
+
+	request.LocalId = localId
+	request.AgrirouterId = agrirouterId
+	request.Params = params
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.BindPersonMapping(ctx.Request().Context(), request.(BindPersonMappingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "BindPersonMapping")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(BindPersonMappingResponseObject); ok {
+		return validResponse.VisitBindPersonMappingResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

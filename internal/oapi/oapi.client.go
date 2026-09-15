@@ -98,6 +98,17 @@ type ClientInterface interface {
 
 	ConfirmMessages(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// StreamInitialLoadEvents request
+	StreamInitialLoadEvents(ctx context.Context, externalEndpointId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetInitialLoadStatus request
+	GetInitialLoadStatus(ctx context.Context, externalEndpointId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetInitialLoadStateWithBody request with any body
+	SetInitialLoadStateWithBody(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SetInitialLoadState(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// DeleteEndpoint request
 	DeleteEndpoint(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -108,6 +119,104 @@ type ClientInterface interface {
 
 	// ReceiveEvents request
 	ReceiveEvents(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// StreamMasterdataEvents request
+	StreamMasterdataEvents(ctx context.Context, params *StreamMasterdataEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequestFarmWithBody request with any body
+	RequestFarmWithBody(ctx context.Context, params *RequestFarmParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RequestFarm(ctx context.Context, params *RequestFarmParams, body RequestFarmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutFarmWithBody request with any body
+	PutFarmWithBody(ctx context.Context, localId LocalId, params *PutFarmParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutFarm(ctx context.Context, localId LocalId, params *PutFarmParams, body PutFarmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeactivateFarm request
+	DeactivateFarm(ctx context.Context, localId LocalId, params *DeactivateFarmParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UnbindFarmMapping request
+	UnbindFarmMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFarmMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BindFarmMapping request
+	BindFarmMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFarmMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequestFieldBoundaryWithBody request with any body
+	RequestFieldBoundaryWithBody(ctx context.Context, params *RequestFieldBoundaryParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RequestFieldBoundary(ctx context.Context, params *RequestFieldBoundaryParams, body RequestFieldBoundaryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutFieldBoundaryWithBody request with any body
+	PutFieldBoundaryWithBody(ctx context.Context, localId LocalId, params *PutFieldBoundaryParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutFieldBoundary(ctx context.Context, localId LocalId, params *PutFieldBoundaryParams, body PutFieldBoundaryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeactivateFieldBoundary request
+	DeactivateFieldBoundary(ctx context.Context, localId LocalId, params *DeactivateFieldBoundaryParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UnbindFieldBoundaryMapping request
+	UnbindFieldBoundaryMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldBoundaryMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BindFieldBoundaryMapping request
+	BindFieldBoundaryMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFieldBoundaryMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequestFieldWithBody request with any body
+	RequestFieldWithBody(ctx context.Context, params *RequestFieldParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RequestField(ctx context.Context, params *RequestFieldParams, body RequestFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutFieldWithBody request with any body
+	PutFieldWithBody(ctx context.Context, localId LocalId, params *PutFieldParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutField(ctx context.Context, localId LocalId, params *PutFieldParams, body PutFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeactivateField request
+	DeactivateField(ctx context.Context, localId LocalId, params *DeactivateFieldParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UnbindFieldMapping request
+	UnbindFieldMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BindFieldMapping request
+	BindFieldMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFieldMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequestOrganizationWithBody request with any body
+	RequestOrganizationWithBody(ctx context.Context, params *RequestOrganizationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RequestOrganization(ctx context.Context, params *RequestOrganizationParams, body RequestOrganizationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutOrganizationWithBody request with any body
+	PutOrganizationWithBody(ctx context.Context, localId LocalId, params *PutOrganizationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutOrganization(ctx context.Context, localId LocalId, params *PutOrganizationParams, body PutOrganizationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeactivateOrganization request
+	DeactivateOrganization(ctx context.Context, localId LocalId, params *DeactivateOrganizationParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UnbindOrganizationMapping request
+	UnbindOrganizationMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindOrganizationMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BindOrganizationMapping request
+	BindOrganizationMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindOrganizationMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequestPersonWithBody request with any body
+	RequestPersonWithBody(ctx context.Context, params *RequestPersonParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RequestPerson(ctx context.Context, params *RequestPersonParams, body RequestPersonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PutPersonWithBody request with any body
+	PutPersonWithBody(ctx context.Context, localId LocalId, params *PutPersonParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PutPerson(ctx context.Context, localId LocalId, params *PutPersonParams, body PutPersonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// DeactivatePerson request
+	DeactivatePerson(ctx context.Context, localId LocalId, params *DeactivatePersonParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UnbindPersonMapping request
+	UnbindPersonMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindPersonMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// BindPersonMapping request
+	BindPersonMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindPersonMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// SendMessagesWithBody request with any body
 	SendMessagesWithBody(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -145,6 +254,54 @@ func (c *Client) ConfirmMessagesWithBody(ctx context.Context, params *ConfirmMes
 
 func (c *Client) ConfirmMessages(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewConfirmMessagesRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) StreamInitialLoadEvents(ctx context.Context, externalEndpointId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStreamInitialLoadEventsRequest(c.Server, externalEndpointId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetInitialLoadStatus(ctx context.Context, externalEndpointId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInitialLoadStatusRequest(c.Server, externalEndpointId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SetInitialLoadStateWithBody(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetInitialLoadStateRequestWithBody(c.Server, externalEndpointId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SetInitialLoadState(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetInitialLoadStateRequest(c.Server, externalEndpointId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -193,6 +350,438 @@ func (c *Client) PutEndpoint(ctx context.Context, externalId ExternalId, params 
 
 func (c *Client) ReceiveEvents(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewReceiveEventsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) StreamMasterdataEvents(ctx context.Context, params *StreamMasterdataEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStreamMasterdataEventsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequestFarmWithBody(ctx context.Context, params *RequestFarmParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestFarmRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequestFarm(ctx context.Context, params *RequestFarmParams, body RequestFarmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestFarmRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutFarmWithBody(ctx context.Context, localId LocalId, params *PutFarmParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutFarmRequestWithBody(c.Server, localId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutFarm(ctx context.Context, localId LocalId, params *PutFarmParams, body PutFarmJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutFarmRequest(c.Server, localId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeactivateFarm(ctx context.Context, localId LocalId, params *DeactivateFarmParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeactivateFarmRequest(c.Server, localId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UnbindFarmMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFarmMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUnbindFarmMappingRequest(c.Server, localId, agrirouterId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BindFarmMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFarmMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBindFarmMappingRequest(c.Server, localId, agrirouterId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequestFieldBoundaryWithBody(ctx context.Context, params *RequestFieldBoundaryParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestFieldBoundaryRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequestFieldBoundary(ctx context.Context, params *RequestFieldBoundaryParams, body RequestFieldBoundaryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestFieldBoundaryRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutFieldBoundaryWithBody(ctx context.Context, localId LocalId, params *PutFieldBoundaryParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutFieldBoundaryRequestWithBody(c.Server, localId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutFieldBoundary(ctx context.Context, localId LocalId, params *PutFieldBoundaryParams, body PutFieldBoundaryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutFieldBoundaryRequest(c.Server, localId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeactivateFieldBoundary(ctx context.Context, localId LocalId, params *DeactivateFieldBoundaryParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeactivateFieldBoundaryRequest(c.Server, localId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UnbindFieldBoundaryMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldBoundaryMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUnbindFieldBoundaryMappingRequest(c.Server, localId, agrirouterId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BindFieldBoundaryMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFieldBoundaryMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBindFieldBoundaryMappingRequest(c.Server, localId, agrirouterId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequestFieldWithBody(ctx context.Context, params *RequestFieldParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestFieldRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequestField(ctx context.Context, params *RequestFieldParams, body RequestFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestFieldRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutFieldWithBody(ctx context.Context, localId LocalId, params *PutFieldParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutFieldRequestWithBody(c.Server, localId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutField(ctx context.Context, localId LocalId, params *PutFieldParams, body PutFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutFieldRequest(c.Server, localId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeactivateField(ctx context.Context, localId LocalId, params *DeactivateFieldParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeactivateFieldRequest(c.Server, localId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UnbindFieldMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUnbindFieldMappingRequest(c.Server, localId, agrirouterId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BindFieldMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFieldMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBindFieldMappingRequest(c.Server, localId, agrirouterId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequestOrganizationWithBody(ctx context.Context, params *RequestOrganizationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestOrganizationRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequestOrganization(ctx context.Context, params *RequestOrganizationParams, body RequestOrganizationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestOrganizationRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutOrganizationWithBody(ctx context.Context, localId LocalId, params *PutOrganizationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutOrganizationRequestWithBody(c.Server, localId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutOrganization(ctx context.Context, localId LocalId, params *PutOrganizationParams, body PutOrganizationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutOrganizationRequest(c.Server, localId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeactivateOrganization(ctx context.Context, localId LocalId, params *DeactivateOrganizationParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeactivateOrganizationRequest(c.Server, localId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UnbindOrganizationMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindOrganizationMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUnbindOrganizationMappingRequest(c.Server, localId, agrirouterId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BindOrganizationMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindOrganizationMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBindOrganizationMappingRequest(c.Server, localId, agrirouterId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequestPersonWithBody(ctx context.Context, params *RequestPersonParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestPersonRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequestPerson(ctx context.Context, params *RequestPersonParams, body RequestPersonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestPersonRequest(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutPersonWithBody(ctx context.Context, localId LocalId, params *PutPersonParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutPersonRequestWithBody(c.Server, localId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PutPerson(ctx context.Context, localId LocalId, params *PutPersonParams, body PutPersonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutPersonRequest(c.Server, localId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) DeactivatePerson(ctx context.Context, localId LocalId, params *DeactivatePersonParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeactivatePersonRequest(c.Server, localId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UnbindPersonMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindPersonMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUnbindPersonMappingRequest(c.Server, localId, agrirouterId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) BindPersonMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindPersonMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewBindPersonMappingRequest(c.Server, localId, agrirouterId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -315,6 +904,160 @@ func NewConfirmMessagesRequestWithBody(server string, params *ConfirmMessagesPar
 	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewStreamInitialLoadEventsRequest generates requests for StreamInitialLoadEvents
+func NewStreamInitialLoadEventsRequest(server string, externalEndpointId ExternalEndpointId, params *StreamInitialLoadEventsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "externalEndpointId", runtime.ParamLocationPath, externalEndpointId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/endpoints/%s/masterdata-initial-load/events", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewGetInitialLoadStatusRequest generates requests for GetInitialLoadStatus
+func NewGetInitialLoadStatusRequest(server string, externalEndpointId ExternalEndpointId, params *GetInitialLoadStatusParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "externalEndpointId", runtime.ParamLocationPath, externalEndpointId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/endpoints/%s/masterdata-initial-load/status", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewSetInitialLoadStateRequest calls the generic SetInitialLoadState builder with application/json body
+func NewSetInitialLoadStateRequest(server string, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSetInitialLoadStateRequestWithBody(server, externalEndpointId, params, "application/json", bodyReader)
+}
+
+// NewSetInitialLoadStateRequestWithBody generates requests for SetInitialLoadState with any type of body
+func NewSetInitialLoadStateRequestWithBody(server string, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "externalEndpointId", runtime.ParamLocationPath, externalEndpointId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/endpoints/%s/masterdata-initial-load/status", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -488,6 +1231,1723 @@ func NewReceiveEventsRequest(server string, params *ReceiveEventsParams) (*http.
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewStreamMasterdataEventsRequest generates requests for StreamMasterdataEvents
+func NewStreamMasterdataEventsRequest(server string, params *StreamMasterdataEventsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/events")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.LastEventID != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Last-Event-ID", runtime.ParamLocationHeader, *params.LastEventID)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Last-Event-ID", headerParam0)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewRequestFarmRequest calls the generic RequestFarm builder with application/json body
+func NewRequestFarmRequest(server string, params *RequestFarmParams, body RequestFarmJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRequestFarmRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewRequestFarmRequestWithBody generates requests for RequestFarm with any type of body
+func NewRequestFarmRequestWithBody(server string, params *RequestFarmParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/farms/requests")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewPutFarmRequest calls the generic PutFarm builder with application/json body
+func NewPutFarmRequest(server string, localId LocalId, params *PutFarmParams, body PutFarmJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutFarmRequestWithBody(server, localId, params, "application/json", bodyReader)
+}
+
+// NewPutFarmRequestWithBody generates requests for PutFarm with any type of body
+func NewPutFarmRequestWithBody(server string, localId LocalId, params *PutFarmParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/farms/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+		if params.XAgrirouterBaseRevision != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-base-revision", runtime.ParamLocationHeader, *params.XAgrirouterBaseRevision)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-base-revision", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewDeactivateFarmRequest generates requests for DeactivateFarm
+func NewDeactivateFarmRequest(server string, localId LocalId, params *DeactivateFarmParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/farms/%s/deactivation", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+		if params.XAgrirouterBaseRevision != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-base-revision", runtime.ParamLocationHeader, *params.XAgrirouterBaseRevision)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-base-revision", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewUnbindFarmMappingRequest generates requests for UnbindFarmMapping
+func NewUnbindFarmMappingRequest(server string, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFarmMappingParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/farms/%s/id-mapping/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewBindFarmMappingRequest generates requests for BindFarmMapping
+func NewBindFarmMappingRequest(server string, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFarmMappingParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/farms/%s/id-mapping/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewRequestFieldBoundaryRequest calls the generic RequestFieldBoundary builder with application/json body
+func NewRequestFieldBoundaryRequest(server string, params *RequestFieldBoundaryParams, body RequestFieldBoundaryJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRequestFieldBoundaryRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewRequestFieldBoundaryRequestWithBody generates requests for RequestFieldBoundary with any type of body
+func NewRequestFieldBoundaryRequestWithBody(server string, params *RequestFieldBoundaryParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/field-boundaries/requests")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewPutFieldBoundaryRequest calls the generic PutFieldBoundary builder with application/json body
+func NewPutFieldBoundaryRequest(server string, localId LocalId, params *PutFieldBoundaryParams, body PutFieldBoundaryJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutFieldBoundaryRequestWithBody(server, localId, params, "application/json", bodyReader)
+}
+
+// NewPutFieldBoundaryRequestWithBody generates requests for PutFieldBoundary with any type of body
+func NewPutFieldBoundaryRequestWithBody(server string, localId LocalId, params *PutFieldBoundaryParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/field-boundaries/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+		if params.XAgrirouterBaseRevision != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-base-revision", runtime.ParamLocationHeader, *params.XAgrirouterBaseRevision)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-base-revision", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewDeactivateFieldBoundaryRequest generates requests for DeactivateFieldBoundary
+func NewDeactivateFieldBoundaryRequest(server string, localId LocalId, params *DeactivateFieldBoundaryParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/field-boundaries/%s/deactivation", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+		if params.XAgrirouterBaseRevision != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-base-revision", runtime.ParamLocationHeader, *params.XAgrirouterBaseRevision)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-base-revision", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewUnbindFieldBoundaryMappingRequest generates requests for UnbindFieldBoundaryMapping
+func NewUnbindFieldBoundaryMappingRequest(server string, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldBoundaryMappingParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/field-boundaries/%s/id-mapping/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewBindFieldBoundaryMappingRequest generates requests for BindFieldBoundaryMapping
+func NewBindFieldBoundaryMappingRequest(server string, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFieldBoundaryMappingParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/field-boundaries/%s/id-mapping/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewRequestFieldRequest calls the generic RequestField builder with application/json body
+func NewRequestFieldRequest(server string, params *RequestFieldParams, body RequestFieldJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRequestFieldRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewRequestFieldRequestWithBody generates requests for RequestField with any type of body
+func NewRequestFieldRequestWithBody(server string, params *RequestFieldParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/fields/requests")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewPutFieldRequest calls the generic PutField builder with application/json body
+func NewPutFieldRequest(server string, localId LocalId, params *PutFieldParams, body PutFieldJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutFieldRequestWithBody(server, localId, params, "application/json", bodyReader)
+}
+
+// NewPutFieldRequestWithBody generates requests for PutField with any type of body
+func NewPutFieldRequestWithBody(server string, localId LocalId, params *PutFieldParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/fields/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+		if params.XAgrirouterBaseRevision != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-base-revision", runtime.ParamLocationHeader, *params.XAgrirouterBaseRevision)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-base-revision", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewDeactivateFieldRequest generates requests for DeactivateField
+func NewDeactivateFieldRequest(server string, localId LocalId, params *DeactivateFieldParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/fields/%s/deactivation", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+		if params.XAgrirouterBaseRevision != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-base-revision", runtime.ParamLocationHeader, *params.XAgrirouterBaseRevision)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-base-revision", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewUnbindFieldMappingRequest generates requests for UnbindFieldMapping
+func NewUnbindFieldMappingRequest(server string, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldMappingParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/fields/%s/id-mapping/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewBindFieldMappingRequest generates requests for BindFieldMapping
+func NewBindFieldMappingRequest(server string, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFieldMappingParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/fields/%s/id-mapping/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewRequestOrganizationRequest calls the generic RequestOrganization builder with application/json body
+func NewRequestOrganizationRequest(server string, params *RequestOrganizationParams, body RequestOrganizationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRequestOrganizationRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewRequestOrganizationRequestWithBody generates requests for RequestOrganization with any type of body
+func NewRequestOrganizationRequestWithBody(server string, params *RequestOrganizationParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/organizations/requests")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewPutOrganizationRequest calls the generic PutOrganization builder with application/json body
+func NewPutOrganizationRequest(server string, localId LocalId, params *PutOrganizationParams, body PutOrganizationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutOrganizationRequestWithBody(server, localId, params, "application/json", bodyReader)
+}
+
+// NewPutOrganizationRequestWithBody generates requests for PutOrganization with any type of body
+func NewPutOrganizationRequestWithBody(server string, localId LocalId, params *PutOrganizationParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/organizations/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+		if params.XAgrirouterBaseRevision != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-base-revision", runtime.ParamLocationHeader, *params.XAgrirouterBaseRevision)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-base-revision", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewDeactivateOrganizationRequest generates requests for DeactivateOrganization
+func NewDeactivateOrganizationRequest(server string, localId LocalId, params *DeactivateOrganizationParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/organizations/%s/deactivation", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+		if params.XAgrirouterBaseRevision != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-base-revision", runtime.ParamLocationHeader, *params.XAgrirouterBaseRevision)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-base-revision", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewUnbindOrganizationMappingRequest generates requests for UnbindOrganizationMapping
+func NewUnbindOrganizationMappingRequest(server string, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindOrganizationMappingParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/organizations/%s/id-mapping/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewBindOrganizationMappingRequest generates requests for BindOrganizationMapping
+func NewBindOrganizationMappingRequest(server string, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindOrganizationMappingParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/organizations/%s/id-mapping/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewRequestPersonRequest calls the generic RequestPerson builder with application/json body
+func NewRequestPersonRequest(server string, params *RequestPersonParams, body RequestPersonJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRequestPersonRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewRequestPersonRequestWithBody generates requests for RequestPerson with any type of body
+func NewRequestPersonRequestWithBody(server string, params *RequestPersonParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/persons/requests")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewPutPersonRequest calls the generic PutPerson builder with application/json body
+func NewPutPersonRequest(server string, localId LocalId, params *PutPersonParams, body PutPersonJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutPersonRequestWithBody(server, localId, params, "application/json", bodyReader)
+}
+
+// NewPutPersonRequestWithBody generates requests for PutPerson with any type of body
+func NewPutPersonRequestWithBody(server string, localId LocalId, params *PutPersonParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/persons/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+		if params.XAgrirouterBaseRevision != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-base-revision", runtime.ParamLocationHeader, *params.XAgrirouterBaseRevision)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-base-revision", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewDeactivatePersonRequest generates requests for DeactivatePerson
+func NewDeactivatePersonRequest(server string, localId LocalId, params *DeactivatePersonParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/persons/%s/deactivation", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+		if params.XAgrirouterBaseRevision != nil {
+			var headerParam2 string
+
+			headerParam2, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-base-revision", runtime.ParamLocationHeader, *params.XAgrirouterBaseRevision)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("x-agrirouter-base-revision", headerParam2)
+		}
+
+	}
+
+	return req, nil
+}
+
+// NewUnbindPersonMappingRequest generates requests for UnbindPersonMapping
+func NewUnbindPersonMappingRequest(server string, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindPersonMappingParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/persons/%s/id-mapping/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
+	}
+
+	return req, nil
+}
+
+// NewBindPersonMappingRequest generates requests for BindPersonMapping
+func NewBindPersonMappingRequest(server string, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindPersonMappingParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	if err != nil {
+		return nil, err
+	}
+
+	var pathParam1 string
+
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/masterdata/persons/%s/id-mapping/%s", pathParam0, pathParam1)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-endpoint-id", runtime.ParamLocationHeader, params.XAgrirouterEndpointId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-endpoint-id", headerParam0)
+
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam1)
+
 	}
 
 	return req, nil
@@ -725,6 +3185,17 @@ type ClientWithResponsesInterface interface {
 
 	ConfirmMessagesWithResponse(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error)
 
+	// StreamInitialLoadEventsWithResponse request
+	StreamInitialLoadEventsWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*StreamInitialLoadEventsResponse, error)
+
+	// GetInitialLoadStatusWithResponse request
+	GetInitialLoadStatusWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*GetInitialLoadStatusResponse, error)
+
+	// SetInitialLoadStateWithBodyWithResponse request with any body
+	SetInitialLoadStateWithBodyWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error)
+
+	SetInitialLoadStateWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error)
+
 	// DeleteEndpointWithResponse request
 	DeleteEndpointWithResponse(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*DeleteEndpointResponse, error)
 
@@ -735,6 +3206,104 @@ type ClientWithResponsesInterface interface {
 
 	// ReceiveEventsWithResponse request
 	ReceiveEventsWithResponse(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*ReceiveEventsResponse, error)
+
+	// StreamMasterdataEventsWithResponse request
+	StreamMasterdataEventsWithResponse(ctx context.Context, params *StreamMasterdataEventsParams, reqEditors ...RequestEditorFn) (*StreamMasterdataEventsResponse, error)
+
+	// RequestFarmWithBodyWithResponse request with any body
+	RequestFarmWithBodyWithResponse(ctx context.Context, params *RequestFarmParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestFarmResponse, error)
+
+	RequestFarmWithResponse(ctx context.Context, params *RequestFarmParams, body RequestFarmJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestFarmResponse, error)
+
+	// PutFarmWithBodyWithResponse request with any body
+	PutFarmWithBodyWithResponse(ctx context.Context, localId LocalId, params *PutFarmParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutFarmResponse, error)
+
+	PutFarmWithResponse(ctx context.Context, localId LocalId, params *PutFarmParams, body PutFarmJSONRequestBody, reqEditors ...RequestEditorFn) (*PutFarmResponse, error)
+
+	// DeactivateFarmWithResponse request
+	DeactivateFarmWithResponse(ctx context.Context, localId LocalId, params *DeactivateFarmParams, reqEditors ...RequestEditorFn) (*DeactivateFarmResponse, error)
+
+	// UnbindFarmMappingWithResponse request
+	UnbindFarmMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFarmMappingParams, reqEditors ...RequestEditorFn) (*UnbindFarmMappingResponse, error)
+
+	// BindFarmMappingWithResponse request
+	BindFarmMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFarmMappingParams, reqEditors ...RequestEditorFn) (*BindFarmMappingResponse, error)
+
+	// RequestFieldBoundaryWithBodyWithResponse request with any body
+	RequestFieldBoundaryWithBodyWithResponse(ctx context.Context, params *RequestFieldBoundaryParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestFieldBoundaryResponse, error)
+
+	RequestFieldBoundaryWithResponse(ctx context.Context, params *RequestFieldBoundaryParams, body RequestFieldBoundaryJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestFieldBoundaryResponse, error)
+
+	// PutFieldBoundaryWithBodyWithResponse request with any body
+	PutFieldBoundaryWithBodyWithResponse(ctx context.Context, localId LocalId, params *PutFieldBoundaryParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutFieldBoundaryResponse, error)
+
+	PutFieldBoundaryWithResponse(ctx context.Context, localId LocalId, params *PutFieldBoundaryParams, body PutFieldBoundaryJSONRequestBody, reqEditors ...RequestEditorFn) (*PutFieldBoundaryResponse, error)
+
+	// DeactivateFieldBoundaryWithResponse request
+	DeactivateFieldBoundaryWithResponse(ctx context.Context, localId LocalId, params *DeactivateFieldBoundaryParams, reqEditors ...RequestEditorFn) (*DeactivateFieldBoundaryResponse, error)
+
+	// UnbindFieldBoundaryMappingWithResponse request
+	UnbindFieldBoundaryMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldBoundaryMappingParams, reqEditors ...RequestEditorFn) (*UnbindFieldBoundaryMappingResponse, error)
+
+	// BindFieldBoundaryMappingWithResponse request
+	BindFieldBoundaryMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFieldBoundaryMappingParams, reqEditors ...RequestEditorFn) (*BindFieldBoundaryMappingResponse, error)
+
+	// RequestFieldWithBodyWithResponse request with any body
+	RequestFieldWithBodyWithResponse(ctx context.Context, params *RequestFieldParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestFieldResponse, error)
+
+	RequestFieldWithResponse(ctx context.Context, params *RequestFieldParams, body RequestFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestFieldResponse, error)
+
+	// PutFieldWithBodyWithResponse request with any body
+	PutFieldWithBodyWithResponse(ctx context.Context, localId LocalId, params *PutFieldParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutFieldResponse, error)
+
+	PutFieldWithResponse(ctx context.Context, localId LocalId, params *PutFieldParams, body PutFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*PutFieldResponse, error)
+
+	// DeactivateFieldWithResponse request
+	DeactivateFieldWithResponse(ctx context.Context, localId LocalId, params *DeactivateFieldParams, reqEditors ...RequestEditorFn) (*DeactivateFieldResponse, error)
+
+	// UnbindFieldMappingWithResponse request
+	UnbindFieldMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldMappingParams, reqEditors ...RequestEditorFn) (*UnbindFieldMappingResponse, error)
+
+	// BindFieldMappingWithResponse request
+	BindFieldMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFieldMappingParams, reqEditors ...RequestEditorFn) (*BindFieldMappingResponse, error)
+
+	// RequestOrganizationWithBodyWithResponse request with any body
+	RequestOrganizationWithBodyWithResponse(ctx context.Context, params *RequestOrganizationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestOrganizationResponse, error)
+
+	RequestOrganizationWithResponse(ctx context.Context, params *RequestOrganizationParams, body RequestOrganizationJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestOrganizationResponse, error)
+
+	// PutOrganizationWithBodyWithResponse request with any body
+	PutOrganizationWithBodyWithResponse(ctx context.Context, localId LocalId, params *PutOrganizationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrganizationResponse, error)
+
+	PutOrganizationWithResponse(ctx context.Context, localId LocalId, params *PutOrganizationParams, body PutOrganizationJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrganizationResponse, error)
+
+	// DeactivateOrganizationWithResponse request
+	DeactivateOrganizationWithResponse(ctx context.Context, localId LocalId, params *DeactivateOrganizationParams, reqEditors ...RequestEditorFn) (*DeactivateOrganizationResponse, error)
+
+	// UnbindOrganizationMappingWithResponse request
+	UnbindOrganizationMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindOrganizationMappingParams, reqEditors ...RequestEditorFn) (*UnbindOrganizationMappingResponse, error)
+
+	// BindOrganizationMappingWithResponse request
+	BindOrganizationMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindOrganizationMappingParams, reqEditors ...RequestEditorFn) (*BindOrganizationMappingResponse, error)
+
+	// RequestPersonWithBodyWithResponse request with any body
+	RequestPersonWithBodyWithResponse(ctx context.Context, params *RequestPersonParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestPersonResponse, error)
+
+	RequestPersonWithResponse(ctx context.Context, params *RequestPersonParams, body RequestPersonJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestPersonResponse, error)
+
+	// PutPersonWithBodyWithResponse request with any body
+	PutPersonWithBodyWithResponse(ctx context.Context, localId LocalId, params *PutPersonParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutPersonResponse, error)
+
+	PutPersonWithResponse(ctx context.Context, localId LocalId, params *PutPersonParams, body PutPersonJSONRequestBody, reqEditors ...RequestEditorFn) (*PutPersonResponse, error)
+
+	// DeactivatePersonWithResponse request
+	DeactivatePersonWithResponse(ctx context.Context, localId LocalId, params *DeactivatePersonParams, reqEditors ...RequestEditorFn) (*DeactivatePersonResponse, error)
+
+	// UnbindPersonMappingWithResponse request
+	UnbindPersonMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindPersonMappingParams, reqEditors ...RequestEditorFn) (*UnbindPersonMappingResponse, error)
+
+	// BindPersonMappingWithResponse request
+	BindPersonMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindPersonMappingParams, reqEditors ...RequestEditorFn) (*BindPersonMappingResponse, error)
 
 	// SendMessagesWithBodyWithResponse request with any body
 	SendMessagesWithBodyWithResponse(ctx context.Context, params *SendMessagesParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendMessagesResponse, error)
@@ -787,6 +3356,79 @@ func (r ConfirmMessagesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ConfirmMessagesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type StreamInitialLoadEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r StreamInitialLoadEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r StreamInitialLoadEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetInitialLoadStatusResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InitialLoadStatus
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInitialLoadStatusResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInitialLoadStatusResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SetInitialLoadStateResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *InitialLoadStatus
+	JSON400      *ValidationError
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON409      *InitialLoadConflict
+}
+
+// Status returns HTTPResponse.Status
+func (r SetInitialLoadStateResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SetInitialLoadStateResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -860,6 +3502,647 @@ func (r ReceiveEventsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ReceiveEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type StreamMasterdataEventsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r StreamMasterdataEventsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r StreamMasterdataEventsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RequestFarmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r RequestFarmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequestFarmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutFarmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Farm
+	JSON201      *Farm
+	JSON400      *ValidationError
+	JSON403      *Forbidden
+	JSON409      *MappingConflict
+	JSON412      *RevisionConflict
+	JSON428      *BaseRevisionRequired
+}
+
+// Status returns HTTPResponse.Status
+func (r PutFarmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutFarmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeactivateFarmResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Farm
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON412      *RevisionConflict
+	JSON428      *BaseRevisionRequired
+}
+
+// Status returns HTTPResponse.Status
+func (r DeactivateFarmResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeactivateFarmResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UnbindFarmMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r UnbindFarmMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UnbindFarmMappingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BindFarmMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON409      *MappingConflict
+}
+
+// Status returns HTTPResponse.Status
+func (r BindFarmMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BindFarmMappingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RequestFieldBoundaryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r RequestFieldBoundaryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequestFieldBoundaryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutFieldBoundaryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *FieldBoundary
+	JSON201      *FieldBoundary
+	JSON400      *ValidationError
+	JSON403      *Forbidden
+	JSON409      *MappingConflict
+	JSON412      *RevisionConflict
+	JSON428      *BaseRevisionRequired
+}
+
+// Status returns HTTPResponse.Status
+func (r PutFieldBoundaryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutFieldBoundaryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeactivateFieldBoundaryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *FieldBoundary
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON412      *RevisionConflict
+	JSON428      *BaseRevisionRequired
+}
+
+// Status returns HTTPResponse.Status
+func (r DeactivateFieldBoundaryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeactivateFieldBoundaryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UnbindFieldBoundaryMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r UnbindFieldBoundaryMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UnbindFieldBoundaryMappingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BindFieldBoundaryMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON409      *MappingConflict
+}
+
+// Status returns HTTPResponse.Status
+func (r BindFieldBoundaryMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BindFieldBoundaryMappingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RequestFieldResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r RequestFieldResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequestFieldResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutFieldResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Field
+	JSON201      *Field
+	JSON400      *ValidationError
+	JSON403      *Forbidden
+	JSON409      *MappingConflict
+	JSON412      *RevisionConflict
+	JSON428      *BaseRevisionRequired
+}
+
+// Status returns HTTPResponse.Status
+func (r PutFieldResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutFieldResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeactivateFieldResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Field
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON412      *RevisionConflict
+	JSON428      *BaseRevisionRequired
+}
+
+// Status returns HTTPResponse.Status
+func (r DeactivateFieldResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeactivateFieldResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UnbindFieldMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r UnbindFieldMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UnbindFieldMappingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BindFieldMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON409      *MappingConflict
+}
+
+// Status returns HTTPResponse.Status
+func (r BindFieldMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BindFieldMappingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RequestOrganizationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r RequestOrganizationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequestOrganizationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutOrganizationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Organization
+	JSON201      *Organization
+	JSON400      *ValidationError
+	JSON403      *Forbidden
+	JSON409      *MappingConflict
+	JSON412      *RevisionConflict
+	JSON428      *BaseRevisionRequired
+}
+
+// Status returns HTTPResponse.Status
+func (r PutOrganizationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutOrganizationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeactivateOrganizationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Organization
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON412      *RevisionConflict
+	JSON428      *BaseRevisionRequired
+}
+
+// Status returns HTTPResponse.Status
+func (r DeactivateOrganizationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeactivateOrganizationResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UnbindOrganizationMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r UnbindOrganizationMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UnbindOrganizationMappingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BindOrganizationMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON409      *MappingConflict
+}
+
+// Status returns HTTPResponse.Status
+func (r BindOrganizationMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BindOrganizationMappingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RequestPersonResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r RequestPersonResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequestPersonResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutPersonResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Person
+	JSON201      *Person
+	JSON400      *ValidationError
+	JSON403      *Forbidden
+	JSON409      *MappingConflict
+	JSON412      *RevisionConflict
+	JSON428      *BaseRevisionRequired
+}
+
+// Status returns HTTPResponse.Status
+func (r PutPersonResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutPersonResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type DeactivatePersonResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Person
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON412      *RevisionConflict
+	JSON428      *BaseRevisionRequired
+}
+
+// Status returns HTTPResponse.Status
+func (r DeactivatePersonResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeactivatePersonResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UnbindPersonMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+}
+
+// Status returns HTTPResponse.Status
+func (r UnbindPersonMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UnbindPersonMappingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type BindPersonMappingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON403      *Forbidden
+	JSON404      *NotFound
+	JSON409      *MappingConflict
+}
+
+// Status returns HTTPResponse.Status
+func (r BindPersonMappingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r BindPersonMappingResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -967,6 +4250,41 @@ func (c *ClientWithResponses) ConfirmMessagesWithResponse(ctx context.Context, p
 	return ParseConfirmMessagesResponse(rsp)
 }
 
+// StreamInitialLoadEventsWithResponse request returning *StreamInitialLoadEventsResponse
+func (c *ClientWithResponses) StreamInitialLoadEventsWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*StreamInitialLoadEventsResponse, error) {
+	rsp, err := c.StreamInitialLoadEvents(ctx, externalEndpointId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStreamInitialLoadEventsResponse(rsp)
+}
+
+// GetInitialLoadStatusWithResponse request returning *GetInitialLoadStatusResponse
+func (c *ClientWithResponses) GetInitialLoadStatusWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*GetInitialLoadStatusResponse, error) {
+	rsp, err := c.GetInitialLoadStatus(ctx, externalEndpointId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInitialLoadStatusResponse(rsp)
+}
+
+// SetInitialLoadStateWithBodyWithResponse request with arbitrary body returning *SetInitialLoadStateResponse
+func (c *ClientWithResponses) SetInitialLoadStateWithBodyWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error) {
+	rsp, err := c.SetInitialLoadStateWithBody(ctx, externalEndpointId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetInitialLoadStateResponse(rsp)
+}
+
+func (c *ClientWithResponses) SetInitialLoadStateWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error) {
+	rsp, err := c.SetInitialLoadState(ctx, externalEndpointId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetInitialLoadStateResponse(rsp)
+}
+
 // DeleteEndpointWithResponse request returning *DeleteEndpointResponse
 func (c *ClientWithResponses) DeleteEndpointWithResponse(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*DeleteEndpointResponse, error) {
 	rsp, err := c.DeleteEndpoint(ctx, externalId, params, reqEditors...)
@@ -1000,6 +4318,320 @@ func (c *ClientWithResponses) ReceiveEventsWithResponse(ctx context.Context, par
 		return nil, err
 	}
 	return ParseReceiveEventsResponse(rsp)
+}
+
+// StreamMasterdataEventsWithResponse request returning *StreamMasterdataEventsResponse
+func (c *ClientWithResponses) StreamMasterdataEventsWithResponse(ctx context.Context, params *StreamMasterdataEventsParams, reqEditors ...RequestEditorFn) (*StreamMasterdataEventsResponse, error) {
+	rsp, err := c.StreamMasterdataEvents(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStreamMasterdataEventsResponse(rsp)
+}
+
+// RequestFarmWithBodyWithResponse request with arbitrary body returning *RequestFarmResponse
+func (c *ClientWithResponses) RequestFarmWithBodyWithResponse(ctx context.Context, params *RequestFarmParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestFarmResponse, error) {
+	rsp, err := c.RequestFarmWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestFarmResponse(rsp)
+}
+
+func (c *ClientWithResponses) RequestFarmWithResponse(ctx context.Context, params *RequestFarmParams, body RequestFarmJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestFarmResponse, error) {
+	rsp, err := c.RequestFarm(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestFarmResponse(rsp)
+}
+
+// PutFarmWithBodyWithResponse request with arbitrary body returning *PutFarmResponse
+func (c *ClientWithResponses) PutFarmWithBodyWithResponse(ctx context.Context, localId LocalId, params *PutFarmParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutFarmResponse, error) {
+	rsp, err := c.PutFarmWithBody(ctx, localId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutFarmResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutFarmWithResponse(ctx context.Context, localId LocalId, params *PutFarmParams, body PutFarmJSONRequestBody, reqEditors ...RequestEditorFn) (*PutFarmResponse, error) {
+	rsp, err := c.PutFarm(ctx, localId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutFarmResponse(rsp)
+}
+
+// DeactivateFarmWithResponse request returning *DeactivateFarmResponse
+func (c *ClientWithResponses) DeactivateFarmWithResponse(ctx context.Context, localId LocalId, params *DeactivateFarmParams, reqEditors ...RequestEditorFn) (*DeactivateFarmResponse, error) {
+	rsp, err := c.DeactivateFarm(ctx, localId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeactivateFarmResponse(rsp)
+}
+
+// UnbindFarmMappingWithResponse request returning *UnbindFarmMappingResponse
+func (c *ClientWithResponses) UnbindFarmMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFarmMappingParams, reqEditors ...RequestEditorFn) (*UnbindFarmMappingResponse, error) {
+	rsp, err := c.UnbindFarmMapping(ctx, localId, agrirouterId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUnbindFarmMappingResponse(rsp)
+}
+
+// BindFarmMappingWithResponse request returning *BindFarmMappingResponse
+func (c *ClientWithResponses) BindFarmMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFarmMappingParams, reqEditors ...RequestEditorFn) (*BindFarmMappingResponse, error) {
+	rsp, err := c.BindFarmMapping(ctx, localId, agrirouterId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBindFarmMappingResponse(rsp)
+}
+
+// RequestFieldBoundaryWithBodyWithResponse request with arbitrary body returning *RequestFieldBoundaryResponse
+func (c *ClientWithResponses) RequestFieldBoundaryWithBodyWithResponse(ctx context.Context, params *RequestFieldBoundaryParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestFieldBoundaryResponse, error) {
+	rsp, err := c.RequestFieldBoundaryWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestFieldBoundaryResponse(rsp)
+}
+
+func (c *ClientWithResponses) RequestFieldBoundaryWithResponse(ctx context.Context, params *RequestFieldBoundaryParams, body RequestFieldBoundaryJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestFieldBoundaryResponse, error) {
+	rsp, err := c.RequestFieldBoundary(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestFieldBoundaryResponse(rsp)
+}
+
+// PutFieldBoundaryWithBodyWithResponse request with arbitrary body returning *PutFieldBoundaryResponse
+func (c *ClientWithResponses) PutFieldBoundaryWithBodyWithResponse(ctx context.Context, localId LocalId, params *PutFieldBoundaryParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutFieldBoundaryResponse, error) {
+	rsp, err := c.PutFieldBoundaryWithBody(ctx, localId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutFieldBoundaryResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutFieldBoundaryWithResponse(ctx context.Context, localId LocalId, params *PutFieldBoundaryParams, body PutFieldBoundaryJSONRequestBody, reqEditors ...RequestEditorFn) (*PutFieldBoundaryResponse, error) {
+	rsp, err := c.PutFieldBoundary(ctx, localId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutFieldBoundaryResponse(rsp)
+}
+
+// DeactivateFieldBoundaryWithResponse request returning *DeactivateFieldBoundaryResponse
+func (c *ClientWithResponses) DeactivateFieldBoundaryWithResponse(ctx context.Context, localId LocalId, params *DeactivateFieldBoundaryParams, reqEditors ...RequestEditorFn) (*DeactivateFieldBoundaryResponse, error) {
+	rsp, err := c.DeactivateFieldBoundary(ctx, localId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeactivateFieldBoundaryResponse(rsp)
+}
+
+// UnbindFieldBoundaryMappingWithResponse request returning *UnbindFieldBoundaryMappingResponse
+func (c *ClientWithResponses) UnbindFieldBoundaryMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldBoundaryMappingParams, reqEditors ...RequestEditorFn) (*UnbindFieldBoundaryMappingResponse, error) {
+	rsp, err := c.UnbindFieldBoundaryMapping(ctx, localId, agrirouterId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUnbindFieldBoundaryMappingResponse(rsp)
+}
+
+// BindFieldBoundaryMappingWithResponse request returning *BindFieldBoundaryMappingResponse
+func (c *ClientWithResponses) BindFieldBoundaryMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFieldBoundaryMappingParams, reqEditors ...RequestEditorFn) (*BindFieldBoundaryMappingResponse, error) {
+	rsp, err := c.BindFieldBoundaryMapping(ctx, localId, agrirouterId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBindFieldBoundaryMappingResponse(rsp)
+}
+
+// RequestFieldWithBodyWithResponse request with arbitrary body returning *RequestFieldResponse
+func (c *ClientWithResponses) RequestFieldWithBodyWithResponse(ctx context.Context, params *RequestFieldParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestFieldResponse, error) {
+	rsp, err := c.RequestFieldWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestFieldResponse(rsp)
+}
+
+func (c *ClientWithResponses) RequestFieldWithResponse(ctx context.Context, params *RequestFieldParams, body RequestFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestFieldResponse, error) {
+	rsp, err := c.RequestField(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestFieldResponse(rsp)
+}
+
+// PutFieldWithBodyWithResponse request with arbitrary body returning *PutFieldResponse
+func (c *ClientWithResponses) PutFieldWithBodyWithResponse(ctx context.Context, localId LocalId, params *PutFieldParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutFieldResponse, error) {
+	rsp, err := c.PutFieldWithBody(ctx, localId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutFieldResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutFieldWithResponse(ctx context.Context, localId LocalId, params *PutFieldParams, body PutFieldJSONRequestBody, reqEditors ...RequestEditorFn) (*PutFieldResponse, error) {
+	rsp, err := c.PutField(ctx, localId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutFieldResponse(rsp)
+}
+
+// DeactivateFieldWithResponse request returning *DeactivateFieldResponse
+func (c *ClientWithResponses) DeactivateFieldWithResponse(ctx context.Context, localId LocalId, params *DeactivateFieldParams, reqEditors ...RequestEditorFn) (*DeactivateFieldResponse, error) {
+	rsp, err := c.DeactivateField(ctx, localId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeactivateFieldResponse(rsp)
+}
+
+// UnbindFieldMappingWithResponse request returning *UnbindFieldMappingResponse
+func (c *ClientWithResponses) UnbindFieldMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldMappingParams, reqEditors ...RequestEditorFn) (*UnbindFieldMappingResponse, error) {
+	rsp, err := c.UnbindFieldMapping(ctx, localId, agrirouterId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUnbindFieldMappingResponse(rsp)
+}
+
+// BindFieldMappingWithResponse request returning *BindFieldMappingResponse
+func (c *ClientWithResponses) BindFieldMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindFieldMappingParams, reqEditors ...RequestEditorFn) (*BindFieldMappingResponse, error) {
+	rsp, err := c.BindFieldMapping(ctx, localId, agrirouterId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBindFieldMappingResponse(rsp)
+}
+
+// RequestOrganizationWithBodyWithResponse request with arbitrary body returning *RequestOrganizationResponse
+func (c *ClientWithResponses) RequestOrganizationWithBodyWithResponse(ctx context.Context, params *RequestOrganizationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestOrganizationResponse, error) {
+	rsp, err := c.RequestOrganizationWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestOrganizationResponse(rsp)
+}
+
+func (c *ClientWithResponses) RequestOrganizationWithResponse(ctx context.Context, params *RequestOrganizationParams, body RequestOrganizationJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestOrganizationResponse, error) {
+	rsp, err := c.RequestOrganization(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestOrganizationResponse(rsp)
+}
+
+// PutOrganizationWithBodyWithResponse request with arbitrary body returning *PutOrganizationResponse
+func (c *ClientWithResponses) PutOrganizationWithBodyWithResponse(ctx context.Context, localId LocalId, params *PutOrganizationParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutOrganizationResponse, error) {
+	rsp, err := c.PutOrganizationWithBody(ctx, localId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutOrganizationResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutOrganizationWithResponse(ctx context.Context, localId LocalId, params *PutOrganizationParams, body PutOrganizationJSONRequestBody, reqEditors ...RequestEditorFn) (*PutOrganizationResponse, error) {
+	rsp, err := c.PutOrganization(ctx, localId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutOrganizationResponse(rsp)
+}
+
+// DeactivateOrganizationWithResponse request returning *DeactivateOrganizationResponse
+func (c *ClientWithResponses) DeactivateOrganizationWithResponse(ctx context.Context, localId LocalId, params *DeactivateOrganizationParams, reqEditors ...RequestEditorFn) (*DeactivateOrganizationResponse, error) {
+	rsp, err := c.DeactivateOrganization(ctx, localId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeactivateOrganizationResponse(rsp)
+}
+
+// UnbindOrganizationMappingWithResponse request returning *UnbindOrganizationMappingResponse
+func (c *ClientWithResponses) UnbindOrganizationMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindOrganizationMappingParams, reqEditors ...RequestEditorFn) (*UnbindOrganizationMappingResponse, error) {
+	rsp, err := c.UnbindOrganizationMapping(ctx, localId, agrirouterId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUnbindOrganizationMappingResponse(rsp)
+}
+
+// BindOrganizationMappingWithResponse request returning *BindOrganizationMappingResponse
+func (c *ClientWithResponses) BindOrganizationMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindOrganizationMappingParams, reqEditors ...RequestEditorFn) (*BindOrganizationMappingResponse, error) {
+	rsp, err := c.BindOrganizationMapping(ctx, localId, agrirouterId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBindOrganizationMappingResponse(rsp)
+}
+
+// RequestPersonWithBodyWithResponse request with arbitrary body returning *RequestPersonResponse
+func (c *ClientWithResponses) RequestPersonWithBodyWithResponse(ctx context.Context, params *RequestPersonParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestPersonResponse, error) {
+	rsp, err := c.RequestPersonWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestPersonResponse(rsp)
+}
+
+func (c *ClientWithResponses) RequestPersonWithResponse(ctx context.Context, params *RequestPersonParams, body RequestPersonJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestPersonResponse, error) {
+	rsp, err := c.RequestPerson(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestPersonResponse(rsp)
+}
+
+// PutPersonWithBodyWithResponse request with arbitrary body returning *PutPersonResponse
+func (c *ClientWithResponses) PutPersonWithBodyWithResponse(ctx context.Context, localId LocalId, params *PutPersonParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutPersonResponse, error) {
+	rsp, err := c.PutPersonWithBody(ctx, localId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutPersonResponse(rsp)
+}
+
+func (c *ClientWithResponses) PutPersonWithResponse(ctx context.Context, localId LocalId, params *PutPersonParams, body PutPersonJSONRequestBody, reqEditors ...RequestEditorFn) (*PutPersonResponse, error) {
+	rsp, err := c.PutPerson(ctx, localId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutPersonResponse(rsp)
+}
+
+// DeactivatePersonWithResponse request returning *DeactivatePersonResponse
+func (c *ClientWithResponses) DeactivatePersonWithResponse(ctx context.Context, localId LocalId, params *DeactivatePersonParams, reqEditors ...RequestEditorFn) (*DeactivatePersonResponse, error) {
+	rsp, err := c.DeactivatePerson(ctx, localId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeactivatePersonResponse(rsp)
+}
+
+// UnbindPersonMappingWithResponse request returning *UnbindPersonMappingResponse
+func (c *ClientWithResponses) UnbindPersonMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindPersonMappingParams, reqEditors ...RequestEditorFn) (*UnbindPersonMappingResponse, error) {
+	rsp, err := c.UnbindPersonMapping(ctx, localId, agrirouterId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUnbindPersonMappingResponse(rsp)
+}
+
+// BindPersonMappingWithResponse request returning *BindPersonMappingResponse
+func (c *ClientWithResponses) BindPersonMappingWithResponse(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *BindPersonMappingParams, reqEditors ...RequestEditorFn) (*BindPersonMappingResponse, error) {
+	rsp, err := c.BindPersonMapping(ctx, localId, agrirouterId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseBindPersonMappingResponse(rsp)
 }
 
 // SendMessagesWithBodyWithResponse request with arbitrary body returning *SendMessagesResponse
@@ -1096,6 +4728,133 @@ func ParseConfirmMessagesResponse(rsp *http.Response) (*ConfirmMessagesResponse,
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseStreamInitialLoadEventsResponse parses an HTTP response from a StreamInitialLoadEventsWithResponse call
+func ParseStreamInitialLoadEventsResponse(rsp *http.Response) (*StreamInitialLoadEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &StreamInitialLoadEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetInitialLoadStatusResponse parses an HTTP response from a GetInitialLoadStatusWithResponse call
+func ParseGetInitialLoadStatusResponse(rsp *http.Response) (*GetInitialLoadStatusResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInitialLoadStatusResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InitialLoadStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseSetInitialLoadStateResponse parses an HTTP response from a SetInitialLoadStateWithResponse call
+func ParseSetInitialLoadStateResponse(rsp *http.Response) (*SetInitialLoadStateResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SetInitialLoadStateResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest InitialLoadStatus
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest InitialLoadConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	}
 
@@ -1221,6 +4980,1162 @@ func ParseReceiveEventsResponse(rsp *http.Response) (*ReceiveEventsResponse, err
 	response := &ReceiveEventsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseStreamMasterdataEventsResponse parses an HTTP response from a StreamMasterdataEventsWithResponse call
+func ParseStreamMasterdataEventsResponse(rsp *http.Response) (*StreamMasterdataEventsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &StreamMasterdataEventsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseRequestFarmResponse parses an HTTP response from a RequestFarmWithResponse call
+func ParseRequestFarmResponse(rsp *http.Response) (*RequestFarmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequestFarmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutFarmResponse parses an HTTP response from a PutFarmWithResponse call
+func ParsePutFarmResponse(rsp *http.Response) (*PutFarmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutFarmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Farm
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Farm
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest MappingConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest RevisionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest BaseRevisionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON428 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeactivateFarmResponse parses an HTTP response from a DeactivateFarmWithResponse call
+func ParseDeactivateFarmResponse(rsp *http.Response) (*DeactivateFarmResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeactivateFarmResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Farm
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest RevisionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest BaseRevisionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON428 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUnbindFarmMappingResponse parses an HTTP response from a UnbindFarmMappingWithResponse call
+func ParseUnbindFarmMappingResponse(rsp *http.Response) (*UnbindFarmMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UnbindFarmMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBindFarmMappingResponse parses an HTTP response from a BindFarmMappingWithResponse call
+func ParseBindFarmMappingResponse(rsp *http.Response) (*BindFarmMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BindFarmMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest MappingConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRequestFieldBoundaryResponse parses an HTTP response from a RequestFieldBoundaryWithResponse call
+func ParseRequestFieldBoundaryResponse(rsp *http.Response) (*RequestFieldBoundaryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequestFieldBoundaryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutFieldBoundaryResponse parses an HTTP response from a PutFieldBoundaryWithResponse call
+func ParsePutFieldBoundaryResponse(rsp *http.Response) (*PutFieldBoundaryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutFieldBoundaryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FieldBoundary
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest FieldBoundary
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest MappingConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest RevisionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest BaseRevisionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON428 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeactivateFieldBoundaryResponse parses an HTTP response from a DeactivateFieldBoundaryWithResponse call
+func ParseDeactivateFieldBoundaryResponse(rsp *http.Response) (*DeactivateFieldBoundaryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeactivateFieldBoundaryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FieldBoundary
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest RevisionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest BaseRevisionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON428 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUnbindFieldBoundaryMappingResponse parses an HTTP response from a UnbindFieldBoundaryMappingWithResponse call
+func ParseUnbindFieldBoundaryMappingResponse(rsp *http.Response) (*UnbindFieldBoundaryMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UnbindFieldBoundaryMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBindFieldBoundaryMappingResponse parses an HTTP response from a BindFieldBoundaryMappingWithResponse call
+func ParseBindFieldBoundaryMappingResponse(rsp *http.Response) (*BindFieldBoundaryMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BindFieldBoundaryMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest MappingConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRequestFieldResponse parses an HTTP response from a RequestFieldWithResponse call
+func ParseRequestFieldResponse(rsp *http.Response) (*RequestFieldResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequestFieldResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutFieldResponse parses an HTTP response from a PutFieldWithResponse call
+func ParsePutFieldResponse(rsp *http.Response) (*PutFieldResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutFieldResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Field
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Field
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest MappingConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest RevisionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest BaseRevisionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON428 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeactivateFieldResponse parses an HTTP response from a DeactivateFieldWithResponse call
+func ParseDeactivateFieldResponse(rsp *http.Response) (*DeactivateFieldResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeactivateFieldResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Field
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest RevisionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest BaseRevisionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON428 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUnbindFieldMappingResponse parses an HTTP response from a UnbindFieldMappingWithResponse call
+func ParseUnbindFieldMappingResponse(rsp *http.Response) (*UnbindFieldMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UnbindFieldMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBindFieldMappingResponse parses an HTTP response from a BindFieldMappingWithResponse call
+func ParseBindFieldMappingResponse(rsp *http.Response) (*BindFieldMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BindFieldMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest MappingConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRequestOrganizationResponse parses an HTTP response from a RequestOrganizationWithResponse call
+func ParseRequestOrganizationResponse(rsp *http.Response) (*RequestOrganizationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequestOrganizationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutOrganizationResponse parses an HTTP response from a PutOrganizationWithResponse call
+func ParsePutOrganizationResponse(rsp *http.Response) (*PutOrganizationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutOrganizationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Organization
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Organization
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest MappingConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest RevisionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest BaseRevisionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON428 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeactivateOrganizationResponse parses an HTTP response from a DeactivateOrganizationWithResponse call
+func ParseDeactivateOrganizationResponse(rsp *http.Response) (*DeactivateOrganizationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeactivateOrganizationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Organization
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest RevisionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest BaseRevisionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON428 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUnbindOrganizationMappingResponse parses an HTTP response from a UnbindOrganizationMappingWithResponse call
+func ParseUnbindOrganizationMappingResponse(rsp *http.Response) (*UnbindOrganizationMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UnbindOrganizationMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBindOrganizationMappingResponse parses an HTTP response from a BindOrganizationMappingWithResponse call
+func ParseBindOrganizationMappingResponse(rsp *http.Response) (*BindOrganizationMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BindOrganizationMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest MappingConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRequestPersonResponse parses an HTTP response from a RequestPersonWithResponse call
+func ParseRequestPersonResponse(rsp *http.Response) (*RequestPersonResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequestPersonResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutPersonResponse parses an HTTP response from a PutPersonWithResponse call
+func ParsePutPersonResponse(rsp *http.Response) (*PutPersonResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutPersonResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Person
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Person
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ValidationError
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest MappingConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest RevisionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest BaseRevisionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON428 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseDeactivatePersonResponse parses an HTTP response from a DeactivatePersonWithResponse call
+func ParseDeactivatePersonResponse(rsp *http.Response) (*DeactivatePersonResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeactivatePersonResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Person
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 412:
+		var dest RevisionConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON412 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 428:
+		var dest BaseRevisionRequired
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON428 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUnbindPersonMappingResponse parses an HTTP response from a UnbindPersonMappingWithResponse call
+func ParseUnbindPersonMappingResponse(rsp *http.Response) (*UnbindPersonMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UnbindPersonMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseBindPersonMappingResponse parses an HTTP response from a BindPersonMappingWithResponse call
+func ParseBindPersonMappingResponse(rsp *http.Response) (*BindPersonMappingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &BindPersonMappingResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Forbidden
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest NotFound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest MappingConflict
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
 	}
 
 	return response, nil
