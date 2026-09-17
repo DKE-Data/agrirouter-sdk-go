@@ -61,7 +61,7 @@ type EntityRequest = internal_models.EntityRequest
 type MasterdataCapabilities = internal_models.MasterdataCapabilities
 
 // EntityTypeToggle opts an endpoint into master-data exchange for one entity type
-// (e.g. organizations, persons, farms, fields, field-boundaries).
+// (e.g. organization, person, farm, field, fieldBoundary).
 type EntityTypeToggle = internal_models.EntityTypeToggle
 
 // InitialLoadStatus is an endpoint's initial-load state across every entity type it is opted into.

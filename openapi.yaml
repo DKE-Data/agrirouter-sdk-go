@@ -3128,7 +3128,7 @@ components:
             Extensible enum: the entity type this toggle applies to. New
             values may be added over time; callers must accept unknown
             values.
-          examples: [organizations, persons, farms, fields, field-boundaries]
+          examples: [organization, person, farm, field, fieldBoundary]
       required: [entityType]
     MasterdataCapabilities:
       type: object

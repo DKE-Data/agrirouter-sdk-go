@@ -28,7 +28,7 @@ const (
 // masterdataEntityTypes are the entity types an endpoint can be opted into for
 // master-data exchange. The API treats it as an extensible enum, so other values
 // are accepted too; these are the known ones, used for shell completion.
-var masterdataEntityTypes = []string{"organizations", "persons", "farms", "fields", "field-boundaries"}
+var masterdataEntityTypes = []string{"organization", "person", "farm", "field", "fieldBoundary"}
 
 var putEndpointCmd = &cobra.Command{
 	Use:   "put-endpoint",
@@ -253,7 +253,7 @@ func init() {
 	shown when the user attempts to delete the endpoint instead of the usual deletion dialog.`)
 
 	putEndpointCmd.Flags().StringSlice(withMasterdataCapabilityOpt, []string{}, fmt.Sprintf(`Master-data entity types this endpoint is opted into (repeat or comma-separate),
-	for example: 'organizations'. Known types: %s. The API accepts other values too.`, strings.Join(masterdataEntityTypes, ", ")))
+	for example: 'organization'. Known types: %s. The API accepts other values too.`, strings.Join(masterdataEntityTypes, ", ")))
 	_ = putEndpointCmd.RegisterFlagCompletionFunc(withMasterdataCapabilityOpt, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return masterdataEntityTypes, cobra.ShellCompDirectiveNoFileComp
 	})
