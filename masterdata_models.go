@@ -55,6 +55,15 @@ type Obstacle = internal_models.Obstacle
 // EntityRequest is the body used to lazy-load a master-data entity by its canonical id.
 type EntityRequest = internal_models.EntityRequest
 
+// MasterdataCapabilities is an endpoint's per-entity-type opt-in for master-data
+// exchange, carried on PutEndpointRequest. Absence of a toggle for an entity type
+// means the endpoint is not opted in for it.
+type MasterdataCapabilities = internal_models.MasterdataCapabilities
+
+// EntityTypeToggle opts an endpoint into master-data exchange for one entity type
+// (e.g. organizations, persons, farms, fields, field-boundaries).
+type EntityTypeToggle = internal_models.EntityTypeToggle
+
 // InitialLoadStatus is an endpoint's initial-load state across every entity type it is opted into.
 type InitialLoadStatus = internal_models.InitialLoadStatus
 

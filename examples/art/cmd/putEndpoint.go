@@ -20,7 +20,15 @@ const (
 	withSubscriptionOpt  = "with-subscription"
 	allowDeleteByUserOpt = "allow-delete-by-user"
 	connectionsURIOpt    = "connections-uri"
+
+	withMasterdataCapabilityOpt = "with-masterdata-capability"
+	masterdataResolutionURLOpt  = "masterdata-resolution-url"
 )
+
+// masterdataEntityTypes are the entity types an endpoint can be opted into for
+// master-data exchange. The API treats it as an extensible enum, so other values
+// are accepted too; these are the known ones, used for shell completion.
+var masterdataEntityTypes = []string{"organizations", "persons", "farms", "fields", "field-boundaries"}
 
 var putEndpointCmd = &cobra.Command{
 	Use:   "put-endpoint",
@@ -139,6 +147,29 @@ var putEndpointCmd = &cobra.Command{
 			allowDeleteByUserPtr = &allowDeleteByUser
 		}
 
+		masterdataEntityTypeArgs, err := cmd.Flags().GetStringSlice(withMasterdataCapabilityOpt)
+		if err != nil {
+			return fmt.Errorf("failed to get %s flag: %w", withMasterdataCapabilityOpt, err)
+		}
+		masterdataResolutionURL, err := cmd.Flags().GetString(masterdataResolutionURLOpt)
+		if err != nil {
+			return fmt.Errorf("failed to get %s flag: %w", masterdataResolutionURLOpt, err)
+		}
+		var masterdataCapabilitiesPtr *agrirouter.MasterdataCapabilities
+		if len(masterdataEntityTypeArgs) > 0 || masterdataResolutionURL != "" {
+			toggles := make([]agrirouter.EntityTypeToggle, 0, len(masterdataEntityTypeArgs))
+			for _, entityType := range masterdataEntityTypeArgs {
+				if entityType == "" {
+					return fmt.Errorf("invalid %s value: entity type must not be empty", withMasterdataCapabilityOpt)
+				}
+				toggles = append(toggles, agrirouter.EntityTypeToggle{EntityType: entityType})
+			}
+			masterdataCapabilitiesPtr = &agrirouter.MasterdataCapabilities{Toggles: toggles}
+			if masterdataResolutionURL != "" {
+				masterdataCapabilitiesPtr.ResolutionUrl = &masterdataResolutionURL
+			}
+		}
+
 		slog.Info("Putting endpoint",
 			"externalID", externalID,
 			"name", name,
@@ -150,19 +181,21 @@ var putEndpointCmd = &cobra.Command{
 			"subscriptions", subscriptions,
 			"allowDeleteByUser", allowDeleteByUserPtr,
 			"connectionsURI", connectionsURIPtr,
+			"masterdataEntityTypes", masterdataEntityTypeArgs,
 		)
 
 		epResult, err := client.PutEndpoint(ctx, externalID, &agrirouter.PutEndpointParams{
 			XAgrirouterTenantId: tenantIDParsed,
 		}, &agrirouter.PutEndpointRequest{
-			Name:              namePtr,
-			ApplicationId:     applicationIDParsed,
-			SoftwareVersionId: softwareVersionIDParsed,
-			EndpointType:      agrirouter.EndpointTypeToCreate(endpointType),
-			Capabilities:      capabilities,
-			Subscriptions:     subscriptions,
-			AllowDeleteByUser: allowDeleteByUserPtr,
-			ConnectionsUri:    connectionsURIPtr,
+			Name:                   namePtr,
+			ApplicationId:          applicationIDParsed,
+			SoftwareVersionId:      softwareVersionIDParsed,
+			EndpointType:           agrirouter.EndpointTypeToCreate(endpointType),
+			Capabilities:           capabilities,
+			Subscriptions:          subscriptions,
+			AllowDeleteByUser:      allowDeleteByUserPtr,
+			ConnectionsUri:         connectionsURIPtr,
+			MasterdataCapabilities: masterdataCapabilitiesPtr,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to put endpoint: %w", err)
@@ -218,4 +251,13 @@ func init() {
 	putEndpointCmd.Flags().String(connectionsURIOpt, "", `Optional URI pointing to where the user can manage the entity connected to this endpoint,
 	e.g. to disconnect or delete equipment from an equipment vendor. When provided, this URI will be
 	shown when the user attempts to delete the endpoint instead of the usual deletion dialog.`)
+
+	putEndpointCmd.Flags().StringSlice(withMasterdataCapabilityOpt, []string{}, fmt.Sprintf(`Master-data entity types this endpoint is opted into (repeat or comma-separate),
+	for example: 'organizations'. Known types: %s. The API accepts other values too.`, strings.Join(masterdataEntityTypes, ", ")))
+	_ = putEndpointCmd.RegisterFlagCompletionFunc(withMasterdataCapabilityOpt, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return masterdataEntityTypes, cobra.ShellCompDirectiveNoFileComp
+	})
+
+	putEndpointCmd.Flags().String(masterdataResolutionURLOpt, "", `Optional URI where the user resolves initial-load conflicts in the endpoint's own software.
+	Rendered as a link while the endpoint has awaitingUser set. Applies only to master-data capabilities.`)
 }
