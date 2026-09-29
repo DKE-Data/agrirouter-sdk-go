@@ -259,5 +259,5 @@ func init() {
 	})
 
 	putEndpointCmd.Flags().String(masterdataResolutionURLOpt, "", `Optional URI where the user resolves initial-load conflicts in the endpoint's own software.
-	Rendered as a link while the endpoint has awaitingUser set. Applies only to master-data capabilities.`)
+	Rendered as a link while the endpoint has awaiting_user set. Applies only to master-data capabilities.`)
 }

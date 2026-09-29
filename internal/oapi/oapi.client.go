@@ -98,17 +98,6 @@ type ClientInterface interface {
 
 	ConfirmMessages(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// StreamInitialLoadEvents request
-	StreamInitialLoadEvents(ctx context.Context, externalEndpointId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetInitialLoadStatus request
-	GetInitialLoadStatus(ctx context.Context, externalEndpointId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// SetInitialLoadStateWithBody request with any body
-	SetInitialLoadStateWithBody(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	SetInitialLoadState(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// DeleteEndpoint request
 	DeleteEndpoint(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -116,6 +105,17 @@ type ClientInterface interface {
 	PutEndpointWithBody(ctx context.Context, externalId ExternalId, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PutEndpoint(ctx context.Context, externalId ExternalId, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// StreamInitialLoadEvents request
+	StreamInitialLoadEvents(ctx context.Context, externalId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetInitialLoadStatus request
+	GetInitialLoadStatus(ctx context.Context, externalId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SetInitialLoadStateWithBody request with any body
+	SetInitialLoadStateWithBody(ctx context.Context, externalId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SetInitialLoadState(ctx context.Context, externalId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ReceiveEvents request
 	ReceiveEvents(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -264,54 +264,6 @@ func (c *Client) ConfirmMessages(ctx context.Context, params *ConfirmMessagesPar
 	return c.Client.Do(req)
 }
 
-func (c *Client) StreamInitialLoadEvents(ctx context.Context, externalEndpointId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewStreamInitialLoadEventsRequest(c.Server, externalEndpointId, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) GetInitialLoadStatus(ctx context.Context, externalEndpointId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetInitialLoadStatusRequest(c.Server, externalEndpointId, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) SetInitialLoadStateWithBody(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSetInitialLoadStateRequestWithBody(c.Server, externalEndpointId, params, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) SetInitialLoadState(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSetInitialLoadStateRequest(c.Server, externalEndpointId, params, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) DeleteEndpoint(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteEndpointRequest(c.Server, externalId, params)
 	if err != nil {
@@ -338,6 +290,54 @@ func (c *Client) PutEndpointWithBody(ctx context.Context, externalId ExternalId,
 
 func (c *Client) PutEndpoint(ctx context.Context, externalId ExternalId, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPutEndpointRequest(c.Server, externalId, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) StreamInitialLoadEvents(ctx context.Context, externalId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStreamInitialLoadEventsRequest(c.Server, externalId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetInitialLoadStatus(ctx context.Context, externalId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInitialLoadStatusRequest(c.Server, externalId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SetInitialLoadStateWithBody(ctx context.Context, externalId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetInitialLoadStateRequestWithBody(c.Server, externalId, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SetInitialLoadState(ctx context.Context, externalId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSetInitialLoadStateRequest(c.Server, externalId, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -926,160 +926,6 @@ func NewConfirmMessagesRequestWithBody(server string, params *ConfirmMessagesPar
 	return req, nil
 }
 
-// NewStreamInitialLoadEventsRequest generates requests for StreamInitialLoadEvents
-func NewStreamInitialLoadEventsRequest(server string, externalEndpointId ExternalEndpointId, params *StreamInitialLoadEventsParams) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "externalEndpointId", runtime.ParamLocationPath, externalEndpointId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/endpoints/%s/masterdata-initial-load/events", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-
-		var headerParam0 string
-
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
-		if err != nil {
-			return nil, err
-		}
-
-		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
-
-	}
-
-	return req, nil
-}
-
-// NewGetInitialLoadStatusRequest generates requests for GetInitialLoadStatus
-func NewGetInitialLoadStatusRequest(server string, externalEndpointId ExternalEndpointId, params *GetInitialLoadStatusParams) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "externalEndpointId", runtime.ParamLocationPath, externalEndpointId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/endpoints/%s/masterdata-initial-load/status", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-
-		var headerParam0 string
-
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
-		if err != nil {
-			return nil, err
-		}
-
-		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
-
-	}
-
-	return req, nil
-}
-
-// NewSetInitialLoadStateRequest calls the generic SetInitialLoadState builder with application/json body
-func NewSetInitialLoadStateRequest(server string, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewSetInitialLoadStateRequestWithBody(server, externalEndpointId, params, "application/json", bodyReader)
-}
-
-// NewSetInitialLoadStateRequestWithBody generates requests for SetInitialLoadState with any type of body
-func NewSetInitialLoadStateRequestWithBody(server string, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "externalEndpointId", runtime.ParamLocationPath, externalEndpointId)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/endpoints/%s/masterdata-initial-load/status", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PUT", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	if params != nil {
-
-		var headerParam0 string
-
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
-		if err != nil {
-			return nil, err
-		}
-
-		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
-
-	}
-
-	return req, nil
-}
-
 // NewDeleteEndpointRequest generates requests for DeleteEndpoint
 func NewDeleteEndpointRequest(server string, externalId ExternalId, params *DeleteEndpointParams) (*http.Request, error) {
 	var err error
@@ -1155,6 +1001,160 @@ func NewPutEndpointRequestWithBody(server string, externalId ExternalId, params 
 	}
 
 	operationPath := fmt.Sprintf("/endpoints/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewStreamInitialLoadEventsRequest generates requests for StreamInitialLoadEvents
+func NewStreamInitialLoadEventsRequest(server string, externalId ExternalEndpointId, params *StreamInitialLoadEventsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "external_id", runtime.ParamLocationPath, externalId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/endpoints/%s/masterdata-initial-load/events", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewGetInitialLoadStatusRequest generates requests for GetInitialLoadStatus
+func NewGetInitialLoadStatusRequest(server string, externalId ExternalEndpointId, params *GetInitialLoadStatusParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "external_id", runtime.ParamLocationPath, externalId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/endpoints/%s/masterdata-initial-load/status", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		var headerParam0 string
+
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "x-agrirouter-tenant-id", runtime.ParamLocationHeader, params.XAgrirouterTenantId)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("x-agrirouter-tenant-id", headerParam0)
+
+	}
+
+	return req, nil
+}
+
+// NewSetInitialLoadStateRequest calls the generic SetInitialLoadState builder with application/json body
+func NewSetInitialLoadStateRequest(server string, externalId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSetInitialLoadStateRequestWithBody(server, externalId, params, "application/json", bodyReader)
+}
+
+// NewSetInitialLoadStateRequestWithBody generates requests for SetInitialLoadState with any type of body
+func NewSetInitialLoadStateRequestWithBody(server string, externalId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "external_id", runtime.ParamLocationPath, externalId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/endpoints/%s/masterdata-initial-load/status", pathParam0)
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1357,7 +1357,7 @@ func NewPutFarmRequestWithBody(server string, localId LocalId, params *PutFarmPa
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
@@ -1426,7 +1426,7 @@ func NewDeactivateFarmRequest(server string, localId LocalId, params *Deactivate
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
@@ -1493,14 +1493,14 @@ func NewUnbindFarmMappingRequest(server string, localId LocalId, agrirouterId Id
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouter_id", runtime.ParamLocationPath, agrirouterId)
 	if err != nil {
 		return nil, err
 	}
@@ -1556,14 +1556,14 @@ func NewBindFarmMappingRequest(server string, localId LocalId, agrirouterId IdMa
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouter_id", runtime.ParamLocationPath, agrirouterId)
 	if err != nil {
 		return nil, err
 	}
@@ -1692,7 +1692,7 @@ func NewPutFieldBoundaryRequestWithBody(server string, localId LocalId, params *
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
@@ -1761,7 +1761,7 @@ func NewDeactivateFieldBoundaryRequest(server string, localId LocalId, params *D
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
@@ -1828,14 +1828,14 @@ func NewUnbindFieldBoundaryMappingRequest(server string, localId LocalId, agriro
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouter_id", runtime.ParamLocationPath, agrirouterId)
 	if err != nil {
 		return nil, err
 	}
@@ -1891,14 +1891,14 @@ func NewBindFieldBoundaryMappingRequest(server string, localId LocalId, agrirout
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouter_id", runtime.ParamLocationPath, agrirouterId)
 	if err != nil {
 		return nil, err
 	}
@@ -2027,7 +2027,7 @@ func NewPutFieldRequestWithBody(server string, localId LocalId, params *PutField
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
@@ -2096,7 +2096,7 @@ func NewDeactivateFieldRequest(server string, localId LocalId, params *Deactivat
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
@@ -2163,14 +2163,14 @@ func NewUnbindFieldMappingRequest(server string, localId LocalId, agrirouterId I
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouter_id", runtime.ParamLocationPath, agrirouterId)
 	if err != nil {
 		return nil, err
 	}
@@ -2226,14 +2226,14 @@ func NewBindFieldMappingRequest(server string, localId LocalId, agrirouterId IdM
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouter_id", runtime.ParamLocationPath, agrirouterId)
 	if err != nil {
 		return nil, err
 	}
@@ -2362,7 +2362,7 @@ func NewPutOrganizationRequestWithBody(server string, localId LocalId, params *P
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
@@ -2431,7 +2431,7 @@ func NewDeactivateOrganizationRequest(server string, localId LocalId, params *De
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
@@ -2498,14 +2498,14 @@ func NewUnbindOrganizationMappingRequest(server string, localId LocalId, agrirou
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouter_id", runtime.ParamLocationPath, agrirouterId)
 	if err != nil {
 		return nil, err
 	}
@@ -2561,14 +2561,14 @@ func NewBindOrganizationMappingRequest(server string, localId LocalId, agriroute
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouter_id", runtime.ParamLocationPath, agrirouterId)
 	if err != nil {
 		return nil, err
 	}
@@ -2697,7 +2697,7 @@ func NewPutPersonRequestWithBody(server string, localId LocalId, params *PutPers
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
@@ -2766,7 +2766,7 @@ func NewDeactivatePersonRequest(server string, localId LocalId, params *Deactiva
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
@@ -2833,14 +2833,14 @@ func NewUnbindPersonMappingRequest(server string, localId LocalId, agrirouterId 
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouter_id", runtime.ParamLocationPath, agrirouterId)
 	if err != nil {
 		return nil, err
 	}
@@ -2896,14 +2896,14 @@ func NewBindPersonMappingRequest(server string, localId LocalId, agrirouterId Id
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "localId", runtime.ParamLocationPath, localId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "local_id", runtime.ParamLocationPath, localId)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouterId", runtime.ParamLocationPath, agrirouterId)
+	pathParam1, err = runtime.StyleParamWithLocation("simple", false, "agrirouter_id", runtime.ParamLocationPath, agrirouterId)
 	if err != nil {
 		return nil, err
 	}
@@ -3185,17 +3185,6 @@ type ClientWithResponsesInterface interface {
 
 	ConfirmMessagesWithResponse(ctx context.Context, params *ConfirmMessagesParams, body ConfirmMessagesJSONRequestBody, reqEditors ...RequestEditorFn) (*ConfirmMessagesResponse, error)
 
-	// StreamInitialLoadEventsWithResponse request
-	StreamInitialLoadEventsWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*StreamInitialLoadEventsResponse, error)
-
-	// GetInitialLoadStatusWithResponse request
-	GetInitialLoadStatusWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*GetInitialLoadStatusResponse, error)
-
-	// SetInitialLoadStateWithBodyWithResponse request with any body
-	SetInitialLoadStateWithBodyWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error)
-
-	SetInitialLoadStateWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error)
-
 	// DeleteEndpointWithResponse request
 	DeleteEndpointWithResponse(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*DeleteEndpointResponse, error)
 
@@ -3203,6 +3192,17 @@ type ClientWithResponsesInterface interface {
 	PutEndpointWithBodyWithResponse(ctx context.Context, externalId ExternalId, params *PutEndpointParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error)
 
 	PutEndpointWithResponse(ctx context.Context, externalId ExternalId, params *PutEndpointParams, body PutEndpointJSONRequestBody, reqEditors ...RequestEditorFn) (*PutEndpointResponse, error)
+
+	// StreamInitialLoadEventsWithResponse request
+	StreamInitialLoadEventsWithResponse(ctx context.Context, externalId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*StreamInitialLoadEventsResponse, error)
+
+	// GetInitialLoadStatusWithResponse request
+	GetInitialLoadStatusWithResponse(ctx context.Context, externalId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*GetInitialLoadStatusResponse, error)
+
+	// SetInitialLoadStateWithBodyWithResponse request with any body
+	SetInitialLoadStateWithBodyWithResponse(ctx context.Context, externalId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error)
+
+	SetInitialLoadStateWithResponse(ctx context.Context, externalId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error)
 
 	// ReceiveEventsWithResponse request
 	ReceiveEventsWithResponse(ctx context.Context, params *ReceiveEventsParams, reqEditors ...RequestEditorFn) (*ReceiveEventsResponse, error)
@@ -3362,6 +3362,58 @@ func (r ConfirmMessagesResponse) StatusCode() int {
 	return 0
 }
 
+type DeleteEndpointResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON400      *ErrorResponse
+	JSON401      *ErrorResponse
+	JSON403      *ErrorResponse
+	JSON404      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r DeleteEndpointResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r DeleteEndpointResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PutEndpointResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Endpoint
+	JSON201      *Endpoint
+	JSON400      *ErrorResponse
+	JSON401      *ErrorResponse
+	JSON403      *ErrorResponse
+	JSON413      *ErrorResponse
+}
+
+// Status returns HTTPResponse.Status
+func (r PutEndpointResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PutEndpointResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type StreamInitialLoadEventsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3429,58 +3481,6 @@ func (r SetInitialLoadStateResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r SetInitialLoadStateResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type DeleteEndpointResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON400      *ErrorResponse
-	JSON401      *ErrorResponse
-	JSON403      *ErrorResponse
-	JSON404      *ErrorResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r DeleteEndpointResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r DeleteEndpointResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type PutEndpointResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *Endpoint
-	JSON201      *Endpoint
-	JSON400      *ErrorResponse
-	JSON401      *ErrorResponse
-	JSON403      *ErrorResponse
-	JSON413      *ErrorResponse
-}
-
-// Status returns HTTPResponse.Status
-func (r PutEndpointResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r PutEndpointResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4250,41 +4250,6 @@ func (c *ClientWithResponses) ConfirmMessagesWithResponse(ctx context.Context, p
 	return ParseConfirmMessagesResponse(rsp)
 }
 
-// StreamInitialLoadEventsWithResponse request returning *StreamInitialLoadEventsResponse
-func (c *ClientWithResponses) StreamInitialLoadEventsWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*StreamInitialLoadEventsResponse, error) {
-	rsp, err := c.StreamInitialLoadEvents(ctx, externalEndpointId, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseStreamInitialLoadEventsResponse(rsp)
-}
-
-// GetInitialLoadStatusWithResponse request returning *GetInitialLoadStatusResponse
-func (c *ClientWithResponses) GetInitialLoadStatusWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*GetInitialLoadStatusResponse, error) {
-	rsp, err := c.GetInitialLoadStatus(ctx, externalEndpointId, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetInitialLoadStatusResponse(rsp)
-}
-
-// SetInitialLoadStateWithBodyWithResponse request with arbitrary body returning *SetInitialLoadStateResponse
-func (c *ClientWithResponses) SetInitialLoadStateWithBodyWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error) {
-	rsp, err := c.SetInitialLoadStateWithBody(ctx, externalEndpointId, params, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseSetInitialLoadStateResponse(rsp)
-}
-
-func (c *ClientWithResponses) SetInitialLoadStateWithResponse(ctx context.Context, externalEndpointId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error) {
-	rsp, err := c.SetInitialLoadState(ctx, externalEndpointId, params, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseSetInitialLoadStateResponse(rsp)
-}
-
 // DeleteEndpointWithResponse request returning *DeleteEndpointResponse
 func (c *ClientWithResponses) DeleteEndpointWithResponse(ctx context.Context, externalId ExternalId, params *DeleteEndpointParams, reqEditors ...RequestEditorFn) (*DeleteEndpointResponse, error) {
 	rsp, err := c.DeleteEndpoint(ctx, externalId, params, reqEditors...)
@@ -4309,6 +4274,41 @@ func (c *ClientWithResponses) PutEndpointWithResponse(ctx context.Context, exter
 		return nil, err
 	}
 	return ParsePutEndpointResponse(rsp)
+}
+
+// StreamInitialLoadEventsWithResponse request returning *StreamInitialLoadEventsResponse
+func (c *ClientWithResponses) StreamInitialLoadEventsWithResponse(ctx context.Context, externalId ExternalEndpointId, params *StreamInitialLoadEventsParams, reqEditors ...RequestEditorFn) (*StreamInitialLoadEventsResponse, error) {
+	rsp, err := c.StreamInitialLoadEvents(ctx, externalId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStreamInitialLoadEventsResponse(rsp)
+}
+
+// GetInitialLoadStatusWithResponse request returning *GetInitialLoadStatusResponse
+func (c *ClientWithResponses) GetInitialLoadStatusWithResponse(ctx context.Context, externalId ExternalEndpointId, params *GetInitialLoadStatusParams, reqEditors ...RequestEditorFn) (*GetInitialLoadStatusResponse, error) {
+	rsp, err := c.GetInitialLoadStatus(ctx, externalId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInitialLoadStatusResponse(rsp)
+}
+
+// SetInitialLoadStateWithBodyWithResponse request with arbitrary body returning *SetInitialLoadStateResponse
+func (c *ClientWithResponses) SetInitialLoadStateWithBodyWithResponse(ctx context.Context, externalId ExternalEndpointId, params *SetInitialLoadStateParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error) {
+	rsp, err := c.SetInitialLoadStateWithBody(ctx, externalId, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetInitialLoadStateResponse(rsp)
+}
+
+func (c *ClientWithResponses) SetInitialLoadStateWithResponse(ctx context.Context, externalId ExternalEndpointId, params *SetInitialLoadStateParams, body SetInitialLoadStateJSONRequestBody, reqEditors ...RequestEditorFn) (*SetInitialLoadStateResponse, error) {
+	rsp, err := c.SetInitialLoadState(ctx, externalId, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSetInitialLoadStateResponse(rsp)
 }
 
 // ReceiveEventsWithResponse request returning *ReceiveEventsResponse
@@ -4734,6 +4734,114 @@ func ParseConfirmMessagesResponse(rsp *http.Response) (*ConfirmMessagesResponse,
 	return response, nil
 }
 
+// ParseDeleteEndpointResponse parses an HTTP response from a DeleteEndpointWithResponse call
+func ParseDeleteEndpointResponse(rsp *http.Response) (*DeleteEndpointResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &DeleteEndpointResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePutEndpointResponse parses an HTTP response from a PutEndpointWithResponse call
+func ParsePutEndpointResponse(rsp *http.Response) (*PutEndpointResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PutEndpointResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Endpoint
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Endpoint
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON400 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
+		var dest ErrorResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON413 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseStreamInitialLoadEventsResponse parses an HTTP response from a StreamInitialLoadEventsWithResponse call
 func ParseStreamInitialLoadEventsResponse(rsp *http.Response) (*StreamInitialLoadEventsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -4855,114 +4963,6 @@ func ParseSetInitialLoadStateResponse(rsp *http.Response) (*SetInitialLoadStateR
 			return nil, err
 		}
 		response.JSON409 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseDeleteEndpointResponse parses an HTTP response from a DeleteEndpointWithResponse call
-func ParseDeleteEndpointResponse(rsp *http.Response) (*DeleteEndpointResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &DeleteEndpointResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest ErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest ErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest ErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest ErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParsePutEndpointResponse parses an HTTP response from a PutEndpointWithResponse call
-func ParsePutEndpointResponse(rsp *http.Response) (*PutEndpointResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &PutEndpointResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Endpoint
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest Endpoint
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest ErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest ErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest ErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON403 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 413:
-		var dest ErrorResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON413 = &dest
 
 	}
 

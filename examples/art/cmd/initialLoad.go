@@ -53,7 +53,7 @@ var setInitialLoadStateCmd = &cobra.Command{
 	Short: "Set an endpoint's initial-load state",
 	Long: fmt.Sprintf(`Advances the endpoint's initial-load state and, when confirming reconciliation,
 carries the identifier bindings reconciliation produced via --%s (a JSON array
-of {"agrirouterId","localId"} objects, inline or @path).
+of {"agrirouter_id","local_id"} objects, inline or @path).
 
 Valid --%s values: %s.`, idMappingsOpt, stateOpt, joinInitialLoadStates()),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -139,7 +139,7 @@ func init() {
 	setInitialLoadStateCmd.Flags().String(stateOpt, "", "Target initial-load state: "+joinInitialLoadStates())
 	_ = setInitialLoadStateCmd.MarkFlagRequired(stateOpt)
 	setInitialLoadStateCmd.Flags().Bool(awaitingUserOpt, false, "Whether reconciliation needs user action; omitted leaves the current value untouched")
-	setInitialLoadStateCmd.Flags().String(idMappingsOpt, "", `Reconciliation bindings as a JSON array of {"agrirouterId","localId"} objects, inline or @path`)
+	setInitialLoadStateCmd.Flags().String(idMappingsOpt, "", `Reconciliation bindings as a JSON array of {"agrirouter_id","local_id"} objects, inline or @path`)
 	_ = setInitialLoadStateCmd.RegisterFlagCompletionFunc(stateOpt, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		out := make([]string, len(allInitialLoadStates))
 		for i, s := range allInitialLoadStates {

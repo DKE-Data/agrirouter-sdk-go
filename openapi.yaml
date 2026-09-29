@@ -516,14 +516,14 @@ paths:
 
   # ------------------------------------------------------- masterdata sync
 
-  /masterdata/organizations/{localId}:
+  /masterdata/organizations/{local_id}:
     put:
       operationId: putOrganization
       tags: [Masterdata]
       summary: Send (create or update) an organization
       description: >
         Submits an organization from the calling endpoint, identified by the
-        application's own localId. An update to an existing organization must
+        application's own local_id. An update to an existing organization must
         carry the revision it was edited from in x-agrirouter-base-revision.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
@@ -571,7 +571,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/organizations/{localId}/id-mapping/{agrirouterId}:
+  /masterdata/organizations/{local_id}/id-mapping/{agrirouter_id}:
     parameters:
       - $ref: '#/components/parameters/LocalId'
       - $ref: '#/components/parameters/IdMappingAgrirouterId'
@@ -583,7 +583,7 @@ paths:
       summary: Bind a local identifier to an existing organization
       description: >
         Declares that the canonical organization in the path is the one this
-        endpoint already knows as localId, so a later PUT under that localId
+        endpoint already knows as local_id, so a later PUT under that local_id
         updates it instead of creating a duplicate.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
@@ -611,8 +611,8 @@ paths:
       summary: Declare that this endpoint no longer holds an organization
       description: >
         Declares that the endpoint no longer holds the canonical organization
-        under this localId. The canonical object itself is untouched and is
-        delivered again, without a localId, on its next change.
+        under this local_id. The canonical object itself is untouched and is
+        delivered again, without a local_id, on its next change.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -634,7 +634,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/organizations/{localId}/deactivation:
+  /masterdata/organizations/{local_id}/deactivation:
     post:
       operationId: deactivateOrganization
       tags: [Masterdata]
@@ -712,14 +712,14 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/persons/{localId}:
+  /masterdata/persons/{local_id}:
     put:
       operationId: putPerson
       tags: [Masterdata]
       summary: Send (create or update) a person
       description: >
         Submits a person from the calling endpoint, identified by the
-        application's own localId. An update to an existing person must
+        application's own local_id. An update to an existing person must
         carry the revision it was edited from in x-agrirouter-base-revision.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
@@ -767,7 +767,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/persons/{localId}/id-mapping/{agrirouterId}:
+  /masterdata/persons/{local_id}/id-mapping/{agrirouter_id}:
     parameters:
       - $ref: '#/components/parameters/LocalId'
       - $ref: '#/components/parameters/IdMappingAgrirouterId'
@@ -779,7 +779,7 @@ paths:
       summary: Bind a local identifier to an existing person
       description: >
         Declares that the canonical person in the path is the one this
-        endpoint already knows as localId, so a later PUT under that localId
+        endpoint already knows as local_id, so a later PUT under that local_id
         updates it instead of creating a duplicate.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
@@ -807,8 +807,8 @@ paths:
       summary: Declare that this endpoint no longer holds a person
       description: >
         Declares that the endpoint no longer holds the canonical person
-        under this localId. The canonical object itself is untouched and is
-        delivered again, without a localId, on its next change.
+        under this local_id. The canonical object itself is untouched and is
+        delivered again, without a local_id, on its next change.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -830,7 +830,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/persons/{localId}/deactivation:
+  /masterdata/persons/{local_id}/deactivation:
     post:
       operationId: deactivatePerson
       tags: [Masterdata]
@@ -908,14 +908,14 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/farms/{localId}:
+  /masterdata/farms/{local_id}:
     put:
       operationId: putFarm
       tags: [Masterdata]
       summary: Send (create or update) a farm
       description: >
         Submits a farm from the calling endpoint, identified by the
-        application's own localId. An update to an existing farm must carry
+        application's own local_id. An update to an existing farm must carry
         the revision it was edited from in x-agrirouter-base-revision.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
@@ -963,7 +963,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/farms/{localId}/id-mapping/{agrirouterId}:
+  /masterdata/farms/{local_id}/id-mapping/{agrirouter_id}:
     parameters:
       - $ref: '#/components/parameters/LocalId'
       - $ref: '#/components/parameters/IdMappingAgrirouterId'
@@ -975,7 +975,7 @@ paths:
       summary: Bind a local identifier to an existing farm
       description: >
         Declares that the canonical farm in the path is the one this
-        endpoint already knows as localId, so a later PUT under that localId
+        endpoint already knows as local_id, so a later PUT under that local_id
         updates it instead of creating a duplicate.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
@@ -1003,8 +1003,8 @@ paths:
       summary: Declare that this endpoint no longer holds a farm
       description: >
         Declares that the endpoint no longer holds the canonical farm under
-        this localId. The canonical object itself is untouched and is
-        delivered again, without a localId, on its next change.
+        this local_id. The canonical object itself is untouched and is
+        delivered again, without a local_id, on its next change.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1026,7 +1026,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/farms/{localId}/deactivation:
+  /masterdata/farms/{local_id}/deactivation:
     post:
       operationId: deactivateFarm
       tags: [Masterdata]
@@ -1104,14 +1104,14 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/fields/{localId}:
+  /masterdata/fields/{local_id}:
     put:
       operationId: putField
       tags: [Masterdata]
       summary: Send (create or update) a field
       description: >
         Submits a field from the calling endpoint, identified by the
-        application's own localId. An update to an existing field must carry
+        application's own local_id. An update to an existing field must carry
         the revision it was edited from in x-agrirouter-base-revision.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
@@ -1159,7 +1159,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/fields/{localId}/id-mapping/{agrirouterId}:
+  /masterdata/fields/{local_id}/id-mapping/{agrirouter_id}:
     parameters:
       - $ref: '#/components/parameters/LocalId'
       - $ref: '#/components/parameters/IdMappingAgrirouterId'
@@ -1171,7 +1171,7 @@ paths:
       summary: Bind a local identifier to an existing field
       description: >
         Declares that the canonical field in the path is the one this
-        endpoint already knows as localId, so a later PUT under that localId
+        endpoint already knows as local_id, so a later PUT under that local_id
         updates it instead of creating a duplicate.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
@@ -1199,8 +1199,8 @@ paths:
       summary: Declare that this endpoint no longer holds a field
       description: >
         Declares that the endpoint no longer holds the canonical field under
-        this localId. The canonical object itself is untouched and is
-        delivered again, without a localId, on its next change.
+        this local_id. The canonical object itself is untouched and is
+        delivered again, without a local_id, on its next change.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1222,7 +1222,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/fields/{localId}/deactivation:
+  /masterdata/fields/{local_id}/deactivation:
     post:
       operationId: deactivateField
       tags: [Masterdata]
@@ -1300,14 +1300,14 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/field-boundaries/{localId}:
+  /masterdata/field-boundaries/{local_id}:
     put:
       operationId: putFieldBoundary
       tags: [Masterdata]
       summary: Send (create or update) a field boundary
       description: >
         Submits a field boundary from the calling endpoint, identified by the
-        application's own localId. An update to an existing field boundary
+        application's own local_id. An update to an existing field boundary
         must carry the revision it was edited from in
         x-agrirouter-base-revision.
       security:
@@ -1356,7 +1356,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/field-boundaries/{localId}/id-mapping/{agrirouterId}:
+  /masterdata/field-boundaries/{local_id}/id-mapping/{agrirouter_id}:
     parameters:
       - $ref: '#/components/parameters/LocalId'
       - $ref: '#/components/parameters/IdMappingAgrirouterId'
@@ -1368,8 +1368,8 @@ paths:
       summary: Bind a local identifier to an existing field boundary
       description: >
         Declares that the canonical field boundary in the path is the one
-        this endpoint already knows as localId, so a later PUT under that
-        localId updates it instead of creating a duplicate.
+        this endpoint already knows as local_id, so a later PUT under that
+        local_id updates it instead of creating a duplicate.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1396,8 +1396,8 @@ paths:
       summary: Declare that this endpoint no longer holds a field boundary
       description: >
         Declares that the endpoint no longer holds the canonical field
-        boundary under this localId. The canonical object itself is
-        untouched and is delivered again, without a localId, on its next
+        boundary under this local_id. The canonical object itself is
+        untouched and is delivered again, without a local_id, on its next
         change.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
@@ -1420,7 +1420,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/field-boundaries/{localId}/deactivation:
+  /masterdata/field-boundaries/{local_id}/deactivation:
     post:
       operationId: deactivateFieldBoundary
       tags: [Masterdata]
@@ -1531,7 +1531,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /endpoints/{externalEndpointId}/masterdata-initial-load/events:
+  /endpoints/{external_id}/masterdata-initial-load/events:
     get:
       operationId: streamInitialLoadEvents
       tags: [Masterdata]
@@ -1568,7 +1568,7 @@ paths:
         '500':
           description: Server Side Error
 
-  /endpoints/{externalEndpointId}/masterdata-initial-load/status:
+  /endpoints/{external_id}/masterdata-initial-load/status:
     parameters:
       - $ref: '#/components/parameters/ExternalEndpointId'
       - $ref: '#/components/parameters/x-agrirouter-tenant-id'
@@ -1700,14 +1700,14 @@ components:
         string allow applications to scope their endpoint IDs in a stable,
         globally unique way.
     LocalId:
-      name: localId
+      name: local_id
       in: path
       required: true
       description: >
         The calling application's own identifier for the master-data entity.
         Unique across the whole application per entity type, whichever of
         its endpoints sends it: the mapping is keyed on (application,
-        localId). A local identifier already mapped to a different canonical
+        local_id). A local identifier already mapped to a different canonical
         object is rejected.
       schema:
         type: string
@@ -1719,7 +1719,7 @@ components:
         The endpoint acting on this request — the sender of an entity, the
         caller of a request, the holder of a binding. It decides entitlement
         and the tenant, and it becomes the source endpoint of any revision
-        produced. It does not scope localId, which resolves in the
+        produced. It does not scope local_id, which resolves in the
         application's namespace.
 
 
@@ -1746,7 +1746,7 @@ components:
         control. Absent on a create is normal, there being no base. Present
         on a request that does not resolve to an existing object it is 412:
         the client believes it is updating something agrirouter does not
-        know under that localId.
+        know under that local_id.
 
 
         A base behind the current revision is not necessarily a failure:
@@ -1757,7 +1757,7 @@ components:
         type: integer
         minimum: 1
     IdMappingAgrirouterId:
-      name: agrirouterId
+      name: agrirouter_id
       in: path
       required: true
       description: >
@@ -1768,7 +1768,7 @@ components:
         type: string
         format: uuid
     ExternalEndpointId:
-      name: externalEndpointId
+      name: external_id
       in: path
       required: true
       description: >
@@ -1839,7 +1839,7 @@ components:
         x-agrirouter-base-revision: the base is behind the current revision
         and the changes since overlap with the client's, so no merge is
         possible; or the base is one agrirouter never issued for this
-        object; or a base was given for a localId that does not resolve to
+        object; or a base was given for a local_id that does not resolve to
         an existing object. The body carries the current revision.
       content:
         application/json:
@@ -2586,11 +2586,11 @@ components:
       type: object
       description: A lazy-loading request for a single canonical master-data object.
       properties:
-        agrirouterId:
+        agrirouter_id:
           type: string
           format: uuid
           description: The canonical identifier of the wanted entity.
-      required: [agrirouterId]
+      required: [agrirouter_id]
     MasterdataError:
       type: object
       description: An error from a master-data operation.
@@ -2607,10 +2607,10 @@ components:
         - $ref: "#/components/schemas/MasterdataError"
         - type: object
           properties:
-            currentRevision:
+            current_revision:
               type: integer
               description: The canonical object's current revision.
-          required: [currentRevision]
+          required: [current_revision]
     MappingConflictError:
       description: >
         The 409 of a binding: a MasterdataError carrying the rejection that
@@ -2627,20 +2627,20 @@ components:
       type: object
       description: >
         A reference to another master-data entity by canonical and/or local
-        id. On send either identifier suffices: a localId is resolved
+        id. On send either identifier suffices: a local_id is resolved
         against the sender's own mapping and is rejected if the target has
-        not been sent yet. On delivery agrirouter populates agrirouterId,
-        since the sender's localId does not resolve in the receiver's
+        not been sent yet. On delivery agrirouter populates agrirouter_id,
+        since the sender's local_id does not resolve in the receiver's
         namespace.
       properties:
-        agrirouterId:
+        agrirouter_id:
           type: string
           format: uuid
-        localId:
+        local_id:
           type: string
       anyOf:
-        - required: [agrirouterId]
-        - required: [localId]
+        - required: [agrirouter_id]
+        - required: [local_id]
     PartyReference:
       description: >
         A reference to a party. The slot admits both organizations and
@@ -2660,12 +2660,12 @@ components:
         One binding of a local identifier to a canonical object, as carried
         in bulk on the initial-load confirmation.
       properties:
-        agrirouterId:
+        agrirouter_id:
           type: string
           format: uuid
-        localId:
+        local_id:
           type: string
-      required: [agrirouterId, localId]
+      required: [agrirouter_id, local_id]
     IdMappingRejectionReason:
       type: string
       description: >
@@ -2674,18 +2674,18 @@ components:
 
 
         LOCAL_ID_ALREADY_BOUND — this endpoint already knows a different
-        canonical object by that localId. existingMapping names it.
+        canonical object by that local_id. existing_mapping names it.
 
 
         AGRIROUTER_ID_ALREADY_BOUND — this endpoint already knows that
-        canonical object by a different localId. existingMapping names it.
+        canonical object by a different local_id. existing_mapping names it.
 
 
         UNKNOWN_OBJECT — no such canonical object, or the endpoint is not
         entitled to it.
 
 
-        DUPLICATE_IN_REQUEST — the same localId or the same agrirouterId
+        DUPLICATE_IN_REQUEST — the same local_id or the same agrirouter_id
         appears in more than one pair of the same request, which would make
         the outcome depend on the order pairs were applied in. Every pair
         involved is rejected and none is applied.
@@ -2704,7 +2704,7 @@ components:
           properties:
             reason:
               $ref: "#/components/schemas/IdMappingRejectionReason"
-            existingMapping:
+            existing_mapping:
               $ref: "#/components/schemas/IdMappingBinding"
               description: >
                 The mapping that already holds the taken identifier. Present
@@ -2718,12 +2718,12 @@ components:
         Fields common to every master-data entity. The concrete entity type
         follows from the path.
       properties:
-        agrirouterId:
+        agrirouter_id:
           type: string
           format: uuid
           readOnly: true
           description: Canonical identifier, assigned by agrirouter. Absent on first send.
-        localId:
+        local_id:
           type: string
           description: >
             The calling application's own identifier for the entity, in
@@ -2743,18 +2743,18 @@ components:
             taken from the body: the revision a write was made from travels
             in the x-agrirouter-base-revision header, where it is compared
             and discarded.
-        modifiedAt:
+        modified_at:
           type: string
           format: date-time
           readOnly: true
-        tenantId:
+        tenant_id:
           type: string
           format: uuid
           readOnly: true
           description: >
             The tenant the object belongs to. Assigned by agrirouter; a
             value sent by a participant is ignored.
-        sourceEndpointId:
+        source_endpoint_id:
           type: string
           format: uuid
           readOnly: true
@@ -2766,9 +2766,9 @@ components:
       properties:
         street:
           type: string
-        poBox:
+        po_box:
           type: string
-        postalCode:
+        postal_code:
           type: string
         city:
           type: string
@@ -2794,17 +2794,17 @@ components:
         A harvest period as an interval. A discrete year is mapped to an
         interval on send; label may round-trip the native presentation.
       properties:
-        validFrom:
+        valid_from:
           type: string
           format: date
-        validTo:
+        valid_to:
           type: string
           format: date
           description: Absent means open / current.
         label:
           type: string
           description: 'Human-facing designation, e.g. "2026" or "2025/2026".'
-      required: [validFrom]
+      required: [valid_from]
     Party:
       type: object
       description: >
@@ -2815,15 +2815,15 @@ components:
           $ref: "#/components/schemas/Address"
         contact:
           $ref: "#/components/schemas/Contact"
-        billingAddress:
+        billing_address:
           $ref: "#/components/schemas/Address"
-        taxNumber:
+        tax_number:
           type: string
           description: Identifier assigned by tax authorities.
-        taxId:
+        tax_id:
           type: string
           description: Numerical identifier assigned by tax authorities.
-        tradeId:
+        trade_id:
           type: string
           description: Numerical identifier assigned by public authorities.
     Organization:
@@ -2843,7 +2843,7 @@ components:
               description: Discriminator, set by agrirouter. Implied by the path on send.
             name:
               type: string
-            commercialRegistryNumber:
+            commercial_registry_number:
               type: string
               description: Identifier from the commercial register.
           required: [type, name]
@@ -2879,12 +2879,12 @@ components:
       type: object
       description: A role held by a person in one organization.
       properties:
-        organizationId:
+        organization_id:
           $ref: "#/components/schemas/EntityReference"
           description: The organization the person belongs to.
-        memberRole:
+        member_role:
           $ref: "#/components/schemas/Role"
-      required: [organizationId, memberRole]
+      required: [organization_id, member_role]
     Person:
       description: >
         A natural person. A person may hold land, and may belong to one or
@@ -2900,9 +2900,9 @@ components:
               description: Discriminator, set by agrirouter. Implied by the path on send.
             title:
               type: string
-            firstName:
+            first_name:
               type: string
-            lastName:
+            last_name:
               type: string
             memberships:
               type: array
@@ -2911,7 +2911,7 @@ components:
                 role held there.
               items:
                 $ref: "#/components/schemas/Membership"
-          required: [type, lastName]
+          required: [type, last_name]
     Partner:
       type: object
       description: >
@@ -2919,12 +2919,12 @@ components:
         advisor that reads it. Records a business relationship only; it
         does not by itself grant visibility of the farm.
       properties:
-        partnerId:
+        partner_id:
           $ref: "#/components/schemas/PartyReference"
           description: The organization or person acting as partner.
-        partnerRole:
+        partner_role:
           $ref: "#/components/schemas/Role"
-      required: [partnerId, partnerRole]
+      required: [partner_id, partner_role]
     Geometry:
       type: object
       description: >
@@ -2955,7 +2955,7 @@ components:
               description: The organization or person that holds the farm.
             name:
               type: string
-            specialisedUsageType:
+            specialised_usage_type:
               type: string
               description: >
                 Production orientation of the farm (e.g. arable farming,
@@ -2969,7 +2969,7 @@ components:
                 $ref: "#/components/schemas/Partner"
             address:
               $ref: "#/components/schemas/Address"
-            geoReference:
+            geo_reference:
               $ref: "#/components/schemas/Geometry"
               description: A GeoJSON Point (longitude, latitude) locating the farm.
           required: [type, owner, name]
@@ -2989,7 +2989,7 @@ components:
             - SANDY_TO_SILTY_LOAM
             - CLAYEY_LOAM
             - CLAY
-        ratingPoints:
+        rating_points:
           type: integer
           minimum: 0
           maximum: 100
@@ -3025,12 +3025,12 @@ components:
             topography:
               type: number
               description: 'Slope / gradient, e.g. 7 (degrees).'
-            fieldBoundaries:
+            field_boundaries:
               type: array
               description: References to the field's boundaries.
               items:
                 $ref: "#/components/schemas/EntityReference"
-            harvestPeriod:
+            harvest_period:
               $ref: "#/components/schemas/HarvestPeriod"
             metadata:
               type: object
@@ -3074,7 +3074,7 @@ components:
             boundary:
               $ref: "#/components/schemas/Geometry"
               description: A GeoJSON Polygon or MultiPolygon.
-            boundaryType:
+            boundary_type:
               type: string
               description: >
                 Extensible enum: the boundary classification. New values
@@ -3084,7 +3084,7 @@ components:
                 - OPERATIONAL
                 - ECONOMIC_DEFINED
                 - ADMINISTRATIVE_RECEIVED
-            creationMethod:
+            creation_method:
               type: string
               description: >
                 Extensible enum: how the boundary was produced. New values
@@ -3097,13 +3097,13 @@ components:
                 - AUTO_OPERATION
                 - AUTO_IMAGERY
                 - ADMINISTRATIVE
-            harvestPeriod:
+            harvest_period:
               $ref: "#/components/schemas/HarvestPeriod"
             obstacles:
               type: array
               items:
                 $ref: "#/components/schemas/Obstacle"
-            regulatoryRequirements:
+            regulatory_requirements:
               type: string
               description: >
                 Extensible enum: a regulatory constraint applying to the
@@ -3122,14 +3122,14 @@ components:
     EntityTypeToggle:
       type: object
       properties:
-        entityType:
+        entity_type:
           type: string
           description: >
             Extensible enum: the entity type this toggle applies to. New
             values may be added over time; callers must accept unknown
             values.
           examples: [organization, person, farm, field, fieldBoundary]
-      required: [entityType]
+      required: [entity_type]
     MasterdataCapabilities:
       type: object
       description: >
@@ -3137,25 +3137,25 @@ components:
         of a toggle for an entity type means the endpoint is not opted in
         for it.
       properties:
-        endpointId:
+        endpoint_id:
           type: string
           format: uuid
           readOnly: true
           description: >
             The agrirouter identifier of the endpoint this resource belongs
             to. The path addresses it by the participant's own
-            externalEndpointId.
+            external_id.
         toggles:
           type: array
           items:
             $ref: "#/components/schemas/EntityTypeToggle"
-        resolutionUrl:
+        resolution_url:
           type: string
           format: uri
           description: >
             Where the user resolves initial-load conflicts in the
             endpoint's own software. Optional and rendered as a link while
-            the endpoint has awaitingUser set.
+            the endpoint has awaiting_user set.
           examples: ["https://app.example.com/tenants/42/agrirouter/masterdata"]
       required: [toggles]
     InitialLoadState:
@@ -3194,17 +3194,17 @@ components:
         entity type it is opted into; an endpoint opted into no entity type
         has none.
       properties:
-        endpointId:
+        endpoint_id:
           type: string
           format: uuid
           readOnly: true
           description: >
             The agrirouter identifier of the endpoint this resource belongs
             to. The path addresses it by the participant's own
-            externalEndpointId.
+            external_id.
         state:
           $ref: "#/components/schemas/InitialLoadState"
-        awaitingUser:
+        awaiting_user:
           type: boolean
           readOnly: true
           description: >
@@ -3212,7 +3212,7 @@ components:
             conflict, a missing required attribute, a granularity mismatch.
             Raised by the endpoint and cleared by agrirouter on the two
             endpoint-driven transitions.
-        previousLoadCompletedAt:
+        previous_load_completed_at:
           type: string
           format: date-time
           readOnly: true
@@ -3221,7 +3221,7 @@ components:
             has. Its presence means the canonical set now arriving is a
             repeat load, so the endpoint must not treat its arrival as
             evidence of a first connection.
-        rejectedIdMappings:
+        rejected_id_mappings:
           type: array
           readOnly: true
           description: >
@@ -3230,7 +3230,7 @@ components:
             stands in its way. They do not fail the transition.
           items:
             $ref: "#/components/schemas/IdMappingRejection"
-        updatedAt:
+        updated_at:
           type: string
           format: date-time
           readOnly: true
@@ -3244,19 +3244,19 @@ components:
       properties:
         state:
           $ref: "#/components/schemas/InitialLoadState"
-        awaitingUser:
+        awaiting_user:
           type: boolean
           description: >
             Set to true when the endpoint's reconciliation needs user
             action, so agrirouter can show the endpoint as waiting rather
             than as still working. Omitting it leaves the current value
             untouched.
-        idMappings:
+        id_mappings:
           type: array
           description: >
             The bindings reconciliation produced: one entry per canonical
             object the endpoint matched to something it already held.
-            Pairs that cannot be recorded come back in rejectedIdMappings
+            Pairs that cannot be recorded come back in rejected_id_mappings
             rather than failing the transition.
           items:
             $ref: "#/components/schemas/IdMappingBinding"

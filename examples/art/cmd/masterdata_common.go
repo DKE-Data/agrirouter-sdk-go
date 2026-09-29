@@ -271,7 +271,7 @@ func mdMappingCmd(
 			if err := fn(ctx, client, localID, agrirouterID, endpointID, tenantID); err != nil {
 				return fmt.Errorf("%s failed: %w", use, err)
 			}
-			fmt.Printf("%s: ok (localId=%s agrirouterId=%s)\n", use, localID, agrirouterID)
+			fmt.Printf("%s: ok (local_id=%s agrirouter_id=%s)\n", use, localID, agrirouterID)
 			return nil
 		},
 	}
