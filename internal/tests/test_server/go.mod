@@ -1,6 +1,6 @@
 module github.com/DKE-Data/agrirouter-sdk-go/internal/tests/test_server
 
-go 1.25.0
+go 1.25.7
 
 replace github.com/DKE-Data/agrirouter-sdk-go => ../../..
 
