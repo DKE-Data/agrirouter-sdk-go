@@ -22,7 +22,6 @@ const (
 	bodyOpt               = "body"
 	externalEndpointIDOpt = "external-endpoint-id"
 	stateOpt              = "state"
-	awaitingUserOpt       = "awaiting-user"
 	lastEventIDOpt        = "last-event-id"
 	idMappingsOpt         = "id-mappings"
 )

@@ -10,48 +10,26 @@ import (
 // so the test server compiles and serves the rest of the API. Each returns the
 // operation's success response with a zero-valued body.
 
-// ---------------------------------------------------------------- organizations
+// ---------------------------------------------------------------------- parties
 
-func (s *Server) PutOrganization(_ context.Context, _ PutOrganizationRequestObject) (PutOrganizationResponseObject, error) {
-	return PutOrganization200JSONResponse{}, nil
+func (s *Server) PutParty(_ context.Context, _ PutPartyRequestObject) (PutPartyResponseObject, error) {
+	return PutParty200JSONResponse{}, nil
 }
 
-func (s *Server) BindOrganizationMapping(_ context.Context, _ BindOrganizationMappingRequestObject) (BindOrganizationMappingResponseObject, error) {
-	return BindOrganizationMapping204Response{}, nil
+func (s *Server) BindPartyMapping(_ context.Context, _ BindPartyMappingRequestObject) (BindPartyMappingResponseObject, error) {
+	return BindPartyMapping204Response{}, nil
 }
 
-func (s *Server) UnbindOrganizationMapping(_ context.Context, _ UnbindOrganizationMappingRequestObject) (UnbindOrganizationMappingResponseObject, error) {
-	return UnbindOrganizationMapping204Response{}, nil
+func (s *Server) UnbindPartyMapping(_ context.Context, _ UnbindPartyMappingRequestObject) (UnbindPartyMappingResponseObject, error) {
+	return UnbindPartyMapping204Response{}, nil
 }
 
-func (s *Server) DeactivateOrganization(_ context.Context, _ DeactivateOrganizationRequestObject) (DeactivateOrganizationResponseObject, error) {
-	return DeactivateOrganization200JSONResponse{}, nil
+func (s *Server) DeactivateParty(_ context.Context, _ DeactivatePartyRequestObject) (DeactivatePartyResponseObject, error) {
+	return DeactivateParty200JSONResponse{}, nil
 }
 
-func (s *Server) RequestOrganization(_ context.Context, _ RequestOrganizationRequestObject) (RequestOrganizationResponseObject, error) {
-	return RequestOrganization202Response{}, nil
-}
-
-// ---------------------------------------------------------------------- persons
-
-func (s *Server) PutPerson(_ context.Context, _ PutPersonRequestObject) (PutPersonResponseObject, error) {
-	return PutPerson200JSONResponse{}, nil
-}
-
-func (s *Server) BindPersonMapping(_ context.Context, _ BindPersonMappingRequestObject) (BindPersonMappingResponseObject, error) {
-	return BindPersonMapping204Response{}, nil
-}
-
-func (s *Server) UnbindPersonMapping(_ context.Context, _ UnbindPersonMappingRequestObject) (UnbindPersonMappingResponseObject, error) {
-	return UnbindPersonMapping204Response{}, nil
-}
-
-func (s *Server) DeactivatePerson(_ context.Context, _ DeactivatePersonRequestObject) (DeactivatePersonResponseObject, error) {
-	return DeactivatePerson200JSONResponse{}, nil
-}
-
-func (s *Server) RequestPerson(_ context.Context, _ RequestPersonRequestObject) (RequestPersonResponseObject, error) {
-	return RequestPerson202Response{}, nil
+func (s *Server) RequestParty(_ context.Context, _ RequestPartyRequestObject) (RequestPartyResponseObject, error) {
+	return RequestParty202Response{}, nil
 }
 
 // ------------------------------------------------------------------------ farms
@@ -124,6 +102,10 @@ func (s *Server) RequestFieldBoundary(_ context.Context, _ RequestFieldBoundaryR
 
 func (s *Server) GetInitialLoadStatus(_ context.Context, _ GetInitialLoadStatusRequestObject) (GetInitialLoadStatusResponseObject, error) {
 	return GetInitialLoadStatus200JSONResponse{}, nil
+}
+
+func (s *Server) ReportUserAttention(_ context.Context, _ ReportUserAttentionRequestObject) (ReportUserAttentionResponseObject, error) {
+	return ReportUserAttention200JSONResponse{}, nil
 }
 
 func (s *Server) SetInitialLoadState(_ context.Context, _ SetInitialLoadStateRequestObject) (SetInitialLoadStateResponseObject, error) {

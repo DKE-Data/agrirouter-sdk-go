@@ -28,7 +28,7 @@ const (
 // masterdataEntityTypes are the entity types an endpoint can be opted into for
 // master-data exchange. The API treats it as an extensible enum, so other values
 // are accepted too; these are the known ones, used for shell completion.
-var masterdataEntityTypes = []string{"organization", "person", "farm", "field", "fieldBoundary"}
+var masterdataEntityTypes = []string{"party", "farm", "field", "fieldBoundary"}
 
 var putEndpointCmd = &cobra.Command{
 	Use:   "put-endpoint",
@@ -155,7 +155,7 @@ var putEndpointCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to get %s flag: %w", masterdataResolutionURLOpt, err)
 		}
-		var masterdataCapabilitiesPtr *agrirouter.MasterdataCapabilities
+		var masterdataPtr *agrirouter.MasterdataConfig
 		if len(masterdataEntityTypeArgs) > 0 || masterdataResolutionURL != "" {
 			toggles := make([]agrirouter.EntityTypeToggle, 0, len(masterdataEntityTypeArgs))
 			for _, entityType := range masterdataEntityTypeArgs {
@@ -164,9 +164,9 @@ var putEndpointCmd = &cobra.Command{
 				}
 				toggles = append(toggles, agrirouter.EntityTypeToggle{EntityType: entityType})
 			}
-			masterdataCapabilitiesPtr = &agrirouter.MasterdataCapabilities{Toggles: toggles}
+			masterdataPtr = &agrirouter.MasterdataConfig{Capabilities: toggles}
 			if masterdataResolutionURL != "" {
-				masterdataCapabilitiesPtr.ResolutionUrl = &masterdataResolutionURL
+				masterdataPtr.ResolutionUrl = &masterdataResolutionURL
 			}
 		}
 
@@ -187,15 +187,15 @@ var putEndpointCmd = &cobra.Command{
 		epResult, err := client.PutEndpoint(ctx, externalID, &agrirouter.PutEndpointParams{
 			XAgrirouterTenantId: tenantIDParsed,
 		}, &agrirouter.PutEndpointRequest{
-			Name:                   namePtr,
-			ApplicationId:          applicationIDParsed,
-			SoftwareVersionId:      softwareVersionIDParsed,
-			EndpointType:           agrirouter.EndpointTypeToCreate(endpointType),
-			Capabilities:           capabilities,
-			Subscriptions:          subscriptions,
-			AllowDeleteByUser:      allowDeleteByUserPtr,
-			ConnectionsUri:         connectionsURIPtr,
-			MasterdataCapabilities: masterdataCapabilitiesPtr,
+			Name:              namePtr,
+			ApplicationId:     applicationIDParsed,
+			SoftwareVersionId: softwareVersionIDParsed,
+			EndpointType:      agrirouter.EndpointTypeToCreate(endpointType),
+			Capabilities:      capabilities,
+			Subscriptions:     subscriptions,
+			AllowDeleteByUser: allowDeleteByUserPtr,
+			ConnectionsUri:    connectionsURIPtr,
+			Masterdata:        masterdataPtr,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to put endpoint: %w", err)
@@ -253,7 +253,7 @@ func init() {
 	shown when the user attempts to delete the endpoint instead of the usual deletion dialog.`)
 
 	putEndpointCmd.Flags().StringSlice(withMasterdataCapabilityOpt, []string{}, fmt.Sprintf(`Master-data entity types this endpoint is opted into (repeat or comma-separate),
-	for example: 'organization'. Known types: %s. The API accepts other values too.`, strings.Join(masterdataEntityTypes, ", ")))
+	for example: 'party'. Known types: %s. The API accepts other values too.`, strings.Join(masterdataEntityTypes, ", ")))
 	_ = putEndpointCmd.RegisterFlagCompletionFunc(withMasterdataCapabilityOpt, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		return masterdataEntityTypes, cobra.ShellCompDirectiveNoFileComp
 	})

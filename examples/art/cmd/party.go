@@ -1,0 +1,40 @@
+package cmd
+
+import (
+	"context"
+
+	"github.com/DKE-Data/agrirouter-sdk-go"
+	"github.com/google/uuid"
+)
+
+func init() {
+	rootCmd.AddCommand(mdPutCmd("party",
+		func(p *agrirouter.Party, id string) { p.LocalId = &id },
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int, body *agrirouter.Party) (*agrirouter.Party, error) {
+			return c.PutParty(ctx, localID, ep, tn, br, body)
+		}))
+
+	rootCmd.AddCommand(mdMappingCmd("bind-party-mapping",
+		"Bind a local identifier to an existing party",
+		"Declares that the canonical party in --agrirouter-id is the one this endpoint already knows as --local-id.",
+		func(ctx context.Context, c *agrirouter.Client, localID string, ar, ep, tn uuid.UUID) error {
+			return c.BindPartyMapping(ctx, localID, ar, ep, tn)
+		}))
+
+	rootCmd.AddCommand(mdMappingCmd("unbind-party-mapping",
+		"Declare that this endpoint no longer holds a party",
+		"Declares that the endpoint no longer holds the canonical party under --local-id. The canonical object itself is untouched.",
+		func(ctx context.Context, c *agrirouter.Client, localID string, ar, ep, tn uuid.UUID) error {
+			return c.UnbindPartyMapping(ctx, localID, ar, ep, tn)
+		}))
+
+	rootCmd.AddCommand(mdDeactivateCmd("party",
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Party, error) {
+			return c.DeactivateParty(ctx, localID, ep, tn, br)
+		}))
+
+	rootCmd.AddCommand(mdRequestCmd("party",
+		func(ctx context.Context, c *agrirouter.Client, ep, tn, ar uuid.UUID) error {
+			return c.RequestParty(ctx, ep, tn, ar)
+		}))
+}

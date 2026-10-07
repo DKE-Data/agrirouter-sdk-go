@@ -1,15 +1,15 @@
 module github.com/DKE-Data/agrirouter-sdk-go/internal/tests/test_server
 
-go 1.23.12
+go 1.25.7
 
 replace github.com/DKE-Data/agrirouter-sdk-go => ../../..
 
 require (
 	github.com/DKE-Data/agrirouter-sdk-go v0.0.0-00010101000000-000000000000
 	github.com/google/uuid v1.6.0
-	github.com/labstack/echo/v4 v4.13.4
-	github.com/oapi-codegen/runtime v1.1.1
-	github.com/stretchr/testify v1.10.0
+	github.com/labstack/echo/v4 v4.15.1
+	github.com/oapi-codegen/runtime v1.5.0
+	github.com/stretchr/testify v1.11.1
 	github.com/tmaxmax/go-sse v0.11.0
 )
 
@@ -34,7 +34,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
-	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/klauspost/compress v1.17.7 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
@@ -65,11 +65,11 @@ require (
 	go.opentelemetry.io/otel v1.36.0 // indirect
 	go.opentelemetry.io/otel/metric v1.36.0 // indirect
 	go.opentelemetry.io/otel/trace v1.36.0 // indirect
-	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/net v0.40.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.25.0 // indirect
-	golang.org/x/time v0.11.0 // indirect
+	golang.org/x/crypto v0.46.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/time v0.14.0 // indirect
 	google.golang.org/grpc v1.70.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

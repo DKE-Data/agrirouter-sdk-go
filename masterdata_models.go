@@ -5,27 +5,34 @@ import (
 )
 
 // Re-exporting master-data models for convenience, so users can access them
-// directly from the agrirouter package, e.g. agrirouter.Organization.
+// directly from the agrirouter package, e.g. agrirouter.Party.
 
-// Organization is a master-data organization (a company or similar legal party).
-type Organization = internal_models.Organization
+// Party is a master-data party: a person, an organization, or a party whose
+// party type its sender does not record (no Details).
+type Party = internal_models.Party
 
-// Person is a master-data person, optionally a member of one or more organizations.
-type Person = internal_models.Person
+// PartyDetails states a party's party type, with the attributes specific to it.
+type PartyDetails = internal_models.PartyDetails
 
-// Farm is a master-data farm, owned by a party and optionally worked by partners.
+// PersonDetails are the details of a party that is a natural person.
+type PersonDetails = internal_models.PersonDetails
+
+// OrganizationDetails are the details of a party that is an organization.
+type OrganizationDetails = internal_models.OrganizationDetails
+
+// Farm is a master-data farm, optionally held by a party and worked by partners.
 type Farm = internal_models.Farm
 
-// Field is a master-data field belonging to a farm.
+// Field is a master-data field, optionally belonging to a farm and held by a party.
 type Field = internal_models.Field
 
-// FieldBoundary is a master-data boundary of a field, carrying a GeoJSON geometry.
+// FieldBoundary is a master-data boundary of the field it references, carrying a GeoJSON geometry.
 type FieldBoundary = internal_models.FieldBoundary
 
-// Address is a postal address used by organizations and persons.
+// Address is a postal address used by parties.
 type Address = internal_models.Address
 
-// Contact is contact information (phone, email, ...) of an organization or person.
+// Contact is contact information (phone, email, ...) of a party.
 type Contact = internal_models.Contact
 
 // Membership links a person to an organization together with the role held there.
@@ -33,9 +40,6 @@ type Membership = internal_models.Membership
 
 // Partner is a party holding a role on a farm, such as a contractor or advisor.
 type Partner = internal_models.Partner
-
-// PartyReference references a party (organization or person) by canonical and/or local id.
-type PartyReference = internal_models.PartyReference
 
 // EntityReference references another master-data entity by canonical and/or local id.
 type EntityReference = internal_models.EntityReference
@@ -55,13 +59,13 @@ type Obstacle = internal_models.Obstacle
 // EntityRequest is the body used to lazy-load a master-data entity by its canonical id.
 type EntityRequest = internal_models.EntityRequest
 
-// MasterdataCapabilities is an endpoint's per-entity-type opt-in for master-data
-// exchange, carried on PutEndpointRequest. Absence of a toggle for an entity type
-// means the endpoint is not opted in for it.
-type MasterdataCapabilities = internal_models.MasterdataCapabilities
+// MasterdataConfig declares the entity types an endpoint can exchange, carried on
+// PutEndpointRequest. It must be dependency-closed: field boundaries require
+// fields.
+type MasterdataConfig = internal_models.MasterdataConfig
 
 // EntityTypeToggle opts an endpoint into master-data exchange for one entity type
-// (e.g. organization, person, farm, field, fieldBoundary).
+// (party, farm, field, fieldBoundary).
 type EntityTypeToggle = internal_models.EntityTypeToggle
 
 // InitialLoadStatus is an endpoint's initial-load state across every entity type it is opted into.

@@ -516,15 +516,22 @@ paths:
 
   # ------------------------------------------------------- masterdata sync
 
-  /masterdata/organizations/{local_id}:
+  /masterdata/parties/{local_id}:
     put:
-      operationId: putOrganization
+      operationId: putParty
       tags: [Masterdata]
-      summary: Send (create or update) an organization
+      summary: Send (create or update) a party
       description: >
-        Submits an organization from the calling endpoint, identified by the
-        application's own local_id. An update to an existing organization must
-        carry the revision it was edited from in x-agrirouter-base-revision.
+        Submits a party from the calling endpoint, identified by the
+        application's own local_id. An update to an existing party must carry
+        the revision it was edited from in x-agrirouter-base-revision.
+
+        The body is a JSON Merge Patch (RFC 7396) of the entity's
+        attributes: an attribute with a value replaces the current one,
+        null removes it, and an attribute left out is unchanged. Nested
+        objects merge the same way; arrays, references, and geometries are
+        replaced whole. Required attributes are required on every write and
+        are never null. The response is always the whole resulting object.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -538,20 +545,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Organization'
+              $ref: '#/components/schemas/Party'
       responses:
         '200':
-          description: Organization accepted; the resulting canonical object is returned.
+          description: Party accepted; the resulting canonical object is returned.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Organization'
+                $ref: '#/components/schemas/Party'
         '201':
           description: A new canonical object was created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Organization'
+                $ref: '#/components/schemas/Party'
         '400':
           $ref: '#/components/responses/ValidationError'
         '403':
@@ -571,18 +578,18 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/organizations/{local_id}/id-mapping/{agrirouter_id}:
+  /masterdata/parties/{local_id}/id-mapping/{agrirouter_id}:
     parameters:
       - $ref: '#/components/parameters/LocalId'
       - $ref: '#/components/parameters/IdMappingAgrirouterId'
       - $ref: '#/components/parameters/AgrirouterEndpointId'
       - $ref: '#/components/parameters/x-agrirouter-tenant-id'
     put:
-      operationId: bindOrganizationMapping
+      operationId: bindPartyMapping
       tags: [Masterdata]
-      summary: Bind a local identifier to an existing organization
+      summary: Bind a local identifier to an existing party
       description: >
-        Declares that the canonical organization in the path is the one this
+        Declares that the canonical party in the path is the one this
         endpoint already knows as local_id, so a later PUT under that local_id
         updates it instead of creating a duplicate.
       security:
@@ -606,12 +613,12 @@ paths:
         '500':
           description: Server Side Error
     delete:
-      operationId: unbindOrganizationMapping
+      operationId: unbindPartyMapping
       tags: [Masterdata]
-      summary: Declare that this endpoint no longer holds an organization
+      summary: Declare that this endpoint no longer holds a party
       description: >
-        Declares that the endpoint no longer holds the canonical organization
-        under this local_id. The canonical object itself is untouched and is
+        Declares that the endpoint no longer holds the canonical party under
+        this local_id. The canonical object itself is untouched and is
         delivered again, without a local_id, on its next change.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
@@ -634,211 +641,15 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/organizations/{local_id}/deactivation:
+  /masterdata/parties/{local_id}/deactivation:
     post:
-      operationId: deactivateOrganization
+      operationId: deactivateParty
       tags: [Masterdata]
-      summary: Deactivate an organization
+      summary: Deactivate a party
       description: >
-        Signals that the organization was deactivated in the source system.
-        The canonical object is kept but marked inactive. Deactivating an
-        already-inactive organization is a no-op.
-      security:
-        - agrirouterOauthQA: ["endpoints:manage"]
-        - agrirouterOauthPROD: ["endpoints:manage"]
-      parameters:
-        - $ref: '#/components/parameters/LocalId'
-        - $ref: '#/components/parameters/AgrirouterEndpointId'
-        - $ref: '#/components/parameters/x-agrirouter-tenant-id'
-        - $ref: '#/components/parameters/BaseRevision'
-      responses:
-        '200':
-          description: Organization is inactive (either newly deactivated or already inactive).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Organization'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '412':
-          $ref: '#/components/responses/RevisionConflict'
-        '428':
-          $ref: '#/components/responses/BaseRevisionRequired'
-        '502':
-          description: Bad Gateway, upstream service has returned an error
-        '503':
-          description: Service Unavailable at the moment
-        '504':
-          description: Gateway Timeout, request took too long to process
-        '500':
-          description: Server Side Error
-
-  /masterdata/organizations/requests:
-    post:
-      operationId: requestOrganization
-      tags: [Masterdata]
-      summary: Request an organization (lazy loading)
-      description: >
-        Refetches an organization the calling endpoint is entitled to but
-        does not currently hold. The object arrives asynchronously on the
-        master-data event stream.
-      security:
-        - agrirouterOauthQA: ["endpoints:manage"]
-        - agrirouterOauthPROD: ["endpoints:manage"]
-      parameters:
-        - $ref: '#/components/parameters/AgrirouterEndpointId'
-        - $ref: '#/components/parameters/x-agrirouter-tenant-id'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EntityRequest'
-      responses:
-        '202':
-          $ref: '#/components/responses/RequestAccepted'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '502':
-          description: Bad Gateway, upstream service has returned an error
-        '503':
-          description: Service Unavailable at the moment
-        '504':
-          description: Gateway Timeout, request took too long to process
-        '500':
-          description: Server Side Error
-
-  /masterdata/persons/{local_id}:
-    put:
-      operationId: putPerson
-      tags: [Masterdata]
-      summary: Send (create or update) a person
-      description: >
-        Submits a person from the calling endpoint, identified by the
-        application's own local_id. An update to an existing person must
-        carry the revision it was edited from in x-agrirouter-base-revision.
-      security:
-        - agrirouterOauthQA: ["endpoints:manage"]
-        - agrirouterOauthPROD: ["endpoints:manage"]
-      parameters:
-        - $ref: '#/components/parameters/LocalId'
-        - $ref: '#/components/parameters/AgrirouterEndpointId'
-        - $ref: '#/components/parameters/x-agrirouter-tenant-id'
-        - $ref: '#/components/parameters/BaseRevision'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Person'
-      responses:
-        '200':
-          description: Person accepted; the resulting canonical object is returned.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Person'
-        '201':
-          description: A new canonical object was created.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Person'
-        '400':
-          $ref: '#/components/responses/ValidationError'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/MappingConflict'
-        '412':
-          $ref: '#/components/responses/RevisionConflict'
-        '428':
-          $ref: '#/components/responses/BaseRevisionRequired'
-        '502':
-          description: Bad Gateway, upstream service has returned an error
-        '503':
-          description: Service Unavailable at the moment
-        '504':
-          description: Gateway Timeout, request took too long to process
-        '500':
-          description: Server Side Error
-
-  /masterdata/persons/{local_id}/id-mapping/{agrirouter_id}:
-    parameters:
-      - $ref: '#/components/parameters/LocalId'
-      - $ref: '#/components/parameters/IdMappingAgrirouterId'
-      - $ref: '#/components/parameters/AgrirouterEndpointId'
-      - $ref: '#/components/parameters/x-agrirouter-tenant-id'
-    put:
-      operationId: bindPersonMapping
-      tags: [Masterdata]
-      summary: Bind a local identifier to an existing person
-      description: >
-        Declares that the canonical person in the path is the one this
-        endpoint already knows as local_id, so a later PUT under that local_id
-        updates it instead of creating a duplicate.
-      security:
-        - agrirouterOauthQA: ["endpoints:manage"]
-        - agrirouterOauthPROD: ["endpoints:manage"]
-      responses:
-        '204':
-          description: The mapping is recorded.
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/MappingConflict'
-        '502':
-          description: Bad Gateway, upstream service has returned an error
-        '503':
-          description: Service Unavailable at the moment
-        '504':
-          description: Gateway Timeout, request took too long to process
-        '500':
-          description: Server Side Error
-    delete:
-      operationId: unbindPersonMapping
-      tags: [Masterdata]
-      summary: Declare that this endpoint no longer holds a person
-      description: >
-        Declares that the endpoint no longer holds the canonical person
-        under this local_id. The canonical object itself is untouched and is
-        delivered again, without a local_id, on its next change.
-      security:
-        - agrirouterOauthQA: ["endpoints:manage"]
-        - agrirouterOauthPROD: ["endpoints:manage"]
-      responses:
-        '204':
-          description: >
-            The endpoint holds no mapping for this pair. Returned whether or
-            not one existed, so a retry after a lost response is safe.
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '502':
-          description: Bad Gateway, upstream service has returned an error
-        '503':
-          description: Service Unavailable at the moment
-        '504':
-          description: Gateway Timeout, request took too long to process
-        '500':
-          description: Server Side Error
-
-  /masterdata/persons/{local_id}/deactivation:
-    post:
-      operationId: deactivatePerson
-      tags: [Masterdata]
-      summary: Deactivate a person
-      description: >
-        Signals that the person was deactivated in the source system. The
+        Signals that the party was deactivated in the source system. The
         canonical object is kept but marked inactive. Deactivating an
-        already-inactive person is a no-op.
+        already-inactive party is a no-op.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -849,11 +660,11 @@ paths:
         - $ref: '#/components/parameters/BaseRevision'
       responses:
         '200':
-          description: Person is inactive (either newly deactivated or already inactive).
+          description: Party is inactive (either newly deactivated or already inactive).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Person'
+                $ref: '#/components/schemas/Party'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
@@ -871,13 +682,13 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/persons/requests:
+  /masterdata/parties/requests:
     post:
-      operationId: requestPerson
+      operationId: requestParty
       tags: [Masterdata]
-      summary: Request a person (lazy loading)
+      summary: Request a party (lazy loading)
       description: >
-        Refetches a person the calling endpoint is entitled to but does not
+        Refetches a party the calling endpoint is entitled to but does not
         currently hold. The object arrives asynchronously on the master-data
         event stream.
       security:
@@ -917,6 +728,13 @@ paths:
         Submits a farm from the calling endpoint, identified by the
         application's own local_id. An update to an existing farm must carry
         the revision it was edited from in x-agrirouter-base-revision.
+
+        The body is a JSON Merge Patch (RFC 7396) of the entity's
+        attributes: an attribute with a value replaces the current one,
+        null removes it, and an attribute left out is unchanged. Nested
+        objects merge the same way; arrays, references, and geometries are
+        replaced whole. Required attributes are required on every write and
+        are never null. The response is always the whole resulting object.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1113,6 +931,13 @@ paths:
         Submits a field from the calling endpoint, identified by the
         application's own local_id. An update to an existing field must carry
         the revision it was edited from in x-agrirouter-base-revision.
+
+        The body is a JSON Merge Patch (RFC 7396) of the entity's
+        attributes: an attribute with a value replaces the current one,
+        null removes it, and an attribute left out is unchanged. Nested
+        objects merge the same way; arrays, references, and geometries are
+        replaced whole. Required attributes are required on every write and
+        are never null. The response is always the whole resulting object.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1310,6 +1135,13 @@ paths:
         application's own local_id. An update to an existing field boundary
         must carry the revision it was edited from in
         x-agrirouter-base-revision.
+
+        The body is a JSON Merge Patch (RFC 7396) of the entity's
+        attributes: an attribute with a value replaces the current one,
+        null removes it, and an attribute left out is unchanged. Nested
+        objects merge the same way; arrays, references, and geometries are
+        replaced whole. Required attributes are required on every write and
+        are never null. The response is always the whole resulting object.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1636,6 +1468,52 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/InitialLoadConflict'
+        '502':
+          description: Bad Gateway, upstream service has returned an error
+        '503':
+          description: Service Unavailable at the moment
+        '504':
+          description: Gateway Timeout, request took too long to process
+        '500':
+          description: Server Side Error
+
+  /endpoints/{external_id}/masterdata-initial-load/user-attention:
+    parameters:
+      - $ref: '#/components/parameters/ExternalEndpointId'
+      - $ref: '#/components/parameters/x-agrirouter-tenant-id'
+    put:
+      operationId: reportUserAttention
+      tags: [Masterdata]
+      summary: Report that the endpoint's initial load is waiting on a user
+      description: >
+        Raises awaiting_user on the endpoint's initial-load status, so that
+        agrirouter tells the user the load is waiting for them in the
+        application, linking to the endpoint's resolution URL. It carries no
+        body and names no state, so it may be sent from any state before
+        COMPLETED; agrirouter clears the flag when the endpoint advances to
+        LOADING_TO_AGRIROUTER or COMPLETED. Repeating it is a 200.
+      security:
+        - agrirouterOauthQA: ["endpoints:manage"]
+        - agrirouterOauthPROD: ["endpoints:manage"]
+      responses:
+        '200':
+          description: The endpoint's initial load status, with the flag raised.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InitialLoadStatus'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: >
+            The endpoint's initial load is COMPLETED, and a completed load is
+            waiting on nobody.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasterdataError'
         '502':
           description: Bad Gateway, upstream service has returned an error
         '503':
@@ -2402,8 +2280,8 @@ components:
             Note that the owner endpoint must already be processed internally. Since endpoint state
             is propagated asynchronously, an owner endpoint that was just created may not yet be
             resolvable
-        masterdata_capabilities:
-          $ref: "#/components/schemas/MasterdataCapabilities"
+        masterdata:
+          $ref: '#/components/schemas/MasterdataConfig'
     Endpoint:
       type: object
       required:
@@ -2452,6 +2330,8 @@ components:
           description: >
             External ID of the endpoint that owns (is the parent of) this endpoint, if any.
           readOnly: true
+        masterdata:
+          $ref: '#/components/schemas/MasterdataConfig'
     EndpointSubscription:
       type: object
       required:
@@ -2581,57 +2461,111 @@ components:
         - cloud_software
         - virtual_communication_unit
         - farming_software
-  
+
+    MasterdataError:
+      type: object
+      properties:
+        message:
+          type: string
+      required: [message]
+
+    RevisionConflictError:
+      description: >
+        The `412` or `428` of a write: an `Error` carrying the revision the
+        object is currently at, so that the client has the answer a rejected
+        write would otherwise have to fetch separately.
+      allOf:
+        - $ref: '#/components/schemas/MasterdataError'
+        - type: object
+          properties:
+            current_revision:
+              type: integer
+              description: The canonical object's current `revision`.
+          required: [current_revision]
+
+    MappingConflictError:
+      description: >
+        The `409` of a binding: an `Error` carrying the rejection that caused it.
+        The same shape the bulk path returns per pair, so an endpoint resolves a
+        conflict identically whichever path raised it. As there, the outcome is
+        carried by `rejection.reason`; the `message` of the `Error` is diagnostic
+        and MUST NOT be branched on.
+      allOf:
+        - $ref: '#/components/schemas/MasterdataError'
+        - type: object
+          properties:
+            rejection:
+              $ref: '#/components/schemas/IdMappingRejection'
+          required: [rejection]
+
+    IdMappingRejectionReason:
+      type: string
+      description: >
+        [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations).
+        Why a binding could not be recorded.
+
+
+        `LOCAL_ID_ALREADY_BOUND` — this endpoint already knows a different
+        canonical object by that `local_id`. `existing_mapping` names it.
+
+
+        `AGRIROUTER_ID_ALREADY_BOUND` — this endpoint already knows that
+        canonical object by a different `local_id`. `existing_mapping` names it.
+
+
+        `UNKNOWN_OBJECT` — no such canonical object, or the endpoint is not
+        entitled to it. On the per-entity operation this is the `404` instead.
+
+
+        `DUPLICATE_IN_REQUEST` — the same `local_id` or the same `agrirouter_id`
+        appears in more than one pair of this request, which would make the
+        outcome depend on the order pairs were applied in. Every pair involved is
+        rejected and none is applied. Bulk path only.
+      examples:
+        - LOCAL_ID_ALREADY_BOUND
+        - AGRIROUTER_ID_ALREADY_BOUND
+        - UNKNOWN_OBJECT
+        - DUPLICATE_IN_REQUEST
+
+    IdMappingRejection:
+      description: >
+        A binding that could not be recorded: the pair as submitted, why, and
+        the mapping standing in its way.
+      allOf:
+        - $ref: '#/components/schemas/IdMappingBinding'
+        - type: object
+          properties:
+            reason:
+              $ref: '#/components/schemas/IdMappingRejectionReason'
+            existing_mapping:
+              $ref: '#/components/schemas/IdMappingBinding'
+              description: >
+                The mapping that already holds the taken identifier. Both of its
+                ends belong to the rejected endpoint itself, so naming it
+                discloses nothing the endpoint does not already hold, and it is
+                what the endpoint shows the user resolving the conflict. Present
+                for `LOCAL_ID_ALREADY_BOUND` and `AGRIROUTER_ID_ALREADY_BOUND`,
+                absent for the other reasons, where no mapping is in the way.
+          required: [reason]
+
     EntityRequest:
       type: object
-      description: A lazy-loading request for a single canonical master-data object.
+      description: A lazy-loading request for a single canonical object.
       properties:
         agrirouter_id:
           type: string
           format: uuid
           description: The canonical identifier of the wanted entity.
       required: [agrirouter_id]
-    MasterdataError:
-      type: object
-      description: An error from a master-data operation.
-      properties:
-        message:
-          type: string
-      required: [message]
-    RevisionConflictError:
-      description: >
-        The 412 or 428 of a write: a MasterdataError carrying the revision
-        the object is currently at, so the client has the answer a rejected
-        write would otherwise have to fetch separately.
-      allOf:
-        - $ref: "#/components/schemas/MasterdataError"
-        - type: object
-          properties:
-            current_revision:
-              type: integer
-              description: The canonical object's current revision.
-          required: [current_revision]
-    MappingConflictError:
-      description: >
-        The 409 of a binding: a MasterdataError carrying the rejection that
-        caused it. The outcome is carried by rejection.reason; the message
-        of the MasterdataError is diagnostic and must not be branched on.
-      allOf:
-        - $ref: "#/components/schemas/MasterdataError"
-        - type: object
-          properties:
-            rejection:
-              $ref: "#/components/schemas/IdMappingRejection"
-          required: [rejection]
+
     EntityReference:
       type: object
       description: >
-        A reference to another master-data entity by canonical and/or local
-        id. On send either identifier suffices: a local_id is resolved
-        against the sender's own mapping and is rejected if the target has
-        not been sent yet. On delivery agrirouter populates agrirouter_id,
-        since the sender's local_id does not resolve in the receiver's
-        namespace.
+        A reference to another entity by canonical and/or local id. On send
+        either identifier suffices: a local_id is resolved against the sender's
+        own mapping, and is rejected if the target has not been sent yet. On
+        delivery agrirouter populates agrirouter_id, since the sender's local_id
+        does not resolve in the receiver's namespace.
       properties:
         agrirouter_id:
           type: string
@@ -2641,24 +2575,17 @@ components:
       anyOf:
         - required: [agrirouter_id]
         - required: [local_id]
-    PartyReference:
-      description: >
-        A reference to a party. The slot admits both organizations and
-        persons, so the entity type is required: a receiver that does not
-        hold the target must lazy-load it from the matching per-type
-        request operation.
-      allOf:
-        - $ref: "#/components/schemas/EntityReference"
-        - type: object
-          properties:
-            type:
-              enum: [organization, person]
-          required: [type]
+
     IdMappingBinding:
       type: object
       description: >
-        One binding of a local identifier to a canonical object, as carried
-        in bulk on the initial-load confirmation.
+        One binding of a local identifier to a canonical object, as carried in
+        bulk on the initial-load confirmation.
+
+
+        Both ends belong to the calling application's own store: the object it
+        matched, and what it calls that object. A mapping only ever travels from
+        an application to agrirouter.
       properties:
         agrirouter_id:
           type: string
@@ -2666,192 +2593,264 @@ components:
         local_id:
           type: string
       required: [agrirouter_id, local_id]
-    IdMappingRejectionReason:
-      type: string
-      description: >
-        Extensible enum: why a binding could not be recorded. New values may
-        be added over time; callers must accept unknown values.
 
-
-        LOCAL_ID_ALREADY_BOUND — this endpoint already knows a different
-        canonical object by that local_id. existing_mapping names it.
-
-
-        AGRIROUTER_ID_ALREADY_BOUND — this endpoint already knows that
-        canonical object by a different local_id. existing_mapping names it.
-
-
-        UNKNOWN_OBJECT — no such canonical object, or the endpoint is not
-        entitled to it.
-
-
-        DUPLICATE_IN_REQUEST — the same local_id or the same agrirouter_id
-        appears in more than one pair of the same request, which would make
-        the outcome depend on the order pairs were applied in. Every pair
-        involved is rejected and none is applied.
-      examples:
-        - LOCAL_ID_ALREADY_BOUND
-        - AGRIROUTER_ID_ALREADY_BOUND
-        - UNKNOWN_OBJECT
-        - DUPLICATE_IN_REQUEST
-    IdMappingRejection:
-      description: >
-        A binding that could not be recorded: the pair as submitted, why,
-        and the mapping standing in its way.
-      allOf:
-        - $ref: "#/components/schemas/IdMappingBinding"
-        - type: object
-          properties:
-            reason:
-              $ref: "#/components/schemas/IdMappingRejectionReason"
-            existing_mapping:
-              $ref: "#/components/schemas/IdMappingBinding"
-              description: >
-                The mapping that already holds the taken identifier. Present
-                for LOCAL_ID_ALREADY_BOUND and AGRIROUTER_ID_ALREADY_BOUND,
-                absent for the other reasons, where no mapping is in the
-                way.
-          required: [reason]
     Envelope:
       type: object
       description: >
-        Fields common to every master-data entity. The concrete entity type
-        follows from the path.
+        Fields common to every master-data entity. The concrete entity type is
+        determined by the path; each entity schema pins the `type` discriminator
+        so that objects remain self-describing on the event stream.
+
+
+        agrirouter assigns `agrirouter_id`, `revision`, `modified_at`,
+        `tenant_id`, `source_endpoint_id`, and `type`. An object may be sent
+        back as it was delivered, these included: `revision`, `modified_at`,
+        and `source_endpoint_id` are ignored on send; `agrirouter_id`,
+        `tenant_id`, and `type` must match the object written, or the write
+        is a 400.
+
+
+        An optional attribute declared nullable accepts `null` on a write, where
+        it removes the attribute. agrirouter never delivers `null`: an attribute
+        absent from a delivered object is unset.
       properties:
         agrirouter_id:
           type: string
           format: uuid
-          readOnly: true
-          description: Canonical identifier, assigned by agrirouter. Absent on first send.
+          description: >
+            Canonical identifier, assigned by agrirouter. Absent on first send.
+            If sent, it must be the object `local_id` is bound to.
         local_id:
           type: string
           description: >
-            The calling application's own identifier for the entity, in
-            both directions: on send the sender's, on delivery the
-            receiving application's. Required on send. On delivery it is
-            present when agrirouter holds a mapping for the receiving
-            application, and absent when it does not — meaning the
-            application does not yet hold this object.
+            Always the *calling* application's own identifier for the entity, in
+            both directions: on send the sender's, on delivery the receiving
+            application's. It never carries another application's identifier.
+            One store per application, so the identifier is the same whichever
+            of the application's endpoints sends or receives it.
+
+
+            Required on send. On delivery it is present when agrirouter holds a
+            mapping for the receiving application, and absent when it does not —
+            an object the application has not bound, or has unbound. An absent
+            `local_id` means "you do not hold this object": create it locally and
+            bind the identifier you issue.
         active:
           type: boolean
           default: true
         revision:
           type: integer
-          readOnly: true
           description: >
-            Monotonic per-object counter maintained by agrirouter. Never
-            taken from the body: the revision a write was made from travels
-            in the x-agrirouter-base-revision header, where it is compared
-            and discarded.
+            Monotonic per-object counter maintained by agrirouter. Never taken
+            from the body: the revision a write was made from travels in the
+            `x-agrirouter-base-revision` header, where it is compared and
+            discarded. Ignored on send.
         modified_at:
           type: string
           format: date-time
-          readOnly: true
+          description: Assigned by agrirouter. Ignored on send.
         tenant_id:
           type: string
           format: uuid
-          readOnly: true
           description: >
-            The tenant the object belongs to. Assigned by agrirouter; a
-            value sent by a participant is ignored.
+            The tenant the object belongs to. Assigned by agrirouter. On send
+            the tenant follows from the endpoint named in
+            `x-agrirouter-endpoint-id`; a `tenant_id` sent must be that tenant.
+
+
+            One application stream carries every tenant the application is
+            routed to, so on delivery this is the field that says which of them
+            an object belongs to. A receiver holding data for several tenants
+            partitions on it rather than on the connection.
         source_endpoint_id:
           type: string
           format: uuid
-          readOnly: true
           description: >
-            The agrirouter identifier of the endpoint whose change produced
-            this revision.
+            The agrirouter identifier of the endpoint whose change produced this
+            revision. It always belongs to `tenant_id`. Ignored on send.
+
     Address:
       type: object
       properties:
         street:
-          type: string
+          type: [string, 'null']
         po_box:
-          type: string
+          type: [string, 'null']
         postal_code:
-          type: string
+          type: [string, 'null']
         city:
-          type: string
+          type: [string, 'null']
         state:
-          type: string
+          type: [string, 'null']
         country:
-          type: string
+          type: [string, 'null']
           description: ISO 3166-1 alpha-2 country code.
           pattern: '^[A-Z]{2}$'
+
     Contact:
       type: object
       properties:
         phone:
-          type: string
+          type: [string, 'null']
         mobile:
-          type: string
+          type: [string, 'null']
         email:
-          type: string
+          type: [string, 'null']
           format: email
+
     HarvestPeriod:
       type: object
       description: >
-        A harvest period as an interval. A discrete year is mapped to an
-        interval on send; label may round-trip the native presentation.
+        Canonical harvest period as an interval. A discrete year is mapped to an
+        interval on send; `label` may round-trip the native presentation.
       properties:
         valid_from:
           type: string
           format: date
         valid_to:
-          type: string
+          type: [string, 'null']
           format: date
           description: Absent means open / current.
         label:
-          type: string
+          type: [string, 'null']
           description: 'Human-facing designation, e.g. "2026" or "2025/2026".'
       required: [valid_from]
+
     Party:
-      type: object
       description: >
-        Attributes common to every party, whether an organization or a
-        natural person.
-      properties:
-        address:
-          $ref: "#/components/schemas/Address"
-        contact:
-          $ref: "#/components/schemas/Contact"
-        billing_address:
-          $ref: "#/components/schemas/Address"
-        tax_number:
-          type: string
-          description: Identifier assigned by tax authorities.
-        tax_id:
-          type: string
-          description: Numerical identifier assigned by tax authorities.
-        trade_id:
-          type: string
-          description: Numerical identifier assigned by public authorities.
-    Organization:
-      description: >
-        A legal entity that may hold land and to which persons may belong.
-        It plays no fixed role: whether it acts as a contractor or as a
-        client follows from the relations it stands in, not from an
-        attribute.
+        A legal or natural actor: a person, an organization, or a party whose
+        party type its sender does not record. It plays no fixed role: whether it acts
+        as a contractor or as a client follows from the relations it stands in,
+        not from an attribute.
       allOf:
-        - $ref: "#/components/schemas/Envelope"
-        - $ref: "#/components/schemas/Party"
+        - $ref: '#/components/schemas/Envelope'
         - type: object
           properties:
             type:
-              const: organization
-              readOnly: true
-              description: Discriminator, set by agrirouter. Implied by the path on send.
+              const: party
+              description: >
+                Discriminator, set by agrirouter. Implied by the path on send.
+                If sent, it must match the path.
             name:
               type: string
-            commercial_registry_number:
-              type: string
-              description: Identifier from the commercial register.
+              description: >
+                The name the party is known by: an organization's name, a
+                person's full name.
+            details:
+              oneOf:
+                - $ref: '#/components/schemas/PartyDetails'
+                - type: 'null'
+              description: >
+                Whether the party is a person or an organization, with the
+                attributes specific to that party type. Absent means the party
+                type is unknown. Whatever a write sends here is stated to every
+                participant.
+            address:
+              oneOf:
+                - $ref: '#/components/schemas/Address'
+                - type: 'null'
+            contact:
+              oneOf:
+                - $ref: '#/components/schemas/Contact'
+                - type: 'null'
+            billing_address:
+              oneOf:
+                - $ref: '#/components/schemas/Address'
+                - type: 'null'
+            tax_number:
+              type: [string, 'null']
+              description: Identifier assigned by tax authorities.
+            tax_id:
+              type: [string, 'null']
+              description: Numerical identifier assigned by tax authorities.
+            trade_id:
+              type: [string, 'null']
+              description: Numerical identifier assigned by public authorities.
           required: [type, name]
+
+    PartyDetails:
+      description: >
+        The type of a party. `party_type` is a closed set, since it selects the
+        schema of the remaining attributes, and each type admits only its own
+        attributes.
+      oneOf:
+        - $ref: '#/components/schemas/PersonDetails'
+        - $ref: '#/components/schemas/OrganizationDetails'
+      discriminator:
+        propertyName: party_type
+        mapping:
+          PERSON: '#/components/schemas/PersonDetails'
+          ORGANIZATION: '#/components/schemas/OrganizationDetails'
+
+    PersonDetails:
+      type: object
+      description: >
+        A natural person. A person may belong to one or more organizations
+        through `memberships`.
+      properties:
+        party_type:
+          const: PERSON
+        title:
+          type: [string, 'null']
+        first_name:
+          type: [string, 'null']
+        last_name:
+          type: [string, 'null']
+        memberships:
+          type: [array, 'null']
+          description: >
+            The organizations this person belongs to, each with the role held
+            there. A person carrying at least one entry is a member.
+          items:
+            $ref: '#/components/schemas/Membership'
+      required: [party_type]
+
+    OrganizationDetails:
+      type: object
+      description: A legal entity to which persons may belong.
+      properties:
+        party_type:
+          const: ORGANIZATION
+        commercial_registry_number:
+          type: [string, 'null']
+          description: Identifier from the commercial register.
+      required: [party_type]
+
+    Membership:
+      type: object
+      description: A role held by a person in one organization.
+      properties:
+        organization_id:
+          $ref: '#/components/schemas/EntityReference'
+          description: >
+            The organization the person belongs to: a party whose `details` is
+            an organization. A write naming any other party is a `400`, and so
+            is a change or removal of party type on an organization that
+            persons still name.
+        member_role:
+          $ref: '#/components/schemas/Role'
+      required: [organization_id, member_role]
+
+    Partner:
+      type: object
+      description: >
+        A party holding a role on a farm — the contractor that works it, the
+        advisor that reads it. Records a business relationship only. It does NOT
+        grant visibility of the farm: what an endpoint receives is decided by
+        opt-in and routing.
+      properties:
+        partner_id:
+          $ref: '#/components/schemas/EntityReference'
+          description: The party acting as partner.
+        partner_role:
+          $ref: '#/components/schemas/Role'
+      required: [partner_id, partner_role]
+
     Role:
       type: string
       description: >
-        Extensible enum: a role drawn from the ADAPT Role data type. New
-        values may be added over time; callers must accept unknown values.
+        [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations).
+        A role drawn from the ADAPT Role data type.
       examples:
         - UNKNOWN
         - AUTHORIZER
@@ -2875,113 +2874,63 @@ components:
         - OPERATOR
         - OWNER
         - TRANSPORTER
-    Membership:
-      type: object
-      description: A role held by a person in one organization.
-      properties:
-        organization_id:
-          $ref: "#/components/schemas/EntityReference"
-          description: The organization the person belongs to.
-        member_role:
-          $ref: "#/components/schemas/Role"
-      required: [organization_id, member_role]
-    Person:
-      description: >
-        A natural person. A person may hold land, and may belong to one or
-        more organizations through memberships.
-      allOf:
-        - $ref: "#/components/schemas/Envelope"
-        - $ref: "#/components/schemas/Party"
-        - type: object
-          properties:
-            type:
-              const: person
-              readOnly: true
-              description: Discriminator, set by agrirouter. Implied by the path on send.
-            title:
-              type: string
-            first_name:
-              type: string
-            last_name:
-              type: string
-            memberships:
-              type: array
-              description: >
-                The organizations this person belongs to, each with the
-                role held there.
-              items:
-                $ref: "#/components/schemas/Membership"
-          required: [type, last_name]
-    Partner:
-      type: object
-      description: >
-        A party holding a role on a farm — the contractor that works it, the
-        advisor that reads it. Records a business relationship only; it
-        does not by itself grant visibility of the farm.
-      properties:
-        partner_id:
-          $ref: "#/components/schemas/PartyReference"
-          description: The organization or person acting as partner.
-        partner_role:
-          $ref: "#/components/schemas/Role"
-      required: [partner_id, partner_role]
-    Geometry:
-      type: object
-      description: >
-        A GeoJSON geometry (RFC 7946). Positions are [longitude, latitude]
-        and, optionally, altitude.
-      properties:
-        type:
-          type: string
-          description: >
-            Extensible enum: the GeoJSON geometry type. New values may be
-            added over time; callers must accept unknown values.
-          examples: [Point, LineString, Polygon, MultiPolygon]
-        coordinates:
-          description: Nesting depth depends on type.
-      required: [type, coordinates]
+        - COLLECTOR
+
     Farm:
-      description: A grouping of fields the farmer considers part of the same management group.
+      description: >
+        A grouping of fields that the farmer considers part of the same
+        management group.
       allOf:
-        - $ref: "#/components/schemas/Envelope"
+        - $ref: '#/components/schemas/Envelope'
         - type: object
           properties:
             type:
               const: farm
-              readOnly: true
-              description: Discriminator, set by agrirouter. Implied by the path on send.
+              description: >
+                Discriminator, set by agrirouter. Implied by the path on send.
+                If sent, it must match the path.
             owner:
-              $ref: "#/components/schemas/PartyReference"
-              description: The organization or person that holds the farm.
+              oneOf:
+                - $ref: '#/components/schemas/EntityReference'
+                - type: 'null'
+              description: >
+                The party that holds the farm. Absent where the farm's system
+                does not record parties.
             name:
               type: string
             specialised_usage_type:
-              type: string
+              type: [string, 'null']
               description: >
-                Production orientation of the farm (e.g. arable farming,
-                dairy, vineyard, orchard). Free-form.
+                Production orientation of the farm (e.g. arable farming, dairy,
+                vineyard, orchard). Free-form, drawn from AGROVOC where a
+                matching concept exists.
             partners:
-              type: array
+              type: [array, 'null']
               description: >
-                Parties holding a role on this farm, such as the contractor
-                that works it or the advisor that reads it.
+                Parties holding a role on this farm, such as the contractor that
+                works it or the advisor that reads it.
               items:
-                $ref: "#/components/schemas/Partner"
+                $ref: '#/components/schemas/Partner'
             address:
-              $ref: "#/components/schemas/Address"
+              oneOf:
+                - $ref: '#/components/schemas/Address'
+                - type: 'null'
             geo_reference:
-              $ref: "#/components/schemas/Geometry"
+              oneOf:
+                - $ref: '#/components/schemas/Geometry'
+                - type: 'null'
               description: A GeoJSON Point (longitude, latitude) locating the farm.
-          required: [type, owner, name]
+          required: [type, name]
+
     SoilInfo:
       type: object
       description: Soil characteristics of a field.
       properties:
         type:
-          type: string
+          type: [string, 'null']
           description: >
-            Extensible enum: the soil classification. New values may be
-            added over time; callers must accept unknown values.
+            [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations).
+            The soil classification.
           examples:
             - SAND
             - LOAMY_SAND
@@ -2990,65 +2939,75 @@ components:
             - CLAYEY_LOAM
             - CLAY
         rating_points:
-          type: integer
+          type: [integer, 'null']
           minimum: 0
           maximum: 100
-          description: Soil rating points (Bodenzahl / Ackerzahl). Germany only.
+          description: >
+            Soil rating points (Bodenzahl / Ackerzahl). Germany only, as defined
+            by the [Bodenschätzungsgesetz](https://www.bundesfinanzministerium.de/Content/DE/Standardartikel/Themen/Steuern/Weitere_Steuerthemen/2014-07-21-bodenschaetzung-anlage-VRBodSchaetzG.pdf?__blob=publicationFile&v=1).
+
     Field:
       description: >
-        A named physical space where production agriculture takes place,
-        used to partition and identify data.
+        A named physical space where production agriculture takes place, used
+        to partition and identify data.
       allOf:
-        - $ref: "#/components/schemas/Envelope"
+        - $ref: '#/components/schemas/Envelope'
         - type: object
           properties:
             type:
               const: field
-              readOnly: true
-              description: Discriminator, set by agrirouter. Implied by the path on send.
+              description: >
+                Discriminator, set by agrirouter. Implied by the path on send.
+                If sent, it must match the path.
             name:
               type: string
             area:
-              type: number
+              type: [number, 'null']
               description: Nominal area in square metres.
             farm:
-              $ref: "#/components/schemas/EntityReference"
+              oneOf:
+                - $ref: '#/components/schemas/EntityReference'
+                - type: 'null'
               description: The farm this field belongs to.
             owner:
-              $ref: "#/components/schemas/PartyReference"
+              oneOf:
+                - $ref: '#/components/schemas/EntityReference'
+                - type: 'null'
               description: >
-                The organization or person holding this field directly.
-                When absent, the field is held by its farm's owner. When
-                present, it takes precedence for this field.
+                The party holding this field, for systems that
+                attribute fields to a party directly. When absent, the field is
+                held by its farm's owner. When present, it takes precedence for
+                this field, which is how a field held by one party but managed
+                under another's farm is expressed.
             soil:
-              $ref: "#/components/schemas/SoilInfo"
+              oneOf:
+                - $ref: '#/components/schemas/SoilInfo'
+                - type: 'null'
             topography:
-              type: number
+              type: [number, 'null']
               description: 'Slope / gradient, e.g. 7 (degrees).'
-            field_boundaries:
-              type: array
-              description: References to the field's boundaries.
-              items:
-                $ref: "#/components/schemas/EntityReference"
             harvest_period:
-              $ref: "#/components/schemas/HarvestPeriod"
+              oneOf:
+                - $ref: '#/components/schemas/HarvestPeriod'
+                - type: 'null'
             metadata:
-              type: object
+              type: [object, 'null']
               description: >
-                Additional key/value metadata. Callers must preserve and
-                relay metadata they do not understand.
+                Additional key/value metadata. A participant leaves the keys it
+                does not understand out of its writes, which keeps them.
               additionalProperties: true
           required: [type, name]
+
     Obstacle:
       type: object
       description: >
-        A GeoJSON Feature describing an in-field obstacle whose geometry is
-        a Point, LineString, or Polygon.
+        A GeoJSON Feature describing an in-field obstacle whose geometry is a
+        Point, LineString, or Polygon.
       properties:
         type:
           const: Feature
         geometry:
-          $ref: "#/components/schemas/Geometry"
+          $ref: '#/components/schemas/Geometry'
         properties:
           type: object
           properties:
@@ -3057,38 +3016,48 @@ components:
               description: 'Obstacle kind, e.g. "pole", "tree", "waterhole".'
           required: [kind]
       required: [type, geometry, properties]
+
     FieldBoundary:
       description: >
-        A geometry identifying the geo-spatial coordinates of a field,
-        including its outer boundary and any obstacles left out. A field
-        may have several boundaries that differ in geometry by intended
-        use.
+        A geometry identifying the geo-spatial coordinates of a field, including
+        its outer boundary and any obstacles left out. A field may have several
+        boundaries that differ in geometry by intended use.
       allOf:
-        - $ref: "#/components/schemas/Envelope"
+        - $ref: '#/components/schemas/Envelope'
         - type: object
           properties:
             type:
               const: fieldBoundary
-              readOnly: true
-              description: Discriminator, set by agrirouter. Implied by the path on send.
+              description: >
+                Discriminator, set by agrirouter. Implied by the path on send.
+                If sent, it must match the path.
+            field:
+              $ref: '#/components/schemas/EntityReference'
+              description: >
+                The field this boundary describes. A field's boundaries are the
+                boundaries that name it.
+            name:
+              type: [string, 'null']
+              description: >
+                The name the boundary is known by, e.g. a field name and season.
             boundary:
-              $ref: "#/components/schemas/Geometry"
+              $ref: '#/components/schemas/Geometry'
               description: A GeoJSON Polygon or MultiPolygon.
             boundary_type:
-              type: string
+              type: [string, 'null']
               description: >
-                Extensible enum: the boundary classification. New values
-                may be added over time; callers must accept unknown values.
+                [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations).
+                The boundary classification.
               examples:
                 - CONCEPTUAL
                 - OPERATIONAL
                 - ECONOMIC_DEFINED
                 - ADMINISTRATIVE_RECEIVED
             creation_method:
-              type: string
+              type: [string, 'null']
               description: >
-                Extensible enum: how the boundary was produced. New values
-                may be added over time; callers must accept unknown values.
+                [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations).
+                How the boundary was produced.
               examples:
                 - UNKNOWN
                 - MANUAL
@@ -3098,66 +3067,199 @@ components:
                 - AUTO_IMAGERY
                 - ADMINISTRATIVE
             harvest_period:
-              $ref: "#/components/schemas/HarvestPeriod"
+              oneOf:
+                - $ref: '#/components/schemas/HarvestPeriod'
+                - type: 'null'
             obstacles:
-              type: array
+              type: [array, 'null']
               items:
-                $ref: "#/components/schemas/Obstacle"
+                $ref: '#/components/schemas/Obstacle'
             regulatory_requirements:
-              type: string
+              type: [string, 'null']
               description: >
-                Extensible enum: a regulatory constraint applying to the
-                boundary. New values may be added over time; callers must
-                accept unknown values.
+                [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations).
+                A regulatory constraint applying to the boundary.
               examples:
                 - RED_ZONE_NITROGEN
                 - WATER_PROTECTION_AREA
             metadata:
-              type: object
+              type: [object, 'null']
               description: >
-                Additional key/value metadata. Callers must preserve and
-                relay metadata they do not understand.
+                Additional key/value metadata. A participant leaves the keys it
+                does not understand out of its writes, which keeps them.
               additionalProperties: true
-          required: [type, boundary]
+          required: [type, field, boundary]
+
+    Entity:
+      description: >
+        Any master-data entity. Used only on the event stream, which carries every
+        opted-in entity type over a single connection; the typed resources use the
+        concrete schemas directly.
+      oneOf:
+        - $ref: '#/components/schemas/Party'
+        - $ref: '#/components/schemas/Farm'
+        - $ref: '#/components/schemas/Field'
+        - $ref: '#/components/schemas/FieldBoundary'
+      discriminator:
+        propertyName: type
+        mapping:
+          party: '#/components/schemas/Party'
+          farm: '#/components/schemas/Farm'
+          field: '#/components/schemas/Field'
+          fieldBoundary: '#/components/schemas/FieldBoundary'
+
+    Geometry:
+      type: object
+      description: >
+        A GeoJSON geometry (RFC 7946). Positions are [longitude, latitude] and,
+        optionally, altitude.
+      properties:
+        type:
+          type: string
+          description: >
+            [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations).
+            The GeoJSON geometry type.
+          examples: [Point, LineString, Polygon, MultiPolygon]
+        coordinates:
+          description: Nesting depth depends on `type`.
+      required: [type, coordinates]
+
     EntityTypeToggle:
       type: object
       properties:
         entity_type:
           type: string
           description: >
-            Extensible enum: the entity type this toggle applies to. New
-            values may be added over time; callers must accept unknown
-            values.
-          examples: [organization, person, farm, field, fieldBoundary]
+            [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations).
+            The entity type this toggle applies to.
+          examples: [party, farm, field, fieldBoundary]
       required: [entity_type]
-    MasterdataCapabilities:
+
+    MasterdataConfig:
       type: object
       description: >
-        Per-endpoint, per-entity opt-in for master-data exchange. Absence
-        of a toggle for an entity type means the endpoint is not opted in
-        for it.
+        Per-endpoint, per-entity opt-in for master-data exchange. Absence of a
+        toggle for an entity type means the endpoint is not opted in for it.
       properties:
         endpoint_id:
           type: string
           format: uuid
           readOnly: true
           description: >
-            The agrirouter identifier of the endpoint this resource belongs
-            to. The path addresses it by the participant's own
-            external_id.
-        toggles:
+            The agrirouter identifier of the endpoint this resource belongs to.
+            The path addresses it by the participant's own `external_id`.
+        capabilities:
           type: array
           items:
-            $ref: "#/components/schemas/EntityTypeToggle"
+            $ref: '#/components/schemas/EntityTypeToggle'
         resolution_url:
           type: string
           format: uri
           description: >
-            Where the user resolves initial-load conflicts in the
-            endpoint's own software. Optional and rendered as a link while
-            the endpoint has awaiting_user set.
-          examples: ["https://app.example.com/tenants/42/agrirouter/masterdata"]
-      required: [toggles]
+            Where the user resolves initial-load conflicts in the endpoint's own
+            software. Optional, opaque to agrirouter, and not per conflict: it is
+            rendered as a link while the endpoint has `awaiting_user` set.
+          examples: ['https://app.example.com/tenants/42/agrirouter/masterdata']
+      required: [capabilities]
+
+    RouteChangedEventData:
+      type: object
+      description: >
+        Data structure for `ROUTE_CHANGED` events on
+        `/masterdata/events`. It states which entity types the user has selected
+        for one of the application's endpoints.
+
+        One event covers every way the selection changes: the endpoint given a
+        masterdata route for the first time, a further entity type selected on
+        one already routed, a type deselected, and the last one deselected or the
+        route removed.
+
+        The event may arrive more than once for one move and MUST be handled idempotently.
+      required: [event_type, endpoint_id, external_id, entity_types, changed_at]
+      properties:
+        event_type:
+          type: string
+          const: ROUTE_CHANGED
+          description: Discriminator; matches the `event:` line.
+        endpoint_id:
+          type: string
+          format: uuid
+          description: The agrirouter identifier of the endpoint whose selection changed.
+        external_id:
+          type: string
+          description: The application's own identifier for the same endpoint.
+        entity_types:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntityTypeToggle'
+          description: >
+            The endpoint's selection as it stands after the change, stated in
+            full rather than as a delta.
+
+            An empty array is a statement and not an omission: it says the
+            endpoint exchanges nothing, because the user deselected the last
+            entity type or the route was removed.
+          examples:
+            - [{entity_type: party}, {entity_type: farm}]
+        changed_at:
+          type: string
+          format: date-time
+          description: >
+            When the selection reached this state. Not a delivery timestamp: it
+            is unchanged when the same event is delivered again, and a repeat
+            carrying an older value than one already applied for this endpoint
+            can be discarded.
+          examples: ['2026-07-14T09:20:00Z']
+
+    MasterdataResetEventData:
+      type: object
+      description: >
+        Data structure for `RESET_MASTERDATA_SYNC` events on
+        `/masterdata/events`. It states that the user wiped the tenant's master
+        data in agrirouter: every canonical object, every identifier mapping,
+        every masterdata route and every initial-load state of the tenant is
+        discarded. Only a user can do this; no operation of this API does.
+
+
+        Sent to every application that holds a binding in the tenant or has an
+        endpoint there that has taken part at some point. The application MUST discard every binding and stored revision it holds
+        in the tenant, and treat the listed endpoints as opted into nothing. It
+        MUST NOT delete or deactivate its local records. No `ROUTE_CHANGED` is
+        issued for the listed endpoints.
+
+
+        agrirouter delivers it before any later event of the tenant. The
+        application MUST durably store a position at or past it before taking
+        part in that tenant's initial load again, so that a repeat can only
+        arrive while nothing is bound and handling it again changes nothing.
+      required: [event_type, tenant_id, endpoints]
+      properties:
+        event_type:
+          type: string
+          const: RESET_MASTERDATA_SYNC
+          description: Discriminator; matches the `event:` line.
+        tenant_id:
+          type: string
+          format: uuid
+          description: The tenant whose master data was wiped.
+        endpoints:
+          type: array
+          description: >
+            The application's endpoints in the tenant, each now opted into
+            nothing. Empty where the application has no endpoint left there and
+            is told only because it held bindings.
+          items:
+            type: object
+            required: [endpoint_id, external_id]
+            properties:
+              endpoint_id:
+                type: string
+                format: uuid
+                description: The agrirouter identifier of the endpoint.
+              external_id:
+                type: string
+                description: The application's own identifier for the same endpoint.
+
     InitialLoadState:
       type: string
       description: >
@@ -3165,99 +3267,135 @@ components:
         endpoint is opted into.
 
 
-        LOADING_FROM_AGRIROUTER — agrirouter is still sending the canonical
-        set. Entered by opting the endpoint into its first entity type,
-        again whenever a further entity type is added, and by the endpoint
-        asking for the set again through this status resource.
+        `LOADING_FROM_AGRIROUTER` — agrirouter is still sending the canonical set.
+        Entered when the user selects the endpoint's first entity type, and again
+        whenever a further entity type is selected. Both are a user's opt-in
+        decision carried out by agrirouter, and the application is told of them
+        by `ROUTE_CHANGED` on `/masterdata/events`. A participant cannot
+        enter this state directly — neither by adding a type to its declaration,
+        which enables nothing, nor by setting it on the `status` resource, which
+        is a `409`.
 
 
-        RECONCILING — the whole canonical set has been delivered and the
-        initial-load stream closed. The endpoint is now working through
-        whatever conflicts reconciling surfaced.
+        `RECONCILING` — the whole canonical set has been delivered, and
+        agrirouter moves the endpoint here before closing the initial-load
+        stream. agrirouter moves it here itself, and only this one,
+        because it is the side that knows it has finished sending, which is also
+        why this state is the authoritative answer to whether the set arrived: an
+        endpoint cannot tell an orderly close from a dropped connection. Moving
+        first is what makes reading it once, as the response ends, enough. The
+        endpoint is now working through whatever conflicts reconciling surfaced,
+        which may take as long as a user takes.
 
 
-        LOADING_TO_AGRIROUTER — the endpoint has confirmed it reconciled,
-        and is sending the objects it holds that the canonical set did not
-        contain.
+        `LOADING_TO_AGRIROUTER` — the endpoint has confirmed it reconciled, and is
+        sending the objects it holds that the canonical set did not contain.
 
 
-        COMPLETED — steady-state synchronization applies.
+        `COMPLETED` — steady-state synchronization applies.
+
+
+        The endpoint drives two of these transitions, both through the
+        `status` resource: `RECONCILING` → `LOADING_TO_AGRIROUTER` and
+        `LOADING_TO_AGRIROUTER` → `COMPLETED`.
       enum:
         - LOADING_FROM_AGRIROUTER
         - RECONCILING
         - LOADING_TO_AGRIROUTER
         - COMPLETED
+
     InitialLoadStatus:
       type: object
       description: >
         The endpoint's initial-load state. One per endpoint, covering every
-        entity type it is opted into; an endpoint opted into no entity type
-        has none.
+        entity type it is opted into; an endpoint opted into no entity type has
+        no initial-load state.
       properties:
         endpoint_id:
           type: string
           format: uuid
           readOnly: true
           description: >
-            The agrirouter identifier of the endpoint this resource belongs
-            to. The path addresses it by the participant's own
-            external_id.
+            The agrirouter identifier of the endpoint this resource belongs to.
+            The path addresses it by the participant's own `external_id`.
         state:
-          $ref: "#/components/schemas/InitialLoadState"
+          $ref: '#/components/schemas/InitialLoadState'
         awaiting_user:
           type: boolean
           readOnly: true
           description: >
-            Whether the endpoint's own software needs user action — a
-            conflict, a missing required attribute, a granularity mismatch.
-            Raised by the endpoint and cleared by agrirouter on the two
-            endpoint-driven transitions.
+            Whether the endpoint's own software is needing user action
+            — a conflict, a missing required
+            attribute, a granularity mismatch. Raised by the endpoint through the
+            `user-attention` resource and cleared by agrirouter, on the two
+            endpoint-driven transitions only: advancing
+            to `LOADING_TO_AGRIROUTER` clears it, and so does advancing to
+            `COMPLETED`. The step to `RECONCILING` does not, since that is
+            agrirouter reporting it has finished sending and says nothing about
+            whether the user has finished deciding. agrirouter renders the flag as
+            "waiting for you in <app>", linking to the master-data resolution URI
+            supplied for this endpoint.
         previous_load_completed_at:
           type: string
           format: date-time
           readOnly: true
           description: >
-            When this endpoint last reached COMPLETED, present only if it
-            has. Its presence means the canonical set now arriving is a
-            repeat load, so the endpoint must not treat its arrival as
-            evidence of a first connection.
+            When this endpoint last reached `COMPLETED`, present only if it
+            has. Its presence means the canonical set now arriving is a repeat
+            load — the endpoint was a participant before and has returned, having
+            been deselected, had its masterdata route removed, or had a further
+            entity type selected on it. Each of those is the user's act: an
+            application cannot ask for the set again. The identifier mapping
+            survived all of them, so the objects
+            arrive carrying the endpoint's own `local_id` and match rather than
+            reconcile. An endpoint MUST NOT take the arrival of a canonical set as
+            evidence of a first connection: without this check it creates local
+            duplicates of data it already holds.
         rejected_id_mappings:
           type: array
           readOnly: true
           description: >
-            Bindings supplied on this request that could not be recorded,
-            each with its reason and, where one exists, the mapping that
-            stands in its way. They do not fail the transition.
+            Bindings supplied on this request that could not be recorded, each
+            with its `reason` and, where one exists, the mapping that stands in
+            its way. They do not fail the transition: one unresolvable pair
+            should not block the load of a set. The endpoint resolves them as it
+            resolves a `409` on the per-entity operation, and rebinds through
+            that operation once it has. Recomputed on every request that carries
+            `id_mappings`, including a repeat of the transition, so a retry after
+            a lost response reports the current outcome rather than the first.
           items:
-            $ref: "#/components/schemas/IdMappingRejection"
+            $ref: '#/components/schemas/IdMappingRejection'
         updated_at:
           type: string
           format: date-time
           readOnly: true
       required: [state]
+
     InitialLoadStateUpdate:
       type: object
       description: >
-        The target initial-load state for the endpoint. States are
-        accepted in order, plus LOADING_FROM_AGRIROUTER from any state,
-        which asks for the canonical set again.
+        The target initial-load `state` for the endpoint. The states are
+        accepted in order, and repeating the one the endpoint is already in is
+        accepted too. `LOADING_FROM_AGRIROUTER` is never a transition an
+        endpoint may make, from any state including from itself.
       properties:
         state:
-          $ref: "#/components/schemas/InitialLoadState"
-        awaiting_user:
-          type: boolean
-          description: >
-            Set to true when the endpoint's reconciliation needs user
-            action, so agrirouter can show the endpoint as waiting rather
-            than as still working. Omitting it leaves the current value
-            untouched.
+          $ref: '#/components/schemas/InitialLoadState'
         id_mappings:
           type: array
           description: >
-            The bindings reconciliation produced: one entry per canonical
-            object the endpoint matched to something it already held.
-            Pairs that cannot be recorded come back in rejected_id_mappings
-            rather than failing the transition.
+            The bindings reconciliation produced: one entry per canonical object
+            the endpoint matched to something it already held. Carried here
+            because matching happens over a whole set, and the semantics are those
+            of the per-entity `id-mapping` operation applied to each pair. Meaningful
+            only on the transition to `LOADING_TO_AGRIROUTER`, which is where
+            reconciliation is asserted to be done, and on a repeat of that
+            transition, where the pairs are applied again and the rejections
+            recomputed. Pairs are applied
+            independently: any that cannot be recorded — because an identifier is
+            already bound, because the canonical object is unknown to the
+            endpoint, or because the request names the same identifier twice —
+            come back in `rejected_id_mappings` rather than failing the transition.
           items:
-            $ref: "#/components/schemas/IdMappingBinding"
+            $ref: '#/components/schemas/IdMappingBinding'
       required: [state]
