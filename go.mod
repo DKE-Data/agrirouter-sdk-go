@@ -4,7 +4,8 @@ go 1.23.12
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/oapi-codegen/runtime v1.1.1
+	github.com/oapi-codegen/nullable v1.1.0
+	github.com/oapi-codegen/runtime v1.2.0
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
 	github.com/tmaxmax/go-sse v0.11.0

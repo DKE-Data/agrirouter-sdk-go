@@ -79,14 +79,6 @@ Valid --%s values: %s.`, idMappingsOpt, stateOpt, joinInitialLoadStates()),
 
 		update := agrirouter.InitialLoadStateUpdate{State: state}
 
-		if cmd.Flags().Changed(awaitingUserOpt) {
-			awaitingUser, err := cmd.Flags().GetBool(awaitingUserOpt)
-			if err != nil {
-				return fmt.Errorf("failed to get %s flag: %w", awaitingUserOpt, err)
-			}
-			update.AwaitingUser = &awaitingUser
-		}
-
 		if raw, _ := cmd.Flags().GetString(idMappingsOpt); raw != "" {
 			mappings, err := readJSONBody[[]agrirouter.IDMappingBinding](cmd, idMappingsOpt)
 			if err != nil {
@@ -105,6 +97,39 @@ Valid --%s values: %s.`, idMappingsOpt, stateOpt, joinInitialLoadStates()),
 		status, err := client.SetInitialLoadState(ctx, externalEndpointID, tenantID, update)
 		if err != nil {
 			return fmt.Errorf("failed to set initial load state: %w", err)
+		}
+		return printJSON(status)
+	},
+}
+
+var reportUserAttentionCmd = &cobra.Command{
+	Use:   "report-user-attention",
+	Short: "Report that an endpoint's initial load is waiting on a user",
+	Long: `Raises awaiting_user on the endpoint's initial-load status. It names no state,
+so it may be sent from any state before COMPLETED; agrirouter clears the flag on
+the endpoint's next transition.`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		externalEndpointID, err := resolveExternalEndpointID(cmd)
+		if err != nil {
+			return err
+		}
+		tenantID, err := resolveTenantID(cmd)
+		if err != nil {
+			return err
+		}
+
+		client, err := getClient(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create agrirouter client: %w", err)
+		}
+
+		slog.Info("Reporting user attention", "externalEndpointID", externalEndpointID, "tenantID", tenantID)
+
+		status, err := client.ReportUserAttention(ctx, externalEndpointID, tenantID)
+		if err != nil {
+			return fmt.Errorf("failed to report user attention: %w", err)
 		}
 		return printJSON(status)
 	},
@@ -133,12 +158,15 @@ func init() {
 	addExternalEndpointIDFlag(getInitialLoadStatusCmd)
 	addTenantIDFlag(getInitialLoadStatusCmd)
 
+	rootCmd.AddCommand(reportUserAttentionCmd)
+	addExternalEndpointIDFlag(reportUserAttentionCmd)
+	addTenantIDFlag(reportUserAttentionCmd)
+
 	rootCmd.AddCommand(setInitialLoadStateCmd)
 	addExternalEndpointIDFlag(setInitialLoadStateCmd)
 	addTenantIDFlag(setInitialLoadStateCmd)
 	setInitialLoadStateCmd.Flags().String(stateOpt, "", "Target initial-load state: "+joinInitialLoadStates())
 	_ = setInitialLoadStateCmd.MarkFlagRequired(stateOpt)
-	setInitialLoadStateCmd.Flags().Bool(awaitingUserOpt, false, "Whether reconciliation needs user action; omitted leaves the current value untouched")
 	setInitialLoadStateCmd.Flags().String(idMappingsOpt, "", `Reconciliation bindings as a JSON array of {"agrirouter_id","local_id"} objects, inline or @path`)
 	_ = setInitialLoadStateCmd.RegisterFlagCompletionFunc(stateOpt, func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		out := make([]string, len(allInitialLoadStates))

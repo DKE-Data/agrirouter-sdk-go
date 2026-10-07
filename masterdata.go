@@ -20,23 +20,23 @@ func (c *Client) masterdataErr(res *http.Response, body []byte) error {
 	return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, httpResponseToErr(res, body))
 }
 
-// ---------------------------------------------------------------- organizations
+// ---------------------------------------------------------------------- parties
 
-// PutOrganization sends (creates or updates) an organization identified by the
+// PutParty sends (creates or updates) a party identified by the
 // application's own localID. On an update to an existing object, baseRevision
 // must carry the revision it was edited from; pass nil when creating.
-func (c *Client) PutOrganization(
+func (c *Client) PutParty(
 	ctx context.Context,
 	localID string,
 	endpointID, tenantID uuid.UUID,
 	baseRevision *int,
-	org *Organization,
-) (*Organization, error) {
-	res, err := c.oapiClient.PutOrganizationWithResponse(ctx, localID, &internal_models.PutOrganizationParams{
+	party *Party,
+) (*Party, error) {
+	res, err := c.oapiClient.PutPartyWithResponse(ctx, localID, &internal_models.PutPartyParams{
 		XAgrirouterEndpointId:   endpointID,
 		XAgrirouterTenantId:     tenantID,
 		XAgrirouterBaseRevision: baseRevision,
-	}, *org)
+	}, *party)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
@@ -49,15 +49,15 @@ func (c *Client) PutOrganization(
 	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// BindOrganizationMapping declares that the canonical organization agrirouterID
+// BindPartyMapping declares that the canonical party agrirouterID
 // is the one this endpoint already knows as localID, so a later PUT under that
 // localID updates it instead of creating a duplicate.
-func (c *Client) BindOrganizationMapping(
+func (c *Client) BindPartyMapping(
 	ctx context.Context,
 	localID string,
 	agrirouterID, endpointID, tenantID uuid.UUID,
 ) error {
-	res, err := c.oapiClient.BindOrganizationMappingWithResponse(ctx, localID, agrirouterID, &internal_models.BindOrganizationMappingParams{
+	res, err := c.oapiClient.BindPartyMappingWithResponse(ctx, localID, agrirouterID, &internal_models.BindPartyMappingParams{
 		XAgrirouterEndpointId: endpointID,
 		XAgrirouterTenantId:   tenantID,
 	})
@@ -70,18 +70,18 @@ func (c *Client) BindOrganizationMapping(
 	return c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// UnbindOrganizationMapping declares that this endpoint no longer holds the
-// canonical organization under localID. The canonical object itself is untouched.
-func (c *Client) UnbindOrganizationMapping(
+// UnbindPartyMapping declares that this endpoint no longer holds the
+// canonical party under localID. The canonical object itself is untouched.
+func (c *Client) UnbindPartyMapping(
 	ctx context.Context,
 	localID string,
 	agrirouterID, endpointID, tenantID uuid.UUID,
 ) error {
-	params := &internal_models.UnbindOrganizationMappingParams{
+	params := &internal_models.UnbindPartyMappingParams{
 		XAgrirouterEndpointId: endpointID,
 		XAgrirouterTenantId:   tenantID,
 	}
-	res, err := c.oapiClient.UnbindOrganizationMappingWithResponse(ctx, localID, agrirouterID, params)
+	res, err := c.oapiClient.UnbindPartyMappingWithResponse(ctx, localID, agrirouterID, params)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
@@ -91,15 +91,15 @@ func (c *Client) UnbindOrganizationMapping(
 	return c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// DeactivateOrganization signals that the organization was deactivated in the
+// DeactivateParty signals that the party was deactivated in the
 // source system. The canonical object is kept but marked inactive.
-func (c *Client) DeactivateOrganization(
+func (c *Client) DeactivateParty(
 	ctx context.Context,
 	localID string,
 	endpointID, tenantID uuid.UUID,
 	baseRevision *int,
-) (*Organization, error) {
-	res, err := c.oapiClient.DeactivateOrganizationWithResponse(ctx, localID, &internal_models.DeactivateOrganizationParams{
+) (*Party, error) {
+	res, err := c.oapiClient.DeactivatePartyWithResponse(ctx, localID, &internal_models.DeactivatePartyParams{
 		XAgrirouterEndpointId:   endpointID,
 		XAgrirouterTenantId:     tenantID,
 		XAgrirouterBaseRevision: baseRevision,
@@ -113,119 +113,14 @@ func (c *Client) DeactivateOrganization(
 	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// RequestOrganization refetches an organization the calling endpoint is entitled
+// RequestParty refetches a party the calling endpoint is entitled
 // to but does not currently hold. The object arrives asynchronously on the
 // master-data event stream (see StreamMasterdataEvents).
-func (c *Client) RequestOrganization(
+func (c *Client) RequestParty(
 	ctx context.Context,
 	endpointID, tenantID, agrirouterID uuid.UUID,
 ) error {
-	res, err := c.oapiClient.RequestOrganizationWithResponse(ctx, &internal_models.RequestOrganizationParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	}, internal_models.EntityRequest{AgrirouterId: agrirouterID})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusAccepted {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// ---------------------------------------------------------------------- persons
-
-// PutPerson sends (creates or updates) a person. See PutOrganization for the
-// meaning of baseRevision.
-func (c *Client) PutPerson(
-	ctx context.Context,
-	localID string,
-	endpointID, tenantID uuid.UUID,
-	baseRevision *int,
-	person *Person,
-) (*Person, error) {
-	res, err := c.oapiClient.PutPersonWithResponse(ctx, localID, &internal_models.PutPersonParams{
-		XAgrirouterEndpointId:   endpointID,
-		XAgrirouterTenantId:     tenantID,
-		XAgrirouterBaseRevision: baseRevision,
-	}, *person)
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	if res.JSON201 != nil {
-		return res.JSON201, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// BindPersonMapping binds a local identifier to an existing person. See BindOrganizationMapping.
-func (c *Client) BindPersonMapping(
-	ctx context.Context,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
-) error {
-	res, err := c.oapiClient.BindPersonMappingWithResponse(ctx, localID, agrirouterID, &internal_models.BindPersonMappingParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusNoContent {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// UnbindPersonMapping declares that this endpoint no longer holds a person. See UnbindOrganizationMapping.
-func (c *Client) UnbindPersonMapping(
-	ctx context.Context,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
-) error {
-	res, err := c.oapiClient.UnbindPersonMappingWithResponse(ctx, localID, agrirouterID, &internal_models.UnbindPersonMappingParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusNoContent {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// DeactivatePerson deactivates a person. See DeactivateOrganization.
-func (c *Client) DeactivatePerson(
-	ctx context.Context,
-	localID string,
-	endpointID, tenantID uuid.UUID,
-	baseRevision *int,
-) (*Person, error) {
-	res, err := c.oapiClient.DeactivatePersonWithResponse(ctx, localID, &internal_models.DeactivatePersonParams{
-		XAgrirouterEndpointId:   endpointID,
-		XAgrirouterTenantId:     tenantID,
-		XAgrirouterBaseRevision: baseRevision,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// RequestPerson refetches a person by its canonical id. See RequestOrganization.
-func (c *Client) RequestPerson(
-	ctx context.Context,
-	endpointID, tenantID, agrirouterID uuid.UUID,
-) error {
-	res, err := c.oapiClient.RequestPersonWithResponse(ctx, &internal_models.RequestPersonParams{
+	res, err := c.oapiClient.RequestPartyWithResponse(ctx, &internal_models.RequestPartyParams{
 		XAgrirouterEndpointId: endpointID,
 		XAgrirouterTenantId:   tenantID,
 	}, internal_models.EntityRequest{AgrirouterId: agrirouterID})
@@ -240,7 +135,7 @@ func (c *Client) RequestPerson(
 
 // ------------------------------------------------------------------------ farms
 
-// PutFarm sends (creates or updates) a farm. See PutOrganization for baseRevision.
+// PutFarm sends (creates or updates) a farm. See PutParty for baseRevision.
 func (c *Client) PutFarm(
 	ctx context.Context,
 	localID string,
@@ -265,7 +160,7 @@ func (c *Client) PutFarm(
 	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// BindFarmMapping binds a local identifier to an existing farm. See BindOrganizationMapping.
+// BindFarmMapping binds a local identifier to an existing farm. See BindPartyMapping.
 func (c *Client) BindFarmMapping(
 	ctx context.Context,
 	localID string,
@@ -284,7 +179,7 @@ func (c *Client) BindFarmMapping(
 	return c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// UnbindFarmMapping declares that this endpoint no longer holds a farm. See UnbindOrganizationMapping.
+// UnbindFarmMapping declares that this endpoint no longer holds a farm. See UnbindPartyMapping.
 func (c *Client) UnbindFarmMapping(
 	ctx context.Context,
 	localID string,
@@ -303,7 +198,7 @@ func (c *Client) UnbindFarmMapping(
 	return c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// DeactivateFarm deactivates a farm. See DeactivateOrganization.
+// DeactivateFarm deactivates a farm. See DeactivateParty.
 func (c *Client) DeactivateFarm(
 	ctx context.Context,
 	localID string,
@@ -324,7 +219,7 @@ func (c *Client) DeactivateFarm(
 	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// RequestFarm refetches a farm by its canonical id. See RequestOrganization.
+// RequestFarm refetches a farm by its canonical id. See RequestParty.
 func (c *Client) RequestFarm(
 	ctx context.Context,
 	endpointID, tenantID, agrirouterID uuid.UUID,
@@ -344,7 +239,7 @@ func (c *Client) RequestFarm(
 
 // ----------------------------------------------------------------------- fields
 
-// PutField sends (creates or updates) a field. See PutOrganization for baseRevision.
+// PutField sends (creates or updates) a field. See PutParty for baseRevision.
 func (c *Client) PutField(
 	ctx context.Context,
 	localID string,
@@ -369,7 +264,7 @@ func (c *Client) PutField(
 	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// BindFieldMapping binds a local identifier to an existing field. See BindOrganizationMapping.
+// BindFieldMapping binds a local identifier to an existing field. See BindPartyMapping.
 func (c *Client) BindFieldMapping(
 	ctx context.Context,
 	localID string,
@@ -388,7 +283,7 @@ func (c *Client) BindFieldMapping(
 	return c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// UnbindFieldMapping declares that this endpoint no longer holds a field. See UnbindOrganizationMapping.
+// UnbindFieldMapping declares that this endpoint no longer holds a field. See UnbindPartyMapping.
 func (c *Client) UnbindFieldMapping(
 	ctx context.Context,
 	localID string,
@@ -407,7 +302,7 @@ func (c *Client) UnbindFieldMapping(
 	return c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// DeactivateField deactivates a field. See DeactivateOrganization.
+// DeactivateField deactivates a field. See DeactivateParty.
 func (c *Client) DeactivateField(
 	ctx context.Context,
 	localID string,
@@ -428,7 +323,7 @@ func (c *Client) DeactivateField(
 	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// RequestField refetches a field by its canonical id. See RequestOrganization.
+// RequestField refetches a field by its canonical id. See RequestParty.
 func (c *Client) RequestField(
 	ctx context.Context,
 	endpointID, tenantID, agrirouterID uuid.UUID,
@@ -448,7 +343,7 @@ func (c *Client) RequestField(
 
 // -------------------------------------------------------------- field boundaries
 
-// PutFieldBoundary sends (creates or updates) a field boundary. See PutOrganization for baseRevision.
+// PutFieldBoundary sends (creates or updates) a field boundary. See PutParty for baseRevision.
 func (c *Client) PutFieldBoundary(
 	ctx context.Context,
 	localID string,
@@ -473,7 +368,7 @@ func (c *Client) PutFieldBoundary(
 	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// BindFieldBoundaryMapping binds a local identifier to an existing field boundary. See BindOrganizationMapping.
+// BindFieldBoundaryMapping binds a local identifier to an existing field boundary. See BindPartyMapping.
 func (c *Client) BindFieldBoundaryMapping(
 	ctx context.Context,
 	localID string,
@@ -492,7 +387,7 @@ func (c *Client) BindFieldBoundaryMapping(
 	return c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// UnbindFieldBoundaryMapping declares that this endpoint no longer holds a field boundary. See UnbindOrganizationMapping.
+// UnbindFieldBoundaryMapping declares that this endpoint no longer holds a field boundary. See UnbindPartyMapping.
 func (c *Client) UnbindFieldBoundaryMapping(
 	ctx context.Context,
 	localID string,
@@ -512,7 +407,7 @@ func (c *Client) UnbindFieldBoundaryMapping(
 	return c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// DeactivateFieldBoundary deactivates a field boundary. See DeactivateOrganization.
+// DeactivateFieldBoundary deactivates a field boundary. See DeactivateParty.
 func (c *Client) DeactivateFieldBoundary(
 	ctx context.Context,
 	localID string,
@@ -533,7 +428,7 @@ func (c *Client) DeactivateFieldBoundary(
 	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
 }
 
-// RequestFieldBoundary refetches a field boundary by its canonical id. See RequestOrganization.
+// RequestFieldBoundary refetches a field boundary by its canonical id. See RequestParty.
 func (c *Client) RequestFieldBoundary(
 	ctx context.Context,
 	endpointID, tenantID, agrirouterID uuid.UUID,
@@ -584,6 +479,27 @@ func (c *Client) SetInitialLoadState(
 	res, err := c.oapiClient.SetInitialLoadStateWithResponse(ctx, externalEndpointID, &internal_models.SetInitialLoadStateParams{
 		XAgrirouterTenantId: tenantID,
 	}, update)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
+	}
+	if res.JSON200 != nil {
+		return res.JSON200, nil
+	}
+	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
+}
+
+// ReportUserAttention raises awaiting_user on the endpoint's initial-load
+// status, telling the user the load is waiting for them in the application. It
+// names no state, so it may be sent from any state before COMPLETED; agrirouter
+// clears the flag on the endpoint's next transition.
+func (c *Client) ReportUserAttention(
+	ctx context.Context,
+	externalEndpointID string,
+	tenantID uuid.UUID,
+) (*InitialLoadStatus, error) {
+	res, err := c.oapiClient.ReportUserAttentionWithResponse(ctx, externalEndpointID, &internal_models.ReportUserAttentionParams{
+		XAgrirouterTenantId: tenantID,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}

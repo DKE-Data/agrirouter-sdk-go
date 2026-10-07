@@ -37,12 +37,12 @@ type EventType = internal_models.ReceiveEventsParamsTypes
 
 // Event types accepted by [Client.ReceiveEvents] and emitted by the events stream.
 const (
-	EventTypeMessageReceived      = internal_models.MESSAGERECEIVED
-	EventTypeFileReceived         = internal_models.FILERECEIVED
-	EventTypeEndpointDeleted      = internal_models.ENDPOINTDELETED
-	EventTypeEndpointsListChanged = internal_models.ENDPOINTSLISTCHANGED
-	EventTypeAuthorizationAdded   = internal_models.AUTHORIZATIONADDED
-	EventTypeAuthorizationRevoked = internal_models.AUTHORIZATIONREVOKED
+	EventTypeMessageReceived      = internal_models.ReceiveEventsParamsTypesMESSAGERECEIVED
+	EventTypeFileReceived         = internal_models.ReceiveEventsParamsTypesFILERECEIVED
+	EventTypeEndpointDeleted      = internal_models.ReceiveEventsParamsTypesENDPOINTDELETED
+	EventTypeEndpointsListChanged = internal_models.ReceiveEventsParamsTypesENDPOINTSLISTCHANGED
+	EventTypeAuthorizationAdded   = internal_models.ReceiveEventsParamsTypesAUTHORIZATIONADDED
+	EventTypeAuthorizationRevoked = internal_models.ReceiveEventsParamsTypesAUTHORIZATIONREVOKED
 )
 
 // EventHandlers groups optional per-event-type callbacks for [Client.ReceiveEvents].
@@ -313,7 +313,7 @@ func (c *Client) ReceiveEndpointDeletedEvents(
 	errorHandler func(err error),
 ) error {
 	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
-		internal_models.ENDPOINTDELETED,
+		internal_models.ReceiveEventsParamsTypesENDPOINTDELETED,
 	}, func(event internal_models.GenericEventData) {
 		deletedEvent, err := event.AsEndpointDeletedEventData()
 		if err != nil {
@@ -341,7 +341,7 @@ func (c *Client) ReceiveEndpointsListChangedEvents(
 	errorHandler func(err error),
 ) error {
 	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
-		internal_models.ENDPOINTSLISTCHANGED,
+		internal_models.ReceiveEventsParamsTypesENDPOINTSLISTCHANGED,
 	}, func(event internal_models.GenericEventData) {
 		data, err := event.AsEndpointsListChangedEventData()
 		if err != nil {
@@ -363,7 +363,7 @@ func (c *Client) ReceiveAuthorizationAddedEvents(
 	errorHandler func(err error),
 ) error {
 	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
-		internal_models.AUTHORIZATIONADDED,
+		internal_models.ReceiveEventsParamsTypesAUTHORIZATIONADDED,
 	}, func(event internal_models.GenericEventData) {
 		data, err := event.AsAuthorizationAddedEventData()
 		if err != nil {
@@ -385,7 +385,7 @@ func (c *Client) ReceiveAuthorizationRevokedEvents(
 	errorHandler func(err error),
 ) error {
 	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
-		internal_models.AUTHORIZATIONREVOKED,
+		internal_models.ReceiveEventsParamsTypesAUTHORIZATIONREVOKED,
 	}, func(event internal_models.GenericEventData) {
 		data, err := event.AsAuthorizationRevokedEventData()
 		if err != nil {
@@ -407,7 +407,7 @@ func (c *Client) ReceiveMessages(
 	errorHandler func(err error),
 ) error {
 	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
-		internal_models.MESSAGERECEIVED,
+		internal_models.ReceiveEventsParamsTypesMESSAGERECEIVED,
 	}, func(event internal_models.GenericEventData) {
 		messageReceivedEvent, err := event.AsMessageReceivedEventData()
 		if err != nil {
@@ -546,7 +546,7 @@ func (c *Client) ReceiveFiles(
 	errorHandler func(err error),
 ) error {
 	return c.receiveAndHandleEvents(ctx, &[]internal_models.ReceiveEventsParamsTypes{
-		internal_models.FILERECEIVED,
+		internal_models.ReceiveEventsParamsTypesFILERECEIVED,
 	}, func(event internal_models.GenericEventData) {
 		fileReceivedEvent, err := event.AsFileReceivedEventData()
 		if err != nil {
