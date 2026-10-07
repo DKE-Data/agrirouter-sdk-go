@@ -16,38 +16,6 @@ var allInitialLoadStates = []agrirouter.InitialLoadState{
 	agrirouter.InitialLoadStateCompleted,
 }
 
-var getInitialLoadStatusCmd = &cobra.Command{
-	Use:   "get-initial-load-status",
-	Short: "Get an endpoint's initial-load status",
-	Long: `Returns the endpoint's initial-load state, covering every entity type it is
-opted into. The endpoint is addressed by its application-defined external ID.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
-
-		externalEndpointID, err := resolveExternalEndpointID(cmd)
-		if err != nil {
-			return err
-		}
-		tenantID, err := resolveTenantID(cmd)
-		if err != nil {
-			return err
-		}
-
-		client, err := getClient(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to create agrirouter client: %w", err)
-		}
-
-		slog.Info("Getting initial load status", "externalEndpointID", externalEndpointID, "tenantID", tenantID)
-
-		status, err := client.GetInitialLoadStatus(ctx, externalEndpointID, tenantID)
-		if err != nil {
-			return fmt.Errorf("failed to get initial load status: %w", err)
-		}
-		return printJSON(status)
-	},
-}
-
 var setInitialLoadStateCmd = &cobra.Command{
 	Use:   "set-initial-load-state",
 	Short: "Set an endpoint's initial-load state",
@@ -102,39 +70,6 @@ Valid --%s values: %s.`, idMappingsOpt, stateOpt, joinInitialLoadStates()),
 	},
 }
 
-var reportUserAttentionCmd = &cobra.Command{
-	Use:   "report-user-attention",
-	Short: "Report that an endpoint's initial load is waiting on a user",
-	Long: `Raises awaiting_user on the endpoint's initial-load status. It names no state,
-so it may be sent from any state before COMPLETED; agrirouter clears the flag on
-the endpoint's next transition.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
-
-		externalEndpointID, err := resolveExternalEndpointID(cmd)
-		if err != nil {
-			return err
-		}
-		tenantID, err := resolveTenantID(cmd)
-		if err != nil {
-			return err
-		}
-
-		client, err := getClient(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to create agrirouter client: %w", err)
-		}
-
-		slog.Info("Reporting user attention", "externalEndpointID", externalEndpointID, "tenantID", tenantID)
-
-		status, err := client.ReportUserAttention(ctx, externalEndpointID, tenantID)
-		if err != nil {
-			return fmt.Errorf("failed to report user attention: %w", err)
-		}
-		return printJSON(status)
-	},
-}
-
 func parseInitialLoadState(raw string) (agrirouter.InitialLoadState, error) {
 	want := strings.ToUpper(strings.TrimSpace(raw))
 	for _, s := range allInitialLoadStates {
@@ -154,14 +89,6 @@ func joinInitialLoadStates() string {
 }
 
 func init() {
-	rootCmd.AddCommand(getInitialLoadStatusCmd)
-	addExternalEndpointIDFlag(getInitialLoadStatusCmd)
-	addTenantIDFlag(getInitialLoadStatusCmd)
-
-	rootCmd.AddCommand(reportUserAttentionCmd)
-	addExternalEndpointIDFlag(reportUserAttentionCmd)
-	addTenantIDFlag(reportUserAttentionCmd)
-
 	rootCmd.AddCommand(setInitialLoadStateCmd)
 	addExternalEndpointIDFlag(setInitialLoadStateCmd)
 	addTenantIDFlag(setInitialLoadStateCmd)
