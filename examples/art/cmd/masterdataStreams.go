@@ -2,14 +2,32 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/DKE-Data/agrirouter-sdk-go"
 	"github.com/spf13/cobra"
 )
 
-func printMasterdataFrame(_ context.Context, frame *agrirouter.MasterdataEventFrame) {
-	fmt.Printf("[%s] id=%s\n%s\n", frame.Event, frame.ID, frame.Data)
+func printMasterdataFrame(_ context.Context, frame *agrirouter.MasterdataEvent) error {
+	var data any
+	switch {
+	case frame.Party != nil:
+		data = frame.Party
+	case frame.Farm != nil:
+		data = frame.Farm
+	case frame.Field != nil:
+		data = frame.Field
+	case frame.FieldBoundary != nil:
+		data = frame.FieldBoundary
+	case frame.RouteChange != nil:
+		data = frame.RouteChange
+	case frame.Reset != nil:
+		data = frame.Reset
+	}
+	b, _ := json.Marshal(data)
+	fmt.Printf("[%s] id=%s\n%s\n", frame.Type, frame.ID, b)
+	return nil
 }
 
 var streamMasterdataEventsCmd = &cobra.Command{

@@ -18,23 +18,27 @@ func init() {
 		"Bind a local identifier to an existing party",
 		"Declares that the canonical party in --agrirouter-id is the one this endpoint already knows as --local-id.",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ar, ep, tn uuid.UUID) error {
-			return c.BindPartyMapping(ctx, localID, ar, ep, tn)
+			return c.BindMapping(ctx, agrirouter.EntityTypeParty, localID, ar, ep, tn)
 		}))
 
 	rootCmd.AddCommand(mdMappingCmd("unbind-party-mapping",
 		"Declare that this endpoint no longer holds a party",
 		"Declares that the endpoint no longer holds the canonical party under --local-id. The canonical object itself is untouched.",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ar, ep, tn uuid.UUID) error {
-			return c.UnbindPartyMapping(ctx, localID, ar, ep, tn)
+			return c.UnbindMapping(ctx, agrirouter.EntityTypeParty, localID, ar, ep, tn)
 		}))
 
 	rootCmd.AddCommand(mdDeactivateCmd("party",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Party, error) {
-			return c.DeactivateParty(ctx, localID, ep, tn, br)
+			obj, err := c.DeactivateEntity(ctx, agrirouter.EntityTypeParty, localID, ep, tn, br)
+			if err != nil {
+				return nil, err
+			}
+			return obj.Party, nil
 		}))
 
 	rootCmd.AddCommand(mdRequestCmd("party",
 		func(ctx context.Context, c *agrirouter.Client, ep, tn, ar uuid.UUID) error {
-			return c.RequestParty(ctx, ep, tn, ar)
+			return c.RequestEntity(ctx, agrirouter.EntityTypeParty, ep, tn, ar)
 		}))
 }

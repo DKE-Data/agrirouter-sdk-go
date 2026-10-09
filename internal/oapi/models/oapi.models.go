@@ -203,6 +203,21 @@ func (e InitialLoadState) Valid() bool {
 	}
 }
 
+// Defines values for MasterdataResetEventDataEventType.
+const (
+	RESETMASTERDATASYNC MasterdataResetEventDataEventType = "RESET_MASTERDATA_SYNC"
+)
+
+// Valid indicates whether the value is a known member of the MasterdataResetEventDataEventType enum.
+func (e MasterdataResetEventDataEventType) Valid() bool {
+	switch e {
+	case RESETMASTERDATASYNC:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MessageReceivedEventDataEventType.
 const (
 	MessageReceivedEventDataEventTypeMESSAGERECEIVED MessageReceivedEventDataEventType = "MESSAGE_RECEIVED"
@@ -212,6 +227,21 @@ const (
 func (e MessageReceivedEventDataEventType) Valid() bool {
 	switch e {
 	case MessageReceivedEventDataEventTypeMESSAGERECEIVED:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RouteChangedEventDataEventType.
+const (
+	ROUTECHANGED RouteChangedEventDataEventType = "ROUTE_CHANGED"
+)
+
+// Valid indicates whether the value is a known member of the RouteChangedEventDataEventType enum.
+func (e RouteChangedEventDataEventType) Valid() bool {
+	switch e {
+	case ROUTECHANGED:
 		return true
 	default:
 		return false
@@ -487,6 +517,11 @@ type EndpointsListChangedEventDataEventType string
 // EndpointsListResponse defines model for EndpointsListResponse.
 type EndpointsListResponse struct {
 	Endpoints []TenantEndpointInfo `json:"endpoints"`
+}
+
+// Entity Any master-data entity. Used only on the event stream, which carries every opted-in entity type over a single connection; the typed resources use the concrete schemas directly.
+type Entity struct {
+	union json.RawMessage
 }
 
 // EntityReference A reference to another entity by canonical and/or local id. On send either identifier suffices: a local_id is resolved against the sender's own mapping, and is rejected if the target has not been sent yet. On delivery agrirouter populates agrirouter_id, since the sender's local_id does not resolve in the receiver's namespace.
@@ -930,6 +965,31 @@ type MasterdataError struct {
 	Message string `json:"message"`
 }
 
+// MasterdataResetEventData Data structure for `RESET_MASTERDATA_SYNC` events on `/masterdata/events`. It states that the user wiped the tenant's master data in agrirouter: every canonical object, every identifier mapping, every masterdata route and every initial-load state of the tenant is discarded. Only a user can do this; no operation of this API does.
+//
+// Sent to every application that holds a binding in the tenant or has an endpoint there that has taken part at some point. The application MUST discard every binding and stored revision it holds in the tenant, and treat the listed endpoints as opted into nothing. It MUST NOT delete or deactivate its local records. No `ROUTE_CHANGED` is issued for the listed endpoints.
+//
+// agrirouter delivers it before any later event of the tenant. The application MUST durably store a position at or past it before taking part in that tenant's initial load again, so that a repeat can only arrive while nothing is bound and handling it again changes nothing.
+type MasterdataResetEventData struct {
+	// Endpoints The application's endpoints in the tenant, each now opted into nothing. Empty where the application has no endpoint left there and is told only because it held bindings.
+	Endpoints []struct {
+		// EndpointId The agrirouter identifier of the endpoint.
+		EndpointId openapi_types.UUID `json:"endpoint_id"`
+
+		// ExternalId The application's own identifier for the same endpoint.
+		ExternalId string `json:"external_id"`
+	} `json:"endpoints"`
+
+	// EventType Discriminator; matches the `event:` line.
+	EventType MasterdataResetEventDataEventType `json:"event_type"`
+
+	// TenantId The tenant whose master data was wiped.
+	TenantId openapi_types.UUID `json:"tenant_id"`
+}
+
+// MasterdataResetEventDataEventType Discriminator; matches the `event:` line.
+type MasterdataResetEventDataEventType string
+
 // Membership A role held by a person in one organization.
 type Membership struct {
 	// MemberRole [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). A role drawn from the ADAPT Role data type.
@@ -1168,6 +1228,36 @@ type RevisionConflictError struct {
 //
 // Examples: UNKNOWN, AUTHORIZER, CROP_ADVISOR, CUSTOMER, CUSTOM_SERVICE_PROVIDER, DATA_SERVICES_PROVIDER, END_USER, FARM_MANAGER, FINANCIER, STATIONARY_ASSET_SUPPLIER, GOVERNMENT_AGENCY, GROWER, INPUT_SUPPLIER, INSURANCE_AGENT, IRRIGATION_MANAGER, LABORER, MARKET_ADVISOR, MARKET_PROVIDER, MOBILE_ASSET_SUPPLIER, OPERATOR, OWNER, TRANSPORTER, COLLECTOR
 type Role = string
+
+// RouteChangedEventData Data structure for `ROUTE_CHANGED` events on `/masterdata/events`. It states which entity types the user has selected for one of the application's endpoints.
+// One event covers every way the selection changes: the endpoint given a masterdata route for the first time, a further entity type selected on one already routed, a type deselected, and the last one deselected or the route removed.
+// The event may arrive more than once for one move and MUST be handled idempotently.
+type RouteChangedEventData struct {
+	// ChangedAt When the selection reached this state. Not a delivery timestamp: it is unchanged when the same event is delivered again, and a repeat carrying an older value than one already applied for this endpoint can be discarded.
+	//
+	//
+	// Examples: 2026-07-14T09:20:00Z
+	ChangedAt time.Time `json:"changed_at"`
+
+	// EndpointId The agrirouter identifier of the endpoint whose selection changed.
+	EndpointId openapi_types.UUID `json:"endpoint_id"`
+
+	// EntityTypes The endpoint's selection as it stands after the change, stated in full rather than as a delta.
+	// An empty array is a statement and not an omission: it says the endpoint exchanges nothing, because the user deselected the last entity type or the route was removed.
+	//
+	//
+	// Examples: [{"entity_type":"party"},{"entity_type":"farm"}]
+	EntityTypes []EntityTypeToggle `json:"entity_types"`
+
+	// EventType Discriminator; matches the `event:` line.
+	EventType RouteChangedEventDataEventType `json:"event_type"`
+
+	// ExternalId The application's own identifier for the same endpoint.
+	ExternalId string `json:"external_id"`
+}
+
+// RouteChangedEventDataEventType Discriminator; matches the `event:` line.
+type RouteChangedEventDataEventType string
 
 // RoutedEndpoints Route-derived information for this endpoint.
 //
@@ -1733,6 +1823,179 @@ type RequestPartyJSONRequestBody = EntityRequest
 
 // PutPartyJSONRequestBody defines body for PutParty for application/json ContentType.
 type PutPartyJSONRequestBody = Party
+
+// AsParty returns the union data inside the Entity as a Party
+func (t Entity) AsParty() (Party, error) {
+	var body Party
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromParty overwrites any union data inside the Entity as the provided Party
+func (t *Entity) FromParty(v Party) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"party"}`))
+	t.union = b
+	return err
+}
+
+// MergeParty performs a merge with any union data inside the Entity, using the provided Party
+func (t *Entity) MergeParty(v Party) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"party"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsFarm returns the union data inside the Entity as a Farm
+func (t Entity) AsFarm() (Farm, error) {
+	var body Farm
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFarm overwrites any union data inside the Entity as the provided Farm
+func (t *Entity) FromFarm(v Farm) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"farm"}`))
+	t.union = b
+	return err
+}
+
+// MergeFarm performs a merge with any union data inside the Entity, using the provided Farm
+func (t *Entity) MergeFarm(v Farm) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"farm"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsField returns the union data inside the Entity as a Field
+func (t Entity) AsField() (Field, error) {
+	var body Field
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromField overwrites any union data inside the Entity as the provided Field
+func (t *Entity) FromField(v Field) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"field"}`))
+	t.union = b
+	return err
+}
+
+// MergeField performs a merge with any union data inside the Entity, using the provided Field
+func (t *Entity) MergeField(v Field) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"field"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsFieldBoundary returns the union data inside the Entity as a FieldBoundary
+func (t Entity) AsFieldBoundary() (FieldBoundary, error) {
+	var body FieldBoundary
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFieldBoundary overwrites any union data inside the Entity as the provided FieldBoundary
+func (t *Entity) FromFieldBoundary(v FieldBoundary) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"fieldBoundary"}`))
+	t.union = b
+	return err
+}
+
+// MergeFieldBoundary performs a merge with any union data inside the Entity, using the provided FieldBoundary
+func (t *Entity) MergeFieldBoundary(v FieldBoundary) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"fieldBoundary"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Entity) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"type"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t Entity) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "farm":
+		return t.AsFarm()
+	case "field":
+		return t.AsField()
+	case "fieldBoundary":
+		return t.AsFieldBoundary()
+	case "party":
+		return t.AsParty()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t Entity) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Entity) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // AsEntityReference0 returns the union data inside the EntityReference as a EntityReference0
 func (t EntityReference) AsEntityReference0() (EntityReference0, error) {
