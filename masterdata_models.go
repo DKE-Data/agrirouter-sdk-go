@@ -1,6 +1,8 @@
 package agrirouter
 
 import (
+	"slices"
+
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/agmasync"
 	internal_models "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
 )
@@ -141,3 +143,15 @@ func DeclareCapabilities(types ...EntityType) MasterdataConfig {
 // SelectedTypes reads the entity types a MasterdataEventRouteChanged frame says
 // the user has selected, in dependency order.
 func SelectedTypes(s RouteChangedEventData) []EntityType { return agmasync.SelectedTypes(s) }
+
+// DependencyOrder lists every entity type so that a referenced type precedes the
+// types that reference it: the order a participant sends in. The result is a
+// copy the caller may modify.
+func DependencyOrder() []EntityType { return slices.Clone(agmasync.DependencyOrder) }
+
+// IsRepeatLoad reports whether the canonical set now arriving is one this
+// endpoint has been sent before. A participant must not infer a first
+// connection from the arrival of a set: it would create local duplicates of data
+// it already holds. The marker survives an opt-out, a disconnection, and endpoint
+// removal; a masterdata reset discards it, so the load after one is a first load.
+func IsRepeatLoad(s InitialLoadStatus) bool { return agmasync.IsRepeatLoad(s) }

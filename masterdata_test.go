@@ -127,7 +127,7 @@ func TestMasterdataErrorsCarryTheServersMessage(t *testing.T) {
 	t.Run("stream refused", func(t *testing.T) {
 		client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusForbidden,
 			body: `{"message":"endpoint not opted into field_boundary"}`})
-		err := client.StreamMasterdataEvents(ctx, "", func(context.Context, *agrirouter.MasterdataEvent) {})
+		err := client.StreamMasterdataEvents(ctx, "", func(context.Context, *agrirouter.MasterdataEvent) error { return nil })
 		assert.ErrorIs(t, err, agrirouter.ErrMasterdataForbidden)
 		var apiErr *agrirouter.MasterdataAPIError
 		require.True(t, errors.As(err, &apiErr))
@@ -147,8 +147,9 @@ func TestMasterdataErrorsCarryTheServersMessage(t *testing.T) {
 
 func TestStreamRejectsAResponseThatIsNotAnEventStream(t *testing.T) {
 	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: `{"hello":"proxy"}`})
-	err := client.StreamMasterdataEvents(context.Background(), "", func(context.Context, *agrirouter.MasterdataEvent) {
+	err := client.StreamMasterdataEvents(context.Background(), "", func(context.Context, *agrirouter.MasterdataEvent) error {
 		t.Fatal("no frame expected")
+		return nil
 	})
 	require.ErrorIs(t, err, agrirouter.ErrNotEventStream)
 	assert.ErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
@@ -228,8 +229,9 @@ func TestStreamMasterdataEventsDecodesFrames(t *testing.T) {
 	client, rec := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frames, contentType: "text/event-stream"})
 
 	var got []agrirouter.MasterdataEvent
-	err := client.StreamMasterdataEvents(context.Background(), "pos-0", func(_ context.Context, ev *agrirouter.MasterdataEvent) {
+	err := client.StreamMasterdataEvents(context.Background(), "pos-0", func(_ context.Context, ev *agrirouter.MasterdataEvent) error {
 		got = append(got, *ev)
+		return nil
 	})
 	// The live stream never ends in an orderly way: its end is reported, so the
 	// participant reconnects rather than silently stops receiving changes.
@@ -257,13 +259,55 @@ func TestStreamMasterdataEventsReadsFramesLargerThan64KB(t *testing.T) {
 	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frames, contentType: "text/event-stream"})
 
 	var got []agrirouter.MasterdataEvent
-	err := client.StreamMasterdataEvents(context.Background(), "", func(_ context.Context, ev *agrirouter.MasterdataEvent) {
+	err := client.StreamMasterdataEvents(context.Background(), "", func(_ context.Context, ev *agrirouter.MasterdataEvent) error {
 		got = append(got, *ev)
+		return nil
 	})
 	require.ErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
 	require.Len(t, got, 1)
 	require.NotNil(t, got[0].Farm)
 	assert.Len(t, got[0].Farm.Name, len(name))
+}
+
+var errApply = errors.New("not applied")
+
+func TestStreamsStopAtTheHandlersError(t *testing.T) {
+	frames := "id: pos-1\nevent: MASTERDATA_CHANGED\n" +
+		`data: {"type":"farm","agrirouter_id":"33333333-3333-3333-3333-333333333333","name":"Hof","revision":2}` + "\n\n" +
+		"id: pos-2\nevent: MASTERDATA_CHANGED\n" +
+		`data: {"type":"farm","agrirouter_id":"44444444-4444-4444-4444-444444444444","name":"Gut","revision":1}` + "\n\n"
+	streams := map[string]func(*agrirouter.Client, agrirouter.MasterdataEventHandler) error{
+		"live": func(c *agrirouter.Client, h agrirouter.MasterdataEventHandler) error {
+			return c.StreamMasterdataEvents(context.Background(), "", h)
+		},
+		"initial load": func(c *agrirouter.Client, h agrirouter.MasterdataEventHandler) error {
+			return c.StreamInitialLoadEvents(context.Background(), "ext-1", tenantID, h)
+		},
+	}
+	for name, stream := range streams {
+		t.Run(name, func(t *testing.T) {
+			client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frames, contentType: "text/event-stream"})
+
+			var got []string
+			err := stream(client, func(_ context.Context, ev *agrirouter.MasterdataEvent) error {
+				got = append(got, ev.Farm.Name)
+				return errApply
+			})
+			// The handler's own error, as is: the participant failed, not the call.
+			require.ErrorIs(t, err, errApply)
+			assert.NotErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
+			assert.NotErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
+			assert.Equal(t, []string{"Hof"}, got, "no frame may follow one that was not applied")
+		})
+	}
+}
+
+func TestDependencyOrderIsACopy(t *testing.T) {
+	order := agrirouter.DependencyOrder()
+	assert.Equal(t, []agrirouter.EntityType{agrirouter.EntityTypeParty, agrirouter.EntityTypeFarm,
+		agrirouter.EntityTypeField, agrirouter.EntityTypeFieldBoundary}, order)
+	order[0] = agrirouter.EntityTypeFieldBoundary
+	assert.Equal(t, agrirouter.EntityTypeParty, agrirouter.DependencyOrder()[0])
 }
 
 func TestWithMasterdataMaxEventSizeBoundsFrames(t *testing.T) {
@@ -273,8 +317,9 @@ func TestWithMasterdataMaxEventSizeBoundsFrames(t *testing.T) {
 	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frame, contentType: "text/event-stream"},
 		agrirouter.WithMasterdataMaxEventSize(1024))
 
-	err := client.StreamMasterdataEvents(context.Background(), "", func(context.Context, *agrirouter.MasterdataEvent) {
+	err := client.StreamMasterdataEvents(context.Background(), "", func(context.Context, *agrirouter.MasterdataEvent) error {
 		t.Fatal("a frame over the configured bound must not be delivered")
+		return nil
 	})
 	require.ErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
 	assert.NotErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
@@ -290,7 +335,7 @@ func TestStreamMasterdataEventsReturnsContextErrorOnCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	err := client.StreamMasterdataEvents(ctx, "", func(context.Context, *agrirouter.MasterdataEvent) {})
+	err := client.StreamMasterdataEvents(ctx, "", func(context.Context, *agrirouter.MasterdataEvent) error { return nil })
 	require.ErrorIs(t, err, context.Canceled)
 	assert.NotErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
 }
@@ -301,9 +346,11 @@ func TestStreamInitialLoadEventsEndsWithoutError(t *testing.T) {
 	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frames, contentType: "text/event-stream"})
 
 	var got []agrirouter.MasterdataEvent
-	err := client.StreamInitialLoadEvents(context.Background(), "ext-1", tenantID, func(_ context.Context, ev *agrirouter.MasterdataEvent) {
-		got = append(got, *ev)
-	})
+	err := client.StreamInitialLoadEvents(context.Background(), "ext-1", tenantID,
+		func(_ context.Context, ev *agrirouter.MasterdataEvent) error {
+			got = append(got, *ev)
+			return nil
+		})
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 }

@@ -199,6 +199,12 @@ func (c *Client) ReportUserAttention(
 // MasterdataEvent is one decoded frame of a master-data stream.
 type MasterdataEvent = agmasync.Event
 
+// MasterdataEventHandler receives one frame of a master-data stream. Returning
+// an error stops the stream: it is closed and the error returned from the
+// Stream call as is, so a participant that fails to durably apply a frame stops
+// before the next one and resumes from its last applied position.
+type MasterdataEventHandler func(ctx context.Context, event *MasterdataEvent) error
+
 // MasterdataObject is a canonical object of any entity type, decoded into its
 // model: Envelope.Type says which of Party, Farm, Field, and FieldBoundary is
 // set.
@@ -213,16 +219,18 @@ type MasterdataEnvelope = agmasync.Envelope
 // durably applied frame; pass "" for a first connection, which redelivers
 // everything the application is entitled to and ends with a CAUGHT_UP frame.
 //
-// This call blocks until the context is canceled, the stream ends, or an error
-// occurs, so it is typically run in its own goroutine. It never returns nil: on
-// cancellation it returns the context's error, and when the connection drops or
-// agrirouter closes it, ErrMasterdataStreamEnded. The SDK does not reconnect on
-// its own, since only the participant knows the last frame it durably applied;
-// call again with that frame's ID.
+// This call blocks until the context is canceled, the stream ends, the handler
+// fails, or an error occurs, so it is typically run in its own goroutine. It
+// never returns nil: on cancellation it returns the context's error, when the
+// handler returns an error it closes the stream and returns that error as is,
+// and when the connection drops or agrirouter closes it,
+// ErrMasterdataStreamEnded. The SDK does not reconnect on its own, since only
+// the participant knows the last frame it durably applied; call again with that
+// frame's ID.
 func (c *Client) StreamMasterdataEvents(
 	ctx context.Context,
 	lastEventID string,
-	handler func(ctx context.Context, event *MasterdataEvent),
+	handler MasterdataEventHandler,
 ) error {
 	s, err := agmasync.Events(ctx, c.oapiClient, lastEventID)
 	if err := c.consume(ctx, s, err, handler); err != nil {
@@ -236,26 +244,29 @@ func (c *Client) StreamMasterdataEvents(
 // the response once the whole set has been sent; a dropped connection is recovered
 // by requesting the set again from the beginning (this stream carries no position).
 //
-// This call blocks until the context is canceled, the stream ends, or an error
-// occurs, so it is typically run in its own goroutine. On cancellation it
-// returns the context's error. A nil return means the response ended, which a
-// dropped connection does exactly as an orderly completion does, so it does not
-// prove the set arrived: consult GetInitialLoadStatus.
+// This call blocks until the context is canceled, the stream ends, the handler
+// fails, or an error occurs, so it is typically run in its own goroutine. On
+// cancellation it returns the context's error, and when the handler returns an
+// error it closes the stream and returns that error as is. A nil return means
+// the response ended, which a dropped connection does exactly as an orderly
+// completion does, so it does not prove the set arrived: consult
+// GetInitialLoadStatus.
 func (c *Client) StreamInitialLoadEvents(
 	ctx context.Context,
 	externalEndpointID string,
 	tenantID uuid.UUID,
-	handler func(ctx context.Context, event *MasterdataEvent),
+	handler MasterdataEventHandler,
 ) error {
 	s, err := agmasync.InitialLoadEvents(ctx, c.oapiClient, externalEndpointID, tenantID)
 	return c.consume(ctx, s, err, handler)
 }
 
 // consume feeds every frame of s to handler. It returns nil when the stream
-// ends, and the context's error when the context was canceled.
+// ends, the context's error when the context was canceled, and the handler's
+// error, unwrapped, when the handler failed.
 func (c *Client) consume(
 	ctx context.Context, s *agmasync.Stream, err error,
-	handler func(ctx context.Context, event *MasterdataEvent),
+	handler MasterdataEventHandler,
 ) error {
 	if err != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
@@ -272,7 +283,9 @@ func (c *Client) consume(
 			}
 			return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 		}
-		handler(ctx, &ev)
+		if err := handler(ctx, &ev); err != nil {
+			return err
+		}
 	}
 	return ctx.Err()
 }

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func printMasterdataFrame(_ context.Context, frame *agrirouter.MasterdataEvent) {
+func printMasterdataFrame(_ context.Context, frame *agrirouter.MasterdataEvent) error {
 	var data any
 	switch {
 	case frame.Party != nil:
@@ -27,6 +27,7 @@ func printMasterdataFrame(_ context.Context, frame *agrirouter.MasterdataEvent) 
 	}
 	b, _ := json.Marshal(data)
 	fmt.Printf("[%s] id=%s\n%s\n", frame.Type, frame.ID, b)
+	return nil
 }
 
 var streamMasterdataEventsCmd = &cobra.Command{
