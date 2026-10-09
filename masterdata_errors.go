@@ -45,6 +45,12 @@ var (
 	// ErrUnknownEntityType is raised locally for an entity type this SDK does
 	// not know.
 	ErrUnknownEntityType = agmasync.ErrUnknownEntityType
+
+	// ErrMasterdataStreamEnded is returned by StreamMasterdataEvents when the
+	// live stream ends without the context being canceled: the connection
+	// dropped or agrirouter closed it. Reconnect from the last durably applied
+	// position.
+	ErrMasterdataStreamEnded = errors.New("master-data stream ended")
 )
 
 // RevisionConflict is the error of a 412: a rejected write and the revision

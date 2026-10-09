@@ -166,7 +166,10 @@ func TestStreamMasterdataEventsDecodesFrames(t *testing.T) {
 	err := client.StreamMasterdataEvents(context.Background(), "pos-0", func(_ context.Context, ev *agrirouter.MasterdataEvent) {
 		got = append(got, *ev)
 	})
-	require.NoError(t, err)
+	// The live stream never ends in an orderly way: its end is reported, so the
+	// participant reconnects rather than silently stops receiving changes.
+	require.ErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
+	assert.ErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
 
 	assert.Equal(t, "/masterdata/events", rec.path)
 	assert.Equal(t, "pos-0", rec.headers.Get("Last-Event-ID"))
@@ -178,6 +181,29 @@ func TestStreamMasterdataEventsDecodesFrames(t *testing.T) {
 	assert.Equal(t, "Hof", got[0].Farm.Name)
 	assert.Equal(t, agrirouter.MasterdataEventCaughtUp, got[1].Type)
 	assert.False(t, got[1].HasEntity())
+}
+
+func TestStreamMasterdataEventsReturnsContextErrorOnCancel(t *testing.T) {
+	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: "", contentType: "text/event-stream"})
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	err := client.StreamMasterdataEvents(ctx, "", func(context.Context, *agrirouter.MasterdataEvent) {})
+	require.ErrorIs(t, err, context.Canceled)
+	assert.NotErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
+}
+
+func TestStreamInitialLoadEventsEndsWithoutError(t *testing.T) {
+	frames := "event: MASTERDATA_CHANGED\n" +
+		`data: {"type":"farm","agrirouter_id":"33333333-3333-3333-3333-333333333333","name":"Hof","revision":2}` + "\n\n"
+	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frames, contentType: "text/event-stream"})
+
+	var got []agrirouter.MasterdataEvent
+	err := client.StreamInitialLoadEvents(context.Background(), "ext-1", tenantID, func(_ context.Context, ev *agrirouter.MasterdataEvent) {
+		got = append(got, *ev)
+	})
+	require.NoError(t, err)
+	require.Len(t, got, 1)
 }
 
 func TestMasterdataUsesTheClientsRequestEditors(t *testing.T) {

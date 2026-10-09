@@ -213,15 +213,22 @@ type MasterdataEnvelope = agmasync.Envelope
 // durably applied frame; pass "" for a first connection, which redelivers
 // everything the application is entitled to and ends with a CAUGHT_UP frame.
 //
-// This call blocks until the context is canceled or an error occurs, so it is
-// typically run in its own goroutine; the terminal error is returned.
+// This call blocks until the context is canceled, the stream ends, or an error
+// occurs, so it is typically run in its own goroutine. It never returns nil: on
+// cancellation it returns the context's error, and when the connection drops or
+// agrirouter closes it, ErrMasterdataStreamEnded. The SDK does not reconnect on
+// its own, since only the participant knows the last frame it durably applied;
+// call again with that frame's ID.
 func (c *Client) StreamMasterdataEvents(
 	ctx context.Context,
 	lastEventID string,
 	handler func(ctx context.Context, event *MasterdataEvent),
 ) error {
 	s, err := agmasync.Events(ctx, c.oapiClient, lastEventID)
-	return consume(ctx, s, err, handler)
+	if err := consume(ctx, s, err, handler); err != nil {
+		return err
+	}
+	return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, ErrMasterdataStreamEnded)
 }
 
 // StreamInitialLoadEvents streams every object of every opted-in entity type the
@@ -229,8 +236,11 @@ func (c *Client) StreamMasterdataEvents(
 // the response once the whole set has been sent; a dropped connection is recovered
 // by requesting the set again from the beginning (this stream carries no position).
 //
-// This call blocks until the context is canceled or an error occurs, so it is
-// typically run in its own goroutine; the terminal error is returned.
+// This call blocks until the context is canceled, the stream ends, or an error
+// occurs, so it is typically run in its own goroutine. On cancellation it
+// returns the context's error. A nil return means the response ended, which a
+// dropped connection does exactly as an orderly completion does, so it does not
+// prove the set arrived: consult GetInitialLoadStatus.
 func (c *Client) StreamInitialLoadEvents(
 	ctx context.Context,
 	externalEndpointID string,
@@ -241,16 +251,24 @@ func (c *Client) StreamInitialLoadEvents(
 	return consume(ctx, s, err, handler)
 }
 
+// consume feeds every frame of s to handler. It returns nil when the stream
+// ends, and the context's error when the context was canceled.
 func consume(ctx context.Context, s *agmasync.Stream, err error, handler func(ctx context.Context, event *MasterdataEvent)) error {
 	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return ctxErr
+		}
 		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
 	defer func() { _ = s.Close() }()
 	for ev, err := range s.Events() {
 		if err != nil {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				return ctxErr
+			}
 			return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 		}
 		handler(ctx, &ev)
 	}
-	return nil
+	return ctx.Err()
 }
