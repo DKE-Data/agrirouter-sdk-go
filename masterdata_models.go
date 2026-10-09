@@ -1,6 +1,7 @@
 package agrirouter
 
 import (
+	"github.com/DKE-Data/agrirouter-sdk-go/internal/agmasync"
 	internal_models "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
 )
 
@@ -19,6 +20,13 @@ type PersonDetails = internal_models.PersonDetails
 
 // OrganizationDetails are the details of a party that is an organization.
 type OrganizationDetails = internal_models.OrganizationDetails
+
+// RouteChangedEventData is the payload of a MasterdataEventRouteChanged frame:
+// the entity types the user has selected on one endpoint.
+type RouteChangedEventData = internal_models.RouteChangedEventData
+
+// MasterdataResetEventData is the payload of a MasterdataEventReset frame.
+type MasterdataResetEventData = internal_models.MasterdataResetEventData
 
 // Farm is a master-data farm, optionally held by a party and worked by partners.
 type Farm = internal_models.Farm
@@ -103,3 +111,33 @@ const (
 	// InitialLoadStateCompleted means steady-state synchronization applies.
 	InitialLoadStateCompleted = internal_models.COMPLETED
 )
+
+// EntityType names a kind of master-data object.
+type EntityType = agmasync.EntityType
+
+// The master-data entity types.
+const (
+	EntityTypeParty         = agmasync.TypeParty
+	EntityTypeFarm          = agmasync.TypeFarm
+	EntityTypeField         = agmasync.TypeField
+	EntityTypeFieldBoundary = agmasync.TypeFieldBoundary
+)
+
+// Master-data stream event types
+const (
+	MasterdataEventChanged      = agmasync.EventMasterdataChanged
+	MasterdataEventDeactivated  = agmasync.EventMasterdataDeactivated
+	MasterdataEventCaughtUp     = agmasync.EventCaughtUp
+	MasterdataEventRouteChanged = agmasync.EventRouteChanged
+	MasterdataEventReset        = agmasync.EventMasterdataReset
+)
+
+// DeclareCapabilities builds the MasterdataConfig an endpoint declares on
+// PutEndpoint, closed over entity dependencies.
+func DeclareCapabilities(types ...EntityType) MasterdataConfig {
+	return agmasync.DeclareCapabilities(types...)
+}
+
+// SelectedTypes reads the entity types a MasterdataEventRouteChanged frame says
+// the user has selected, in dependency order.
+func SelectedTypes(s RouteChangedEventData) []EntityType { return agmasync.SelectedTypes(s) }

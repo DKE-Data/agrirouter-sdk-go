@@ -2,25 +2,79 @@ package agrirouter
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
-	"net/http"
 
-	"github.com/DKE-Data/agrirouter-sdk-go/internal/oapi"
-	internal_models "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
+	"github.com/DKE-Data/agrirouter-sdk-go/internal/agmasync"
 	"github.com/google/uuid"
-	"github.com/tmaxmax/go-sse"
 )
 
-// ErrMasterdataCallFailed is returned when a master-data (AgmaSync) API call fails.
-var ErrMasterdataCallFailed = errors.New("master-data API call failed")
+// ------------------------------------------------------------- any entity type
 
-func (c *Client) masterdataErr(res *http.Response, body []byte) error {
-	return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, httpResponseToErr(res, body))
+// The operations that carry only identifiers take the entity type as a value:
+// a participant handling every type holds it as data, as Envelope.Type on a
+// delivery or in its own store and send queue.
+
+// BindMapping declares that the canonical object agrirouterID of entityType is
+// the one this endpoint already knows as localID, so a later PUT under that
+// localID updates it instead of creating a duplicate.
+func (c *Client) BindMapping(
+	ctx context.Context,
+	entityType EntityType,
+	localID string,
+	agrirouterID, endpointID, tenantID uuid.UUID,
+) error {
+	if err := agmasync.Bind(ctx, c.oapiClient, endpointID, tenantID, entityType, localID, agrirouterID); err != nil {
+		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
+	}
+	return nil
 }
 
-// ---------------------------------------------------------------------- parties
+// UnbindMapping declares that this endpoint no longer holds the canonical
+// object of entityType under localID. The canonical object itself is untouched.
+func (c *Client) UnbindMapping(
+	ctx context.Context,
+	entityType EntityType,
+	localID string,
+	agrirouterID, endpointID, tenantID uuid.UUID,
+) error {
+	if err := agmasync.Unbind(ctx, c.oapiClient, endpointID, tenantID, entityType, localID, agrirouterID); err != nil {
+		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
+	}
+	return nil
+}
+
+// DeactivateEntity signals that the entity of entityType under localID was
+// deactivated in the source system. The canonical object is kept but marked
+// inactive; the result is the canonical object as it now stands.
+func (c *Client) DeactivateEntity(
+	ctx context.Context,
+	entityType EntityType,
+	localID string,
+	endpointID, tenantID uuid.UUID,
+	baseRevision *int,
+) (*MasterdataObject, error) {
+	res, err := agmasync.Deactivate(ctx, c.oapiClient, endpointID, tenantID, entityType, localID, baseRevision)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
+	}
+	return &res, nil
+}
+
+// RequestEntity refetches an object of entityType the calling endpoint is
+// entitled to but does not currently hold. The object arrives asynchronously on the
+// master-data event stream (see StreamMasterdataEvents).
+func (c *Client) RequestEntity(
+	ctx context.Context,
+	entityType EntityType,
+	endpointID, tenantID, agrirouterID uuid.UUID,
+) error {
+	if err := agmasync.Request(ctx, c.oapiClient, endpointID, tenantID, entityType, agrirouterID); err != nil {
+		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
+	}
+	return nil
+}
+
+// ------------------------------------------------------------------------ writes
 
 // PutParty sends (creates or updates) a party identified by the
 // application's own localID. On an update to an existing object, baseRevision
@@ -32,108 +86,14 @@ func (c *Client) PutParty(
 	baseRevision *int,
 	party *Party,
 ) (*Party, error) {
-	res, err := c.oapiClient.PutPartyWithResponse(ctx, localID, &internal_models.PutPartyParams{
-		XAgrirouterEndpointId:   endpointID,
-		XAgrirouterTenantId:     tenantID,
-		XAgrirouterBaseRevision: baseRevision,
-	}, *party)
+	v := *party
+	v.LocalId = &localID
+	res, err := agmasync.PutParty(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	if res.JSON201 != nil {
-		return res.JSON201, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
+	return &res, nil
 }
-
-// BindPartyMapping declares that the canonical party agrirouterID
-// is the one this endpoint already knows as localID, so a later PUT under that
-// localID updates it instead of creating a duplicate.
-func (c *Client) BindPartyMapping(
-	ctx context.Context,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
-) error {
-	res, err := c.oapiClient.BindPartyMappingWithResponse(ctx, localID, agrirouterID, &internal_models.BindPartyMappingParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusNoContent {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// UnbindPartyMapping declares that this endpoint no longer holds the
-// canonical party under localID. The canonical object itself is untouched.
-func (c *Client) UnbindPartyMapping(
-	ctx context.Context,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
-) error {
-	params := &internal_models.UnbindPartyMappingParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	}
-	res, err := c.oapiClient.UnbindPartyMappingWithResponse(ctx, localID, agrirouterID, params)
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusNoContent {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// DeactivateParty signals that the party was deactivated in the
-// source system. The canonical object is kept but marked inactive.
-func (c *Client) DeactivateParty(
-	ctx context.Context,
-	localID string,
-	endpointID, tenantID uuid.UUID,
-	baseRevision *int,
-) (*Party, error) {
-	res, err := c.oapiClient.DeactivatePartyWithResponse(ctx, localID, &internal_models.DeactivatePartyParams{
-		XAgrirouterEndpointId:   endpointID,
-		XAgrirouterTenantId:     tenantID,
-		XAgrirouterBaseRevision: baseRevision,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// RequestParty refetches a party the calling endpoint is entitled
-// to but does not currently hold. The object arrives asynchronously on the
-// master-data event stream (see StreamMasterdataEvents).
-func (c *Client) RequestParty(
-	ctx context.Context,
-	endpointID, tenantID, agrirouterID uuid.UUID,
-) error {
-	res, err := c.oapiClient.RequestPartyWithResponse(ctx, &internal_models.RequestPartyParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	}, internal_models.EntityRequest{AgrirouterId: agrirouterID})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusAccepted {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// ------------------------------------------------------------------------ farms
 
 // PutFarm sends (creates or updates) a farm. See PutParty for baseRevision.
 func (c *Client) PutFarm(
@@ -143,101 +103,14 @@ func (c *Client) PutFarm(
 	baseRevision *int,
 	farm *Farm,
 ) (*Farm, error) {
-	res, err := c.oapiClient.PutFarmWithResponse(ctx, localID, &internal_models.PutFarmParams{
-		XAgrirouterEndpointId:   endpointID,
-		XAgrirouterTenantId:     tenantID,
-		XAgrirouterBaseRevision: baseRevision,
-	}, *farm)
+	v := *farm
+	v.LocalId = &localID
+	res, err := agmasync.PutFarm(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	if res.JSON201 != nil {
-		return res.JSON201, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
+	return &res, nil
 }
-
-// BindFarmMapping binds a local identifier to an existing farm. See BindPartyMapping.
-func (c *Client) BindFarmMapping(
-	ctx context.Context,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
-) error {
-	res, err := c.oapiClient.BindFarmMappingWithResponse(ctx, localID, agrirouterID, &internal_models.BindFarmMappingParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusNoContent {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// UnbindFarmMapping declares that this endpoint no longer holds a farm. See UnbindPartyMapping.
-func (c *Client) UnbindFarmMapping(
-	ctx context.Context,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
-) error {
-	res, err := c.oapiClient.UnbindFarmMappingWithResponse(ctx, localID, agrirouterID, &internal_models.UnbindFarmMappingParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusNoContent {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// DeactivateFarm deactivates a farm. See DeactivateParty.
-func (c *Client) DeactivateFarm(
-	ctx context.Context,
-	localID string,
-	endpointID, tenantID uuid.UUID,
-	baseRevision *int,
-) (*Farm, error) {
-	res, err := c.oapiClient.DeactivateFarmWithResponse(ctx, localID, &internal_models.DeactivateFarmParams{
-		XAgrirouterEndpointId:   endpointID,
-		XAgrirouterTenantId:     tenantID,
-		XAgrirouterBaseRevision: baseRevision,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// RequestFarm refetches a farm by its canonical id. See RequestParty.
-func (c *Client) RequestFarm(
-	ctx context.Context,
-	endpointID, tenantID, agrirouterID uuid.UUID,
-) error {
-	res, err := c.oapiClient.RequestFarmWithResponse(ctx, &internal_models.RequestFarmParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	}, internal_models.EntityRequest{AgrirouterId: agrirouterID})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusAccepted {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// ----------------------------------------------------------------------- fields
 
 // PutField sends (creates or updates) a field. See PutParty for baseRevision.
 func (c *Client) PutField(
@@ -247,101 +120,14 @@ func (c *Client) PutField(
 	baseRevision *int,
 	field *Field,
 ) (*Field, error) {
-	res, err := c.oapiClient.PutFieldWithResponse(ctx, localID, &internal_models.PutFieldParams{
-		XAgrirouterEndpointId:   endpointID,
-		XAgrirouterTenantId:     tenantID,
-		XAgrirouterBaseRevision: baseRevision,
-	}, *field)
+	v := *field
+	v.LocalId = &localID
+	res, err := agmasync.PutField(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	if res.JSON201 != nil {
-		return res.JSON201, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
+	return &res, nil
 }
-
-// BindFieldMapping binds a local identifier to an existing field. See BindPartyMapping.
-func (c *Client) BindFieldMapping(
-	ctx context.Context,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
-) error {
-	res, err := c.oapiClient.BindFieldMappingWithResponse(ctx, localID, agrirouterID, &internal_models.BindFieldMappingParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusNoContent {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// UnbindFieldMapping declares that this endpoint no longer holds a field. See UnbindPartyMapping.
-func (c *Client) UnbindFieldMapping(
-	ctx context.Context,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
-) error {
-	res, err := c.oapiClient.UnbindFieldMappingWithResponse(ctx, localID, agrirouterID, &internal_models.UnbindFieldMappingParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusNoContent {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// DeactivateField deactivates a field. See DeactivateParty.
-func (c *Client) DeactivateField(
-	ctx context.Context,
-	localID string,
-	endpointID, tenantID uuid.UUID,
-	baseRevision *int,
-) (*Field, error) {
-	res, err := c.oapiClient.DeactivateFieldWithResponse(ctx, localID, &internal_models.DeactivateFieldParams{
-		XAgrirouterEndpointId:   endpointID,
-		XAgrirouterTenantId:     tenantID,
-		XAgrirouterBaseRevision: baseRevision,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// RequestField refetches a field by its canonical id. See RequestParty.
-func (c *Client) RequestField(
-	ctx context.Context,
-	endpointID, tenantID, agrirouterID uuid.UUID,
-) error {
-	res, err := c.oapiClient.RequestFieldWithResponse(ctx, &internal_models.RequestFieldParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	}, internal_models.EntityRequest{AgrirouterId: agrirouterID})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusAccepted {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// -------------------------------------------------------------- field boundaries
 
 // PutFieldBoundary sends (creates or updates) a field boundary. See PutParty for baseRevision.
 func (c *Client) PutFieldBoundary(
@@ -351,99 +137,13 @@ func (c *Client) PutFieldBoundary(
 	baseRevision *int,
 	fieldBoundary *FieldBoundary,
 ) (*FieldBoundary, error) {
-	res, err := c.oapiClient.PutFieldBoundaryWithResponse(ctx, localID, &internal_models.PutFieldBoundaryParams{
-		XAgrirouterEndpointId:   endpointID,
-		XAgrirouterTenantId:     tenantID,
-		XAgrirouterBaseRevision: baseRevision,
-	}, *fieldBoundary)
+	v := *fieldBoundary
+	v.LocalId = &localID
+	res, err := agmasync.PutFieldBoundary(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	if res.JSON201 != nil {
-		return res.JSON201, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// BindFieldBoundaryMapping binds a local identifier to an existing field boundary. See BindPartyMapping.
-func (c *Client) BindFieldBoundaryMapping(
-	ctx context.Context,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
-) error {
-	res, err := c.oapiClient.BindFieldBoundaryMappingWithResponse(ctx, localID, agrirouterID, &internal_models.BindFieldBoundaryMappingParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusNoContent {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// UnbindFieldBoundaryMapping declares that this endpoint no longer holds a field boundary. See UnbindPartyMapping.
-func (c *Client) UnbindFieldBoundaryMapping(
-	ctx context.Context,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
-) error {
-	params := &internal_models.UnbindFieldBoundaryMappingParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	}
-	res, err := c.oapiClient.UnbindFieldBoundaryMappingWithResponse(ctx, localID, agrirouterID, params)
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusNoContent {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// DeactivateFieldBoundary deactivates a field boundary. See DeactivateParty.
-func (c *Client) DeactivateFieldBoundary(
-	ctx context.Context,
-	localID string,
-	endpointID, tenantID uuid.UUID,
-	baseRevision *int,
-) (*FieldBoundary, error) {
-	res, err := c.oapiClient.DeactivateFieldBoundaryWithResponse(ctx, localID, &internal_models.DeactivateFieldBoundaryParams{
-		XAgrirouterEndpointId:   endpointID,
-		XAgrirouterTenantId:     tenantID,
-		XAgrirouterBaseRevision: baseRevision,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
-}
-
-// RequestFieldBoundary refetches a field boundary by its canonical id. See RequestParty.
-func (c *Client) RequestFieldBoundary(
-	ctx context.Context,
-	endpointID, tenantID, agrirouterID uuid.UUID,
-) error {
-	res, err := c.oapiClient.RequestFieldBoundaryWithResponse(ctx, &internal_models.RequestFieldBoundaryParams{
-		XAgrirouterEndpointId: endpointID,
-		XAgrirouterTenantId:   tenantID,
-	}, internal_models.EntityRequest{AgrirouterId: agrirouterID})
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	if res.StatusCode() == http.StatusAccepted {
-		return nil
-	}
-	return c.masterdataErr(res.HTTPResponse, res.Body)
+	return &res, nil
 }
 
 // ---------------------------------------------------------------- initial load
@@ -456,16 +156,11 @@ func (c *Client) GetInitialLoadStatus(
 	externalEndpointID string,
 	tenantID uuid.UUID,
 ) (*InitialLoadStatus, error) {
-	res, err := c.oapiClient.GetInitialLoadStatusWithResponse(ctx, externalEndpointID, &internal_models.GetInitialLoadStatusParams{
-		XAgrirouterTenantId: tenantID,
-	})
+	s, err := agmasync.GetInitialLoadStatus(ctx, c.oapiClient, externalEndpointID, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
+	return &s, nil
 }
 
 // SetInitialLoadState advances the endpoint's initial-load state and, when
@@ -476,16 +171,11 @@ func (c *Client) SetInitialLoadState(
 	tenantID uuid.UUID,
 	update InitialLoadStateUpdate,
 ) (*InitialLoadStatus, error) {
-	res, err := c.oapiClient.SetInitialLoadStateWithResponse(ctx, externalEndpointID, &internal_models.SetInitialLoadStateParams{
-		XAgrirouterTenantId: tenantID,
-	}, update)
+	s, err := agmasync.SetInitialLoadState(ctx, c.oapiClient, externalEndpointID, tenantID, update)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
+	return &s, nil
 }
 
 // ReportUserAttention raises awaiting_user on the endpoint's initial-load
@@ -497,33 +187,25 @@ func (c *Client) ReportUserAttention(
 	externalEndpointID string,
 	tenantID uuid.UUID,
 ) (*InitialLoadStatus, error) {
-	res, err := c.oapiClient.ReportUserAttentionWithResponse(ctx, externalEndpointID, &internal_models.ReportUserAttentionParams{
-		XAgrirouterTenantId: tenantID,
-	})
+	s, err := agmasync.ReportUserAttention(ctx, c.oapiClient, externalEndpointID, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
-	if res.JSON200 != nil {
-		return res.JSON200, nil
-	}
-	return nil, c.masterdataErr(res.HTTPResponse, res.Body)
+	return &s, nil
 }
 
 // --------------------------------------------------------------- event streams
 
-// MasterdataEventFrame is a single Server-Sent Event frame from a master-data
-// stream. The frame payload is delivered verbatim: the master-data event schema
-// is not modeled by this API, so Data carries the raw JSON as sent by agrirouter.
-type MasterdataEventFrame struct {
-	// ID is the SSE id: field. For StreamMasterdataEvents, persist it once the
-	// frame is durably applied and send it back as lastEventID to resume; it is
-	// opaque and must not be interpreted, compared, or modified.
-	ID string
-	// Event is the SSE event: field (the event type), empty for an unnamed event.
-	Event string
-	// Data is the SSE data: field, the raw JSON payload of the event.
-	Data string
-}
+// MasterdataEvent is one decoded frame of a master-data stream.
+type MasterdataEvent = agmasync.Event
+
+// MasterdataObject is a canonical object of any entity type, decoded into its
+// model: Envelope.Type says which of Party, Farm, Field, and FieldBoundary is
+// set.
+type MasterdataObject = agmasync.Object
+
+// MasterdataEnvelope holds the fields common to every entity type.
+type MasterdataEnvelope = agmasync.Envelope
 
 // StreamMasterdataEvents opens the persistent master-data change stream for
 // every tenant and entity type the application is opted into, invoking handler
@@ -536,17 +218,10 @@ type MasterdataEventFrame struct {
 func (c *Client) StreamMasterdataEvents(
 	ctx context.Context,
 	lastEventID string,
-	handler func(ctx context.Context, frame *MasterdataEventFrame),
+	handler func(ctx context.Context, event *MasterdataEvent),
 ) error {
-	params := &internal_models.StreamMasterdataEventsParams{}
-	if lastEventID != "" {
-		params.LastEventID = &lastEventID
-	}
-	req, err := oapi.NewStreamMasterdataEventsRequest(c.serverURL.String(), params)
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
-	}
-	return c.streamMasterdataFrames(ctx, req, handler)
+	s, err := agmasync.Events(ctx, c.oapiClient, lastEventID)
+	return consume(ctx, s, err, handler)
 }
 
 // StreamInitialLoadEvents streams every object of every opted-in entity type the
@@ -560,40 +235,22 @@ func (c *Client) StreamInitialLoadEvents(
 	ctx context.Context,
 	externalEndpointID string,
 	tenantID uuid.UUID,
-	handler func(ctx context.Context, frame *MasterdataEventFrame),
+	handler func(ctx context.Context, event *MasterdataEvent),
 ) error {
-	params := &internal_models.StreamInitialLoadEventsParams{XAgrirouterTenantId: tenantID}
-	req, err := oapi.NewStreamInitialLoadEventsRequest(c.serverURL.String(), externalEndpointID, params)
+	s, err := agmasync.InitialLoadEvents(ctx, c.oapiClient, externalEndpointID, tenantID)
+	return consume(ctx, s, err, handler)
+}
+
+func consume(ctx context.Context, s *agmasync.Stream, err error, handler func(ctx context.Context, event *MasterdataEvent)) error {
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
-	return c.streamMasterdataFrames(ctx, req, handler)
-}
-
-func (c *Client) streamMasterdataFrames(
-	ctx context.Context,
-	req *http.Request,
-	handler func(ctx context.Context, frame *MasterdataEventFrame),
-) error {
-	req = req.WithContext(ctx)
-	client := sse.DefaultClient
-	client.ResponseValidator = func(r *http.Response) error {
-		if err := sse.DefaultValidator(r); err != nil {
-			body, _ := io.ReadAll(r.Body)
-			return fmt.Errorf("%w: %v", err, string(body))
+	defer func() { _ = s.Close() }()
+	for ev, err := range s.Events() {
+		if err != nil {
+			return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 		}
-		return nil
+		handler(ctx, &ev)
 	}
-	httpClient := c.oapiClient.ClientInterface.(*oapi.Client).Client
-	client.HTTPClient = httpClient.(*http.Client)
-	conn := client.NewConnection(req)
-	unsubscribe := conn.SubscribeToAll(func(event sse.Event) {
-		handler(ctx, &MasterdataEventFrame{
-			ID:    event.LastEventID,
-			Event: event.Type,
-			Data:  event.Data,
-		})
-	})
-	defer unsubscribe()
-	return conn.Connect()
+	return nil
 }
