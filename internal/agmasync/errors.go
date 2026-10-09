@@ -1,6 +1,7 @@
 package agmasync
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -53,6 +54,15 @@ var (
 	// ErrUnknownEntityType is raised locally, not by agrirouter, when an
 	// entity carries a type this version does not define.
 	ErrUnknownEntityType = errors.New("unknown entity type")
+
+	// ErrEntityTypeMismatch is an answer carrying an entity of another type
+	// than the operation asked for.
+	ErrEntityTypeMismatch = errors.New("entity type mismatch")
+
+	// ErrNotEventStream is a stream answering 200 in a media type other than
+	// text/event-stream — a proxy or an error page answering in agrirouter's
+	// place.
+	ErrNotEventStream = errors.New("not an event stream")
 )
 
 // RevisionConflict reports a rejected write and the revision that stands.
@@ -177,11 +187,11 @@ func (r writeResult) err() error {
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent:
 		return nil
 	case http.StatusBadRequest:
-		return &APIError{r.statusCode, message(r.validation, "validation failed"), ErrValidation}
+		return &APIError{r.statusCode, r.message(r.validation, "validation failed"), ErrValidation}
 	case http.StatusForbidden:
-		return &APIError{r.statusCode, message(r.forbidden, "forbidden"), ErrForbidden}
+		return &APIError{r.statusCode, r.message(r.forbidden, "forbidden"), ErrForbidden}
 	case http.StatusNotFound:
-		return &APIError{r.statusCode, message(r.notFound, "not found"), ErrNotFound}
+		return &APIError{r.statusCode, r.message(r.notFound, "not found"), ErrNotFound}
 	case http.StatusConflict:
 		if r.conflict != nil {
 			return &MappingConflict{Rejection: r.conflict.Rejection, Message: r.conflict.Message}
@@ -206,7 +216,20 @@ func (r writeResult) err() error {
 	}
 }
 
-func message(e *oapi.MasterdataError, fallback string) string {
+// message is the error message agrirouter sent, or fallback where it sent none.
+//
+// e is the body as the generated client decoded it. It is nil where the
+// operation declares no body for the status — no operation but a put declares
+// a 400, though agrirouter answers one to any malformed request — and for the
+// streams, which are read without the generated decoding. The raw body is read
+// as the same error schema then.
+func (r writeResult) message(e *oapi.MasterdataError, fallback string) string {
+	if e == nil {
+		var raw oapi.MasterdataError
+		if json.Unmarshal(r.body, &raw) == nil {
+			e = &raw
+		}
+	}
 	if e == nil || e.Message == "" {
 		return fallback
 	}

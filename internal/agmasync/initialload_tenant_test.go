@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/agmasync"
@@ -32,7 +33,12 @@ func recordTenantHeader(t *testing.T, header string) (*oapiclient.ClientWithResp
 				return
 			}
 			// One body for every call under test, since what is asserted here
-			// is the request rather than the response.
+			// is the request rather than the response. The stream still has
+			// to answer as one.
+			if strings.HasSuffix(r.URL.Path, "/events") {
+				w.Header().Set("Content-Type", "text/event-stream")
+				return
+			}
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"state":"COMPLETED","entity_types":[]}`))
 		}))

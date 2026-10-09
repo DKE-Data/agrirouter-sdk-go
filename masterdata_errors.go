@@ -46,6 +46,22 @@ var (
 	// not know.
 	ErrUnknownEntityType = agmasync.ErrUnknownEntityType
 
+	// ErrLocalIDRequired is raised locally: an entity is sent under its local
+	// id, so a Put with an empty localID cannot be addressed.
+	ErrLocalIDRequired = agmasync.ErrLocalIDRequired
+
+	// ErrEmptyResponse is a success status that carried no body to read.
+	ErrEmptyResponse = agmasync.ErrEmptyResponse
+
+	// ErrEntityTypeMismatch is an answer carrying an entity of another type
+	// than the operation asked for.
+	ErrEntityTypeMismatch = agmasync.ErrEntityTypeMismatch
+
+	// ErrNotEventStream is a master-data stream answering 200 in a media type
+	// other than text/event-stream, such as a proxy answering in agrirouter's
+	// place.
+	ErrNotEventStream = agmasync.ErrNotEventStream
+
 	// ErrMasterdataStreamEnded is returned by StreamMasterdataEvents when the
 	// live stream ends without the context being canceled: the connection
 	// dropped or agrirouter closed it. Reconnect from the last durably applied

@@ -98,6 +98,70 @@ func TestDeactivateEntityDecodesTheObject(t *testing.T) {
 	assert.Equal(t, "/masterdata/fields/field-1/deactivation", rec.path)
 }
 
+func TestDeactivateEntityDecodesByTheRequestedType(t *testing.T) {
+	t.Run("body without type", func(t *testing.T) {
+		client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK,
+			body: `{"name":"Acker","active":false}`})
+
+		obj, err := client.DeactivateEntity(context.Background(), agrirouter.EntityTypeField, "field-1", endpointID, tenantID, nil)
+		require.NoError(t, err)
+		assert.Equal(t, agrirouter.EntityTypeField, obj.Envelope.Type)
+		require.NotNil(t, obj.Field)
+		assert.Equal(t, "Acker", obj.Field.Name)
+	})
+
+	t.Run("body of another type", func(t *testing.T) {
+		client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK,
+			body: `{"type":"farm","name":"Hof","active":false}`})
+
+		obj, err := client.DeactivateEntity(context.Background(), agrirouter.EntityTypeField, "field-1", endpointID, tenantID, nil)
+		require.ErrorIs(t, err, agrirouter.ErrEntityTypeMismatch)
+		assert.ErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
+		assert.Nil(t, obj)
+	})
+}
+
+func TestMasterdataErrorsCarryTheServersMessage(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("stream refused", func(t *testing.T) {
+		client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusForbidden,
+			body: `{"message":"endpoint not opted into field_boundary"}`})
+		err := client.StreamMasterdataEvents(ctx, "", func(context.Context, *agrirouter.MasterdataEvent) {})
+		assert.ErrorIs(t, err, agrirouter.ErrMasterdataForbidden)
+		var apiErr *agrirouter.MasterdataAPIError
+		require.True(t, errors.As(err, &apiErr))
+		assert.Equal(t, "endpoint not opted into field_boundary", apiErr.Message)
+	})
+
+	t.Run("400 on an operation that declares none", func(t *testing.T) {
+		client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusBadRequest,
+			body: `{"message":"invalid base revision"}`})
+		_, err := client.DeactivateEntity(ctx, agrirouter.EntityTypeFarm, "farm-1", endpointID, tenantID, nil)
+		assert.ErrorIs(t, err, agrirouter.ErrMasterdataValidation)
+		var apiErr *agrirouter.MasterdataAPIError
+		require.True(t, errors.As(err, &apiErr))
+		assert.Equal(t, "invalid base revision", apiErr.Message)
+	})
+}
+
+func TestStreamRejectsAResponseThatIsNotAnEventStream(t *testing.T) {
+	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: `{"hello":"proxy"}`})
+	err := client.StreamMasterdataEvents(context.Background(), "", func(context.Context, *agrirouter.MasterdataEvent) {
+		t.Fatal("no frame expected")
+	})
+	require.ErrorIs(t, err, agrirouter.ErrNotEventStream)
+	assert.ErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
+	assert.NotErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
+	assert.ErrorContains(t, err, "application/json")
+}
+
+func TestPutWithoutLocalIDIsMatchable(t *testing.T) {
+	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK})
+	_, err := client.PutFarm(context.Background(), "", endpointID, tenantID, nil, &agrirouter.Farm{Name: "Hof"})
+	assert.ErrorIs(t, err, agrirouter.ErrLocalIDRequired)
+}
+
 func TestInitialLoadAddressesEndpointByExternalID(t *testing.T) {
 	client, rec := newMasterdataClient(t, fakeResponse{status: http.StatusOK,
 		body: `{"state":"RECONCILING","awaiting_user":true}`})

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"mime"
 	"net/http"
 
 	oapiclient "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi"
@@ -276,6 +277,14 @@ func openStream(resp *http.Response, positioned bool) (*Stream, error) {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody))
 		_ = resp.Body.Close()
 		return nil, writeResult{statusCode: resp.StatusCode, body: body}.err()
+	}
+	// A 200 in another media type is not a stream and parsed as one it would yield no
+	// frames and no error.
+	if mt, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type")); err != nil || mt != "text/event-stream" {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody))
+		_ = resp.Body.Close()
+		return nil, &APIError{resp.StatusCode, fmt.Sprintf("stream answered as %q, not text/event-stream: %s",
+			resp.Header.Get("Content-Type"), unexpected(body)), ErrNotEventStream}
 	}
 	return &Stream{resp: resp, positioned: positioned}, nil
 }

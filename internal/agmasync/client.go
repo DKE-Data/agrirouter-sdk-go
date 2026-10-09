@@ -161,7 +161,7 @@ func Deactivate(
 	if err := res.err(); err != nil {
 		return Object{}, err
 	}
-	return ObjectOf(res.body)
+	return objectAs(t, res.body)
 }
 
 // putResponse is what the generated put operations answer with, whichever

@@ -113,6 +113,31 @@ func ObjectOf(raw []byte) (Object, error) {
 	if err != nil {
 		return Object{}, err
 	}
+	return decodeObject(env, raw)
+}
+
+// objectAs decodes the answer to an operation that names its entity type, as
+// an object of type t. The type travels on the request, so the body need not
+// repeat it; when it does, it must agree.
+func objectAs(t EntityType, raw []byte) (Object, error) {
+	var env Envelope
+	if err := json.Unmarshal(raw, &env); err != nil {
+		return Object{}, fmt.Errorf("agmasync: reading entity envelope: %w", err)
+	}
+	switch env.Type {
+	case "":
+		env.Type = t
+	case t:
+	default:
+		return Object{}, fmt.Errorf("agmasync: %w: asked for a %s, answered with a %s",
+			ErrEntityTypeMismatch, t, env.Type)
+	}
+	return decodeObject(env, raw)
+}
+
+// decodeObject decodes raw into the model env.Type names.
+func decodeObject(env Envelope, raw []byte) (Object, error) {
+	var err error
 	o := Object{Envelope: env}
 	switch env.Type {
 	case TypeParty:
