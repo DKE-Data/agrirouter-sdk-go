@@ -225,7 +225,7 @@ func (c *Client) StreamMasterdataEvents(
 	handler func(ctx context.Context, event *MasterdataEvent),
 ) error {
 	s, err := agmasync.Events(ctx, c.oapiClient, lastEventID)
-	if err := consume(ctx, s, err, handler); err != nil {
+	if err := c.consume(ctx, s, err, handler); err != nil {
 		return err
 	}
 	return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, ErrMasterdataStreamEnded)
@@ -248,12 +248,15 @@ func (c *Client) StreamInitialLoadEvents(
 	handler func(ctx context.Context, event *MasterdataEvent),
 ) error {
 	s, err := agmasync.InitialLoadEvents(ctx, c.oapiClient, externalEndpointID, tenantID)
-	return consume(ctx, s, err, handler)
+	return c.consume(ctx, s, err, handler)
 }
 
 // consume feeds every frame of s to handler. It returns nil when the stream
 // ends, and the context's error when the context was canceled.
-func consume(ctx context.Context, s *agmasync.Stream, err error, handler func(ctx context.Context, event *MasterdataEvent)) error {
+func (c *Client) consume(
+	ctx context.Context, s *agmasync.Stream, err error,
+	handler func(ctx context.Context, event *MasterdataEvent),
+) error {
 	if err != nil {
 		if ctxErr := ctx.Err(); ctxErr != nil {
 			return ctxErr
@@ -261,6 +264,7 @@ func consume(ctx context.Context, s *agmasync.Stream, err error, handler func(ct
 		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
 	defer func() { _ = s.Close() }()
+	s.MaxEventSize = c.masterdataMaxEventSize
 	for ev, err := range s.Events() {
 		if err != nil {
 			if ctxErr := ctx.Err(); ctxErr != nil {

@@ -91,6 +91,10 @@ type Stream struct {
 	// positioned is false for the initial-load stream, which delivers a fixed
 	// set rather than a sequence of changes and therefore carries no position.
 	positioned bool
+
+	// MaxEventSize bounds one frame, in bytes; a larger frame ends the
+	// iteration with an error. Zero means [DefaultMaxEventSize].
+	MaxEventSize int
 }
 
 // Close releases the stream's connection.
@@ -120,7 +124,11 @@ func (s *Stream) Events() iter.Seq2[Event, error] {
 		// knows, so a dropped connection ends the iteration instead and the
 		// participant reconnects with its own position. The initial-load stream
 		// carries no position at all and is restarted from the beginning.
-		for raw, err := range sse.Read(s.resp.Body, nil) {
+		maxEventSize := s.MaxEventSize
+		if maxEventSize <= 0 {
+			maxEventSize = DefaultMaxEventSize
+		}
+		for raw, err := range sse.Read(s.resp.Body, &sse.ReadConfig{MaxEventSize: maxEventSize}) {
 			if err != nil {
 				if errIsStreamEnd(err) {
 					return
@@ -168,6 +176,10 @@ func (s *Stream) Events() iter.Seq2[Event, error] {
 		}
 	}
 }
+
+// DefaultMaxEventSize is the frame bound a [Stream] applies unless told
+// otherwise.
+const DefaultMaxEventSize = 16 << 20
 
 func errIsStreamEnd(err error) bool {
 	return errors.Is(err, io.EOF)

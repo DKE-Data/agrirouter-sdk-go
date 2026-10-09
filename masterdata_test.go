@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/DKE-Data/agrirouter-sdk-go"
@@ -35,7 +36,7 @@ type recorded struct {
 	body    string
 }
 
-func newMasterdataClient(t *testing.T, res fakeResponse) (*agrirouter.Client, *recorded) {
+func newMasterdataClient(t *testing.T, res fakeResponse, opts ...agrirouter.ClientOption) (*agrirouter.Client, *recorded) {
 	t.Helper()
 	rec := &recorded{}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +51,7 @@ func newMasterdataClient(t *testing.T, res fakeResponse) (*agrirouter.Client, *r
 		_, _ = w.Write([]byte(res.body))
 	}))
 	t.Cleanup(srv.Close)
-	client, err := agrirouter.NewClient(srv.URL)
+	client, err := agrirouter.NewClient(srv.URL, opts...)
 	require.NoError(t, err)
 	return client, rec
 }
@@ -181,6 +182,43 @@ func TestStreamMasterdataEventsDecodesFrames(t *testing.T) {
 	assert.Equal(t, "Hof", got[0].Farm.Name)
 	assert.Equal(t, agrirouter.MasterdataEventCaughtUp, got[1].Type)
 	assert.False(t, got[1].HasEntity())
+}
+
+func TestStreamMasterdataEventsReadsFramesLargerThan64KB(t *testing.T) {
+	// A field boundary's geometry alone can exceed go-sse's 64KB default; a frame
+	// over the limit would fail every resume from before it.
+	name := strings.Repeat("x", 1<<20)
+	frames := "id: pos-1\nevent: MASTERDATA_CHANGED\n" +
+		`data: {"type":"farm","agrirouter_id":"33333333-3333-3333-3333-333333333333","name":"` + name + `","revision":2}` + "\n\n"
+	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frames, contentType: "text/event-stream"})
+
+	var got []agrirouter.MasterdataEvent
+	err := client.StreamMasterdataEvents(context.Background(), "", func(_ context.Context, ev *agrirouter.MasterdataEvent) {
+		got = append(got, *ev)
+	})
+	require.ErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
+	require.Len(t, got, 1)
+	require.NotNil(t, got[0].Farm)
+	assert.Len(t, got[0].Farm.Name, len(name))
+}
+
+func TestWithMasterdataMaxEventSizeBoundsFrames(t *testing.T) {
+	frame := "id: pos-1\nevent: MASTERDATA_CHANGED\n" +
+		`data: {"type":"farm","agrirouter_id":"33333333-3333-3333-3333-333333333333",` +
+		`"name":"` + strings.Repeat("x", 2048) + `","revision":2}` + "\n\n"
+	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frame, contentType: "text/event-stream"},
+		agrirouter.WithMasterdataMaxEventSize(1024))
+
+	err := client.StreamMasterdataEvents(context.Background(), "", func(context.Context, *agrirouter.MasterdataEvent) {
+		t.Fatal("a frame over the configured bound must not be delivered")
+	})
+	require.ErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
+	assert.NotErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
+}
+
+func TestWithMasterdataMaxEventSizeRejectsNonPositive(t *testing.T) {
+	_, err := agrirouter.NewClient("http://localhost", agrirouter.WithMasterdataMaxEventSize(0))
+	require.Error(t, err)
 }
 
 func TestStreamMasterdataEventsReturnsContextErrorOnCancel(t *testing.T) {
