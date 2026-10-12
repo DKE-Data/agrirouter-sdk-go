@@ -1254,6 +1254,9 @@ type RouteChangedEventData struct {
 
 	// ExternalId The application's own identifier for the same endpoint.
 	ExternalId string `json:"external_id"`
+
+	// TenantId The tenant of the endpoint.
+	TenantId openapi_types.UUID `json:"tenant_id"`
 }
 
 // RouteChangedEventDataEventType Discriminator; matches the `event:` line.
