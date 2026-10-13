@@ -486,7 +486,10 @@ type EndpointsListChangedEventDataEventType string
 
 // EndpointsListResponse defines model for EndpointsListResponse.
 type EndpointsListResponse struct {
-	Endpoints []TenantEndpointInfo `json:"endpoints"`
+	// CompanyName The tenant's company name as entered in agrirouter. Omitted when
+	// the company name is unknown or empty.
+	CompanyName *string              `json:"company_name,omitempty"`
+	Endpoints   []TenantEndpointInfo `json:"endpoints"`
 }
 
 // EntityReference A reference to another entity by canonical and/or local id. On send either identifier suffices: a local_id is resolved against the sender's own mapping, and is rejected if the target has not been sent yet. On delivery agrirouter populates agrirouter_id, since the sender's local_id does not resolve in the receiver's namespace.
@@ -1241,6 +1244,13 @@ type TenantEndpointInfo struct {
 
 // TenantInfo defines model for TenantInfo.
 type TenantInfo struct {
+	// CompanyName The tenant's company name as entered in agrirouter. Omitted when
+	// the company name is unknown or empty.
+	//
+	// `TenantInfo` is also delivered as `tenant` in the
+	// `AUTHORIZATION_ADDED` event, so this field appears there too.
+	CompanyName *string `json:"company_name,omitempty"`
+
 	// Endpoints Endpoints visible in this tenant, subject to the following
 	// privacy rule:
 	//
