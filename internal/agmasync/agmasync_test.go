@@ -1,0 +1,225 @@
+package agmasync_test
+
+import (
+	"encoding/json"
+	"errors"
+	"slices"
+	"testing"
+	"time"
+
+	"github.com/DKE-Data/agrirouter-sdk-go/internal/agmasync"
+	oapi "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
+	"github.com/google/uuid"
+	"github.com/oapi-codegen/nullable"
+)
+
+func TestDependencyClosureExpandsToWhatReferencesResolveTo(t *testing.T) {
+	// Opt-in must be dependency-closed over the required references, because a
+	// receiving endpoint has to be able to resolve them on the objects it is
+	// sent. A boundary's field is the only one (ADR 13): every other reference
+	// is optional and pulls in nothing.
+	tests := map[string]struct {
+		in   []agmasync.EntityType
+		want []agmasync.EntityType
+	}{
+		"field boundaries reach their fields": {
+			in:   []agmasync.EntityType{agmasync.TypeFieldBoundary},
+			want: []agmasync.EntityType{agmasync.TypeField, agmasync.TypeFieldBoundary},
+		},
+		"fields pull in neither farms nor parties": {
+			in:   []agmasync.EntityType{agmasync.TypeField},
+			want: []agmasync.EntityType{agmasync.TypeField},
+		},
+		"farms pull in no parties": {
+			in:   []agmasync.EntityType{agmasync.TypeFarm},
+			want: []agmasync.EntityType{agmasync.TypeFarm},
+		},
+		"parties reference nothing outside their type": {
+			in:   []agmasync.EntityType{agmasync.TypeParty},
+			want: []agmasync.EntityType{agmasync.TypeParty},
+		},
+		"order follows EntityTypes": {
+			in: []agmasync.EntityType{agmasync.TypeFieldBoundary, agmasync.TypeParty},
+			want: []agmasync.EntityType{
+				agmasync.TypeParty, agmasync.TypeField, agmasync.TypeFieldBoundary,
+			},
+		},
+	}
+
+	for name, tc := range tests {
+		t.Run(name, func(t *testing.T) {
+			got := agmasync.DependencyClosure(tc.in)
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("DependencyClosure(%v) = %v, want %v", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestDeclaresCapabilityMatchesTypeNames(t *testing.T) {
+	cfg := oapi.MasterdataConfig{Capabilities: []oapi.EntityTypeToggle{
+		{EntityType: "farm"},
+		{EntityType: "fieldBoundary"},
+	}}
+
+	for _, tc := range []struct {
+		in   agmasync.EntityType
+		want bool
+	}{
+		{agmasync.TypeFarm, true},
+		{agmasync.TypeFieldBoundary, true},
+		{agmasync.TypeField, false},
+	} {
+		if got := agmasync.DeclaresCapability(cfg, tc.in); got != tc.want {
+			t.Errorf("DeclaresCapability(%v) = %v, want %v", tc.in, got, tc.want)
+		}
+	}
+}
+
+func TestSelectedTypesReadsTheSelectionInDependencyOrder(t *testing.T) {
+	// What the ROUTE_CHANGED frame carries, read into entity types. Dependency
+	// order matters: it is the order the set is walked in, so parents precede
+	// what references them.
+	selection := oapi.RouteChangedEventData{
+		ExternalId: "ep-a",
+		EntityTypes: []oapi.EntityTypeToggle{
+			{EntityType: "field"},
+			{EntityType: "party"},
+			{EntityType: "farm"},
+		},
+	}
+
+	got := agmasync.SelectedTypes(selection)
+	want := []agmasync.EntityType{
+		agmasync.TypeParty, agmasync.TypeFarm, agmasync.TypeField,
+	}
+	if len(got) != len(want) {
+		t.Fatalf("SelectedTypes = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("SelectedTypes = %v, want %v", got, want)
+		}
+	}
+}
+
+func TestEnvelopeOfReadsCommonFieldsWhicheverTypeItIs(t *testing.T) {
+	// A receiver reads type, revision, and localId off a frame before it knows
+	// which concrete schema the object is. This is that step.
+	arID := uuid.New()
+	revision := 7
+	localID := "PFD-00042"
+
+	raw, err := json.Marshal(oapi.Field{
+		Type:         "field",
+		AgrirouterId: &arID,
+		LocalId:      &localID,
+		Revision:     &revision,
+		Name:         "North 40",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	env, err := agmasync.EnvelopeOf(raw)
+	if err != nil {
+		t.Fatalf("EnvelopeOf: %v", err)
+	}
+	if env.Type != agmasync.TypeField {
+		t.Errorf("Type = %q, want %q", env.Type, agmasync.TypeField)
+	}
+	if env.Revision == nil || *env.Revision != revision {
+		t.Errorf("Revision = %v, want %d", env.Revision, revision)
+	}
+	if env.LocalId == nil || *env.LocalId != localID {
+		t.Errorf("LocalId = %v, want %q", env.LocalId, localID)
+	}
+	if env.AgrirouterId == nil || *env.AgrirouterId != arID {
+		t.Errorf("AgrirouterId = %v, want %s", env.AgrirouterId, arID)
+	}
+}
+
+func TestEnvelopeOfRejectsAnUnknownEntityType(t *testing.T) {
+	if _, err := agmasync.EnvelopeOf([]byte(`{"type":"guidanceLine","localId":"GL-1"}`)); !errors.Is(err, agmasync.ErrUnknownEntityType) {
+		t.Errorf("EnvelopeOf error = %v, want ErrUnknownEntityType", err)
+	}
+}
+
+func TestNeedsUserSeparatesTheTwoMappingRejections(t *testing.T) {
+	// The two conflicts are different problems in the participant's own store
+	// and are deliberately not interchangeable. One local identifier claimed by
+	// two canonical objects is a granularity disagreement only a person can
+	// settle; the reverse is something the participant already holds the answer
+	// to and must not put in front of anyone.
+	if !agmasync.NeedsUser(oapi.IdMappingRejection{
+		Reason: agmasync.ReasonLocalIDAlreadyBound,
+	}) {
+		t.Error("LOCAL_ID_ALREADY_BOUND should need a user")
+	}
+	for _, reason := range []string{
+		agmasync.ReasonAgrirouterIDAlreadyBound,
+		agmasync.ReasonUnknownObject,
+		agmasync.ReasonDuplicateInRequest,
+		"SOMETHING_ADDED_AFTER_THIS_WAS_WRITTEN",
+	} {
+		if agmasync.NeedsUser(oapi.IdMappingRejection{Reason: reason}) {
+			t.Errorf("%s should not need a user", reason)
+		}
+	}
+}
+
+func TestIsRepeatLoad(t *testing.T) {
+	// A participant that cannot tell a repeat load from a first one creates
+	// local duplicates of everything it already holds.
+	if agmasync.IsRepeatLoad(oapi.InitialLoadStatus{State: agmasync.StateLoadingFromAgrirouter}) {
+		t.Error("a status with no previousLoadCompletedAt is a first load")
+	}
+
+	completed := time.Date(2026, 7, 14, 9, 20, 0, 0, time.UTC)
+	if !agmasync.IsRepeatLoad(oapi.InitialLoadStatus{
+		State:                   agmasync.StateLoadingFromAgrirouter,
+		PreviousLoadCompletedAt: &completed,
+	}) {
+		t.Error("a status carrying previousLoadCompletedAt is a repeat load")
+	}
+}
+
+func TestPartyTierOrdersPersonsAfterOrganizations(t *testing.T) {
+	// A membership names an organization from a person, so persons go one tier
+	// below every other party. The tier is read from the object, not its type.
+	person := func() oapi.Party {
+		var d oapi.PartyDetails
+		if err := d.FromPersonDetails(oapi.PersonDetails{PartyType: agmasync.PartyTypePerson}); err != nil {
+			t.Fatal(err)
+		}
+		return oapi.Party{Name: "Anna Schmidt", Details: nullable.NewNullableWithValue(d)}
+	}
+	organization := func() oapi.Party {
+		var d oapi.PartyDetails
+		if err := d.FromOrganizationDetails(oapi.OrganizationDetails{PartyType: agmasync.PartyTypeOrganization}); err != nil {
+			t.Fatal(err)
+		}
+		return oapi.Party{Name: "Acme", Details: nullable.NewNullableWithValue(d)}
+	}
+
+	for _, tc := range []struct {
+		name      string
+		party     oapi.Party
+		partyType string
+		tier      int
+	}{
+		{"unknown party type", oapi.Party{Name: "Hof Nord"}, "", 0},
+		{"null details", oapi.Party{Name: "Hof Nord", Details: nullable.NewNullNullable[oapi.PartyDetails]()}, "", 0},
+		{"organization", organization(), agmasync.PartyTypeOrganization, 0},
+		{"person", person(), agmasync.PartyTypePerson, 1},
+	} {
+		partyType, err := agmasync.PartyTypeOf(tc.party)
+		if err != nil || partyType != tc.partyType {
+			t.Errorf("%s: PartyTypeOf = %q, %v; want %q", tc.name, partyType, err, tc.partyType)
+		}
+		tier, err := agmasync.PartyTier(tc.party)
+		if err != nil || tier != tc.tier {
+			t.Errorf("%s: PartyTier = %d, %v; want %d", tc.name, tier, err, tc.tier)
+		}
+	}
+}

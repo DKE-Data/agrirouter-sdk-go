@@ -4,3 +4,5 @@ generate:
 output: internal/oapi/models/oapi.models.go
 output-options:
   nullable-type: true
+  # remove this once G4 API is updated
+  skip-prune: true

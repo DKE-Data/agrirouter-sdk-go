@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/DKE-Data/agrirouter-sdk-go/internal/agmasync"
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/oapi"
 	"github.com/google/uuid"
 )
@@ -28,6 +29,9 @@ var (
 
 	// ErrURLIsInvalid is returned when the provided URL is invalid.
 	ErrURLIsInvalid = errors.New("provided URL is invalid")
+
+	// ErrInvalidMasterdataMaxEventSize is returned when WithMasterdataMaxEventSize is given a non-positive size.
+	ErrInvalidMasterdataMaxEventSize = errors.New("master-data max event size must be positive")
 )
 
 // Client is the structure that allows interaction with the agrirouter API.
@@ -37,6 +41,8 @@ type Client struct {
 	serverURL      *url.URL
 
 	oapiOptions []oapi.ClientOption
+
+	masterdataMaxEventSize int
 }
 
 // NewClient creates a new agrirouter client with the given server URL.
@@ -246,6 +252,24 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 	return func(c *Client) error {
 		oapiOpt := oapi.WithRequestEditorFn(fn)
 		c.oapiOptions = append(c.oapiOptions, oapiOpt)
+		return nil
+	}
+}
+
+// DefaultMasterdataMaxEventSize is the largest master-data stream frame, in
+// bytes, a client reads unless WithMasterdataMaxEventSize says otherwise.
+const DefaultMasterdataMaxEventSize = agmasync.DefaultMaxEventSize
+
+// WithMasterdataMaxEventSize sets the largest frame, in bytes, the master-data
+// streams accept (StreamMasterdataEvents, StreamInitialLoadEvents). A larger
+// frame ends the stream with an error, and does so again on every resume from
+// before it, so the bound must exceed any object agrirouter delivers.
+func WithMasterdataMaxEventSize(n int) ClientOption {
+	return func(c *Client) error {
+		if n <= 0 {
+			return fmt.Errorf("%w, got %d", ErrInvalidMasterdataMaxEventSize, n)
+		}
+		c.masterdataMaxEventSize = n
 		return nil
 	}
 }
