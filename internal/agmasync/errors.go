@@ -15,7 +15,7 @@ var (
 	// ErrRevisionConflict is a 412. The write was made from a base revision
 	// that cannot be reconciled with the current one, or from a base
 	// agrirouter never issued, or against a localId that resolves to nothing.
-	// See [RevisionConflict] and "Concurrency control" in specification.md.
+	// See [RevisionConflict].
 	ErrRevisionConflict = errors.New("revision conflict")
 
 	// ErrBaseRevisionRequired is a 428: an update was sent with no base
@@ -24,15 +24,14 @@ var (
 	ErrBaseRevisionRequired = errors.New("base revision required")
 
 	// ErrMappingConflict is a 409: an identifier in the request is already
-	// bound to something else. See [MappingConflict] and "Asymmetric and
-	// non-unique mappings" in specification.md.
+	// bound to something else. See [MappingConflict].
 	ErrMappingConflict = errors.New("identifier mapping conflict")
 
-	// ErrValidation is a 400. Payloads are rejected rather than repaired: see
-	// "Hard validation" in specification.md.
+	// ErrValidation is a 400. agrirouter rejects an invalid payload rather
+	// than repairing it.
 	ErrValidation = errors.New("validation failed")
 
-	// ErrForbidden is a 403 — the acting endpoint is not entitled to the
+	// ErrForbidden is a 403: the acting endpoint is not entitled to the
 	// object, or is not opted into its entity type.
 	ErrForbidden = errors.New("forbidden")
 
@@ -40,8 +39,8 @@ var (
 	ErrNotFound = errors.New("not found")
 
 	// ErrInitialLoadConflict is a 409 on the initial-load status resource: a
-	// transition out of order. Repeating the state the endpoint is already in
-	// is not this — that succeeds. See "Initial load" in specification.md.
+	// transition out of order. Repeating the endpoint's current state
+	// succeeds.
 	ErrInitialLoadConflict = errors.New("initial load transition out of order")
 
 	// ErrLocalIDRequired is raised locally: an entity is sent under its
@@ -60,21 +59,19 @@ var (
 	ErrEntityTypeMismatch = errors.New("entity type mismatch")
 
 	// ErrNotEventStream is a stream answering 200 in a media type other than
-	// text/event-stream — a proxy or an error page answering in agrirouter's
-	// place.
+	// text/event-stream, such as a proxy or an error page answering in
+	// agrirouter's place.
 	ErrNotEventStream = errors.New("not an event stream")
 )
 
 // RevisionConflict reports a rejected write and the revision that stands.
 //
-// The specification requires a participant to take the revision from the
-// response rather than assume base + 1, on failure as much as on success: the
-// way out of a conflict is to obtain the current object, rebase the change onto
-// it, and write again.
+// To recover, obtain the current object, rebase the change onto it, and write
+// again.
 type RevisionConflict struct {
-	// CurrentRevision is the canonical object's revision now. It is the
-	// revision to rebase onto, not necessarily base + 1 — other participants
-	// may have written more than once since.
+	// CurrentRevision is the canonical object's revision now and the one to
+	// rebase onto. It is not necessarily base + 1: other participants may have
+	// written more than once since.
 	CurrentRevision int
 	Message         string
 }
@@ -89,12 +86,11 @@ func (e *RevisionConflict) Is(target error) bool { return errors.Is(target, ErrR
 
 // MappingConflict reports a binding that could not be recorded.
 //
-// The specification requires the cause to be machine-readable, because a
-// participant's handling differs by cause: some of these belong in front of a
-// user and some must never reach one. [MappingConflict.Rejection] carries both
-// which identifier is taken and, where one exists, the mapping standing in the
-// way — and both ends of that mapping belong to the rejected participant
-// itself, so naming it discloses nothing it does not already hold.
+// Handling differs by cause: some causes need a user, others must never reach
+// one (see [NeedsUser]). Rejection names the taken identifier and, where one
+// exists, the conflicting mapping. Both ends of that mapping belong to the
+// rejected participant, so it discloses nothing the participant does not
+// already hold.
 type MappingConflict struct {
 	Rejection oapi.IdMappingRejection
 	Message   string
@@ -108,10 +104,9 @@ func (e *MappingConflict) Error() string {
 // Is makes [errors.Is] match [ErrMappingConflict].
 func (e *MappingConflict) Is(target error) bool { return errors.Is(target, ErrMappingConflict) }
 
-// Rejection reasons. The set is an extensible enumeration, so a participant
-// MUST tolerate a value it does not know rather than treat it as a failure to
-// parse — hence plain string constants and a default branch, not a closed Go
-// enum. See "Extensible enumerations" in specification.md.
+// Rejection reasons. agrirouter may add reasons, so these are plain strings
+// rather than a closed enum, and a participant must handle an unknown value
+// in a default branch.
 const (
 	// ReasonLocalIDAlreadyBound means this application already knows a
 	// different canonical object in the tenant by that localId. Resolving it
@@ -121,8 +116,8 @@ const (
 	ReasonLocalIDAlreadyBound = "LOCAL_ID_ALREADY_BOUND"
 
 	// ReasonAgrirouterIDAlreadyBound means this application already knows that
-	// canonical object under a different localId. Often resolvable without a
-	// user — the participant is usually holding the answer already.
+	// canonical object under a different localId. The participant can usually
+	// resolve it without a user.
 	ReasonAgrirouterIDAlreadyBound = "AGRIROUTER_ID_ALREADY_BOUND"
 
 	// ReasonUnknownObject means no such canonical object, or the endpoint is
@@ -137,11 +132,10 @@ const (
 
 // NeedsUser reports whether a rejection is one only a person can settle.
 //
-// A localId already bound to a different canonical object is a genuine
-// granularity disagreement between two systems — the n:1 case the protocol
-// deliberately does not merge automatically. The others are the participant's
-// own to fix: it already holds the object under another identifier, or it sent
-// a malformed batch.
+// A localId already bound to a different canonical object means two systems
+// disagree on granularity (the n:1 case), which the protocol does not merge
+// automatically. The participant fixes the other reasons itself: it already
+// holds the object under another identifier, or it sent a malformed batch.
 func NeedsUser(r oapi.IdMappingRejection) bool {
 	return r.Reason == ReasonLocalIDAlreadyBound
 }
@@ -162,10 +156,9 @@ func (e *APIError) Is(target error) bool {
 	return e.sentinel != nil && errors.Is(target, e.sentinel)
 }
 
-// writeResult is what every write operation reduces to before it is turned into
-// a result or an error. The generated response types are one per operation and
-// per entity type — twenty of them, structurally identical — so each operation
-// wrapper fills this in and shares the handling below.
+// writeResult is the common shape of a write response. The generated response
+// types differ per operation and entity type but are structurally identical, so
+// each wrapper fills this in and shares the handling below.
 type writeResult struct {
 	statusCode int
 	validation *oapi.MasterdataError
@@ -173,9 +166,8 @@ type writeResult struct {
 	notFound   *oapi.MasterdataError
 	conflict   *oapi.MappingConflictError
 	precond    *oapi.RevisionConflictError
-	// required is the 428 body, which is shaped like the 412 body: agrirouter
-	// answers a missing base revision with the revision the participant should
-	// have sent, sparing it a round trip to find out.
+	// required is the 428 body. It is shaped like the 412 body and carries the
+	// revision the participant should have sent.
 	required *oapi.RevisionConflictError
 	body     []byte
 }
@@ -218,11 +210,10 @@ func (r writeResult) err() error {
 
 // message is the error message agrirouter sent, or fallback where it sent none.
 //
-// e is the body as the generated client decoded it. It is nil where the
-// operation declares no body for the status — no operation but a put declares
-// a 400, though agrirouter answers one to any malformed request — and for the
-// streams, which are read without the generated decoding. The raw body is read
-// as the same error schema then.
+// e is the body as the generated client decoded it. It is nil for the streams,
+// which bypass generated decoding, and where the operation declares no body for
+// the status: only puts declare a 400, though agrirouter answers any malformed
+// request with one. In those cases the raw body is decoded instead.
 func (r writeResult) message(e *oapi.MasterdataError, fallback string) string {
 	if e == nil {
 		var raw oapi.MasterdataError
@@ -247,8 +238,8 @@ func unexpected(body []byte) string {
 	return "unexpected response: " + string(body)
 }
 
-// mappingResult is the same reduction for the binding operations, which answer
-// 204 and carry no entity.
+// mappingResult is the [writeResult] counterpart for the binding operations,
+// which answer 204 and carry no entity.
 type mappingResult struct {
 	statusCode int
 	forbidden  *oapi.MasterdataError

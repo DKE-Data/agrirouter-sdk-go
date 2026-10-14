@@ -98,8 +98,8 @@ func TestPutSendsBackWhatAgrirouterAssigns(t *testing.T) {
 //
 // A reference the participant does not hold must be left out rather than sent
 // as `{}`, which agrirouter rejects as naming neither identifier. And a write is
-// a merge patch, where null and left out mean opposite things — remove it, and
-// leave it alone — so the body has to keep each as the caller set it through
+// a merge patch, where null removes an attribute and leaving it out keeps it,
+// so the body has to keep each as the caller set it through
 // the model's nullable fields.
 func TestPutSendsTheEntityAsTheParticipantBuiltIt(t *testing.T) {
 	api, bodies := captureBodies(t,

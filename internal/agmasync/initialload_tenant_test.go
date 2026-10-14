@@ -55,7 +55,7 @@ func recordTenantHeader(t *testing.T, header string) (*oapiclient.ClientWithResp
 // initial-load call.
 //
 // The deployed g4 API refuses anything under /endpoints/ that does not name a
-// tenant — 400 "tenant ID header is missing in request" — because those paths
+// tenant (400 "tenant ID header is missing in request"), because those paths
 // address an endpoint by the application's own external id, which is unique per
 // tenant rather than agrirouter-wide. openapi.yaml declares the header on
 // PutEndpoint alone, so nothing in the generated client sends it here and the

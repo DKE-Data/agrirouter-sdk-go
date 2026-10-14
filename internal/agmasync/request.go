@@ -11,23 +11,18 @@ import (
 
 // Request asks for a single entity by its canonical identifier.
 //
-// It answers 202 and nothing else: the object itself arrives asynchronously on
-// the application's event stream. It is delivered even when this endpoint was
-// the object's last writer — origin suppression exists to avoid handing an
-// endpoint a revision it already holds, and a request states the opposite.
+// agrirouter answers 202 with no body and delivers the object on the
+// application's event stream, even when this endpoint was its last writer.
 //
-// A request never widens what a participant can see, opt-in being the only
-// filter on delivery. It exists because delivered is not held: an object lost
-// locally, or one referenced by a live-stream object that the initial-load
-// stream has not reached yet. A participant that has lost too many objects to
-// name asks for the whole canonical set instead. See "Requesting objects (lazy
-// loading)" in specification.md.
+// A request never widens what a participant can see. It recovers an object
+// lost locally, or one referenced by a live-stream object that the
+// initial-load stream has not reached yet. A participant that has lost too
+// many objects to name asks for the whole canonical set instead.
 //
-// It is also the way out of holding an object whose reference target it does
-// not hold — a farm delivered with an owner reference carrying no localId.
-// Neither identifier names that target on a send, so the object stays
-// unwritable until the target is requested, created locally, and bound with
-// [Bind]. See "References" in specification.md.
+// It also unblocks an object whose reference target the participant does not
+// hold, such as a farm delivered with an owner reference that has no localId.
+// That object cannot be sent until the target is requested, created locally,
+// and bound with [Bind].
 func Request(
 	ctx context.Context, api *oapiclient.ClientWithResponses,
 	endpointID, tenantID uuid.UUID,

@@ -16,7 +16,7 @@ import (
 func TestDependencyClosureExpandsToWhatReferencesResolveTo(t *testing.T) {
 	// Opt-in must be dependency-closed over the required references, because a
 	// receiving endpoint has to be able to resolve them on the objects it is
-	// sent. A boundary's field is the only one (ADR 13): every other reference
+	// sent. A boundary's field is the only one: every other reference
 	// is optional and pulls in nothing.
 	tests := map[string]struct {
 		in   []agmasync.EntityType

@@ -12,23 +12,20 @@ import (
 // PutParty sends a party. PutFarm, PutField, and PutFieldBoundary likewise
 // send an entity (a creation or an update).
 //
-// base is the revision the participant edited from, and travels in the
-// x-agrirouter-base-revision header. It is nil only for a create: on an update
-// a missing base is rejected with [ErrBaseRevisionRequired], because omitting
-// it would opt the participant out of concurrency control.
+// base is the revision the participant edited from, sent in the
+// x-agrirouter-base-revision header. It is nil only for a create; an update
+// without it fails with [ErrBaseRevisionRequired].
 //
-// The entity is a merge patch: an attribute it leaves out is left as it is,
-// and one sent as null is removed — the models' nullable fields say which. It
-// must carry its local_id; its type is set from the model. Required attributes are
-// required on every write. See "Writing an entity" in specification.md.
+// The entity is a merge patch: an omitted attribute is left unchanged, and one
+// sent as null is removed (the models' nullable fields allow this). It must
+// carry its local_id; its type is set from the model. Required attributes are
+// required on every write.
 //
-// The returned model is the resulting canonical object and MUST be applied
-// exactly as an object delivered on the stream is. It is not an
-// acknowledgement: origin suppression keeps this revision off the sender's own
+// The returned model is the resulting canonical object; apply it as you would
+// a delivered one. agrirouter does not echo the write on the sender's own
 // stream, so this response is the only place the sender learns the
-// agrirouterId assigned to a newly created object, or sees the merged result
-// where agrirouter reconciled the write against a concurrent change instead of
-// rejecting it. See "Applying what agrirouter returns" in specification.md.
+// agrirouterId of a new object, or the merged result where agrirouter
+// reconciled the write with a concurrent change.
 //
 //nolint:dupl // One readable function per entity type is preferred over a generic helper.
 func PutParty(
