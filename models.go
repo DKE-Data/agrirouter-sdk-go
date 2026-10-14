@@ -127,7 +127,14 @@ type AuthorizationAddedEventData = internal_models.AuthorizationAddedEventData
 type AuthorizationRevokedEventData = internal_models.AuthorizationRevokedEventData
 
 // TenantInfo describes an authorized tenant together with its visible endpoints.
+//
+// CompanyName is nil when agrirouter does not know the tenant's company name
+// or it is empty.
 type TenantInfo = internal_models.TenantInfo
+
+// EndpointsListResponse describes the endpoints of a single tenant together
+// with tenant-level information, such as the tenant's company name.
+type EndpointsListResponse = internal_models.EndpointsListResponse
 
 // TenantEndpointInfo describes a single endpoint visible to the application within a tenant.
 type TenantEndpointInfo = internal_models.TenantEndpointInfo
