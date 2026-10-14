@@ -127,6 +127,10 @@ type AuthorizationAddedEventData = internal_models.AuthorizationAddedEventData
 type AuthorizationRevokedEventData = internal_models.AuthorizationRevokedEventData
 
 // TenantInfo describes an authorized tenant together with its visible endpoints.
+//
+// State is the state value the application supplied on the authorization
+// request of the most recent grant for this tenant. It is nil when that grant
+// carried no state.
 type TenantInfo = internal_models.TenantInfo
 
 // TenantEndpointInfo describes a single endpoint visible to the application within a tenant.
