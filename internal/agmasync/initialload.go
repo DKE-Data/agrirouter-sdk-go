@@ -10,25 +10,19 @@ import (
 	"github.com/google/uuid"
 )
 
-// The initial-load states. See "Initial load" in specification.md.
-//
-// The progression is LoadingFromAgrirouter, Reconciling, LoadingToAgrirouter,
-// Completed, and which side drives each transition follows what that side can
-// observe: agrirouter starts the load and declares the set sent, the endpoint
-// declares reconciliation done and the push finished.
+// The initial-load states, in order. agrirouter starts the load and declares
+// the set sent; the endpoint declares reconciliation done and the push
+// finished.
 const (
 	// StateLoadingFromAgrirouter means the canonical set is owed to this
-	// endpoint. Only agrirouter enters it, and only as a consequence of opt-in:
-	// a user opting the endpoint into master data, or into a further entity
-	// type. A participant cannot set it — the attempt is
-	// [ErrInitialLoadConflict] — so an endpoint in this state is one a user's
-	// decision put there.
+	// endpoint. agrirouter enters it when a user opts the endpoint into master
+	// data or into a further entity type. A participant setting it gets
+	// [ErrInitialLoadConflict].
 	StateLoadingFromAgrirouter = oapi.LOADINGFROMAGRIROUTER
 
 	// StateReconciling means agrirouter has sent the whole set. Only
-	// agrirouter enters this state, and it does so only after sending
-	// everything — which is why the state, not the stream closing, is the
-	// proof that the set arrived.
+	// agrirouter enters it, so this state, not the stream closing, proves the
+	// set arrived.
 	StateReconciling = oapi.RECONCILING
 
 	// StateLoadingToAgrirouter is set by the endpoint to declare
@@ -44,15 +38,13 @@ const (
 // DeclareCapabilities builds the masterdata configuration declaring the given entity
 // types, closed over entity dependencies (see [DependencyClosure]).
 //
-// It is the `masterdata` field of the application's own PutEndpoint call. This
-// package does not make that call: PutEndpoint upserts the whole endpoint, so a
-// call carrying only the declaration would withdraw the endpoint's message
-// capabilities and subscriptions. The application, which knows those, sends
-// the declaration alongside them.
+// The result goes in the `masterdata` field of the application's PutEndpoint
+// call. This package does not make that call: PutEndpoint replaces the whole
+// endpoint, so the application sends the declaration alongside its message
+// capabilities and subscriptions.
 //
-// Withdrawing a type narrows any selection naming it, which for that type has
-// the effect of the user deselecting it. That is the only way a declaration
-// changes what is delivered, and it can only ever remove.
+// Withdrawing a type removes it from any selection naming it, as if the user
+// had deselected it. A declaration never adds to what is delivered.
 func DeclareCapabilities(types ...EntityType) oapi.MasterdataConfig {
 	closure := DependencyClosure(types)
 	capabilities := make([]oapi.EntityTypeToggle, 0, len(closure))
@@ -65,13 +57,9 @@ func DeclareCapabilities(types ...EntityType) oapi.MasterdataConfig {
 // DependencyClosure expands a set of entity types to the dependency-closed set
 // that a declaration or a selection carries.
 //
-// Both steps must be closed. For a declaration it is what to send: one that is
-// not closed is rejected. For the user's selection agrirouter closes it itself,
-// so this is what a participant uses to reason about what opting into a type
-// will bring with it — when telling a user what to expect, or when checking that
-// its own store can hold everything a choice implies.
-//
-// See "Entity dependencies" in specification.md.
+// agrirouter rejects a declaration that is not closed. It closes the user's
+// selection itself, so a participant uses this to predict what opting into a
+// type brings with it.
 func DependencyClosure(types []EntityType) []EntityType {
 	want := make(map[EntityType]bool, len(EntityTypes))
 	var add func(EntityType)
@@ -80,8 +68,8 @@ func DependencyClosure(types []EntityType) []EntityType {
 			return
 		}
 		want[t] = true
-		// A boundary's field is the only required reference. Every other one
-		// is optional, so it constrains nothing (ADR 13).
+		// A boundary's field is the only required reference; optional ones
+		// constrain nothing.
 		if t == TypeFieldBoundary {
 			add(TypeField)
 		}
@@ -103,14 +91,9 @@ func DependencyClosure(types []EntityType) []EntityType {
 // SelectedTypes reads the entity types the user selected, off an
 // [EventRouteChanged] frame.
 //
-// The result is in [DependencyOrder], so walking it sends parents before the
-// objects referencing them. An empty result means the endpoint exchanges nothing
-// — the user deselected the last type, or removed the route. That is a statement
-// and not an omission, the frame stating the selection in full.
-//
-// A toggle carries the same value as the entity `type` discriminator, so the
-// comparison is direct. What this adds over a loop at each call site is the
-// ordering.
+// The result is in [DependencyOrder]. The frame states the whole selection, so
+// an empty result means the endpoint exchanges nothing: the user deselected
+// the last type or removed the route.
 func SelectedTypes(s oapi.RouteChangedEventData) []EntityType {
 	out := make([]EntityType, 0, len(s.EntityTypes))
 	for _, typ := range DependencyOrder {
@@ -126,8 +109,8 @@ func SelectedTypes(s oapi.RouteChangedEventData) []EntityType {
 
 // DeclaresCapability reports whether the endpoint declared it can exchange a type.
 //
-// It answers what the software is capable of, never what the user opted it into
-// — see [SelectedTypes] for that.
+// It reports what the software supports, not what the user opted it into; see
+// [SelectedTypes] for that.
 func DeclaresCapability(cfg oapi.MasterdataConfig, t EntityType) bool {
 	for _, toggle := range cfg.Capabilities {
 		if toggle.EntityType == string(t) {
@@ -139,11 +122,10 @@ func DeclaresCapability(cfg oapi.MasterdataConfig, t EntityType) bool {
 
 // GetInitialLoadStatus reads the endpoint's initial-load state.
 //
-// This is what says whether the canonical set has been sent. A participant
-// MUST NOT read that from its initial-load stream ending, because a dropped
-// connection ends the response exactly as an orderly completion does; an
-// endpoint that finds itself still in [StateLoadingFromAgrirouter] connects
-// again and takes the set from the beginning.
+// The state, not the initial-load stream ending, tells whether the canonical
+// set was sent: a dropped connection ends the stream just as completion does.
+// An endpoint still in [StateLoadingFromAgrirouter] reconnects and takes the
+// set from the beginning.
 //
 // Returns [ErrNotFound] for an endpoint opted into no entity type, which has no
 // initial-load state at all.
@@ -170,28 +152,24 @@ func GetInitialLoadStatus(
 // IsRepeatLoad reports whether a canonical set now arriving is one this
 // endpoint has been sent before.
 //
-// A participant MUST NOT infer from the arrival of a set that this is a first
-// connection: without this check it creates local duplicates of data it
-// already holds. The marker is previousLoadCompletedAt, which survives an
-// opt-out, a disconnection, and endpoint removal, because the identifier
-// mapping does. A masterdata reset discards it with the mapping, so the load
-// that follows one is a first load. See "Re-connection" and "Masterdata reset"
-// in specification.md.
+// A participant that treats every arriving set as a first load creates local
+// duplicates of data it already holds. The marker is previousLoadCompletedAt,
+// which survives opt-out, disconnection, and endpoint removal along with the
+// identifier mapping. A masterdata reset discards both, so the next load is a
+// first load.
 func IsRepeatLoad(s oapi.InitialLoadStatus) bool {
 	return s.PreviousLoadCompletedAt != nil
 }
 
 // SetInitialLoadState drives one of the endpoint's two transitions.
 //
-// Out-of-order transitions are [ErrInitialLoadConflict]. Repeating the state
-// the endpoint is already in is not out of order: it succeeds, and any
-// bindings carried are applied again and their rejections recomputed. That is
-// the only way an endpoint whose confirmation went unanswered can learn which
-// bindings were recorded, the mapping not being readable back.
+// Out-of-order transitions are [ErrInitialLoadConflict]. Repeating the current
+// state succeeds and reapplies any bindings carried, recomputing their
+// rejections. The mapping cannot be read back, so this is how an endpoint whose
+// confirmation went unanswered learns which bindings were recorded.
 //
-// [StateLoadingFromAgrirouter] is refused from every state, including from
-// itself. This operation moves the endpoint and does nothing else; reporting
-// that a user is needed is [ReportUserAttention].
+// [StateLoadingFromAgrirouter] is refused from every state, including itself.
+// To report that a user is needed, use [ReportUserAttention].
 func SetInitialLoadState(
 	ctx context.Context, api *oapiclient.ClientWithResponses,
 	externalEndpointID string, tenantID uuid.UUID,
@@ -224,18 +202,14 @@ func SetInitialLoadState(
 // ConfirmReconciled declares that reconciliation is finished and carries the
 // bindings it produced.
 //
-// It asserts that the conflicts the set surfaced have been resolved in the
-// participant's own software, not merely that the set was received — receipt is
-// already recorded, agrirouter having moved the endpoint to
-// [StateReconciling] when it finished sending. Reconciliation is human-paced
-// and unbounded, so sitting in [StateReconciling] for a long time is not a
-// fault.
+// It asserts that the participant has resolved the conflicts the set
+// surfaced; receipt was already recorded by agrirouter moving the endpoint to
+// [StateReconciling]. Reconciliation may wait on people, so staying in
+// [StateReconciling] for a long time is not a fault.
 //
 // Bindings are applied independently: a pair that cannot be recorded comes back
-// in the status's RejectedIdMappings rather than failing the transition, since
-// one unresolvable pair should not block the load of a whole set. Each has to
-// be resolved on its own terms and rebound through [Bind]; use
-// [NeedsUser] to tell the ones that need a person from the ones that do not.
+// in the status's RejectedIdMappings instead of failing the transition. Resolve
+// each and rebind it with [Bind]; [NeedsUser] tells which need a person.
 func ConfirmReconciled(
 	ctx context.Context, api *oapiclient.ClientWithResponses,
 	externalEndpointID string, tenantID uuid.UUID,

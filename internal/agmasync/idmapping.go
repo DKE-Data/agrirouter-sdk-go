@@ -12,14 +12,13 @@ import (
 // Bind declares that this endpoint already holds a canonical object under its
 // own localID.
 //
-// A participant MUST bind before sending the object; an unbound send creates a
-// duplicate canonical object.
+// Bind before sending the object; an unbound send creates a duplicate
+// canonical object.
 //
 // The mapping is keyed by application and tenant, so the binding covers every
 // endpoint of the application in this tenant. A localID denotes one canonical
 // object per tenant; binding it to a second is [ErrMappingConflict]. Bindings
-// from a whole initial load go in bulk via [ConfirmReconciled] instead. See
-// "Identifier mapping" in specification.md.
+// from an initial load go in bulk through [ConfirmReconciled].
 func Bind(
 	ctx context.Context, api *oapiclient.ClientWithResponses,
 	endpointID, tenantID uuid.UUID,

@@ -49,34 +49,29 @@ type Event struct {
 	// fail on it.
 	Type string
 
-	// ID is the delivery position as of this frame, and is opaque.
+	// ID is the opaque delivery position as of this frame. Do not interpret,
+	// compare, construct, or modify it; its structure may change between
+	// versions. The same value may repeat across frames, as it does throughout
+	// catch-up.
 	//
-	// A participant MUST NOT interpret, compare, construct, or modify it: its
-	// structure is undefined and may change between implementations and
-	// versions. It does not necessarily advance on every frame — the same
-	// value repeats across consecutive frames throughout catch-up — and
-	// nothing may be read into that beyond the position being unchanged.
-	//
-	// Whatever ID a frame carries is safe to resume from once that frame and
-	// every frame before it have been durably applied. The initial-load stream
-	// carries no position at all, so this is empty there.
+	// It is safe to resume from once this frame and every earlier one have
+	// been durably applied. It is empty on the initial-load stream, which has
+	// no position.
 	ID string
 
 	// Object is the canonical object the frame carries. It is the zero value
 	// on a frame that carries none, such as EventCaughtUp.
 	Object
 
-	// RouteChange is set on an [EventRouteChanged] frame and nil on every other.
-	// It is the one frame on the stream that carries something other than an
-	// entity, and what it carries is the endpoint's whole selection as it
-	// stands after the change.
+	// RouteChange is set on an [EventRouteChanged] frame and nil otherwise. It
+	// holds the endpoint's whole selection after the change.
 	RouteChange *oapi.RouteChangedEventData
 
-	// Reset is set on an [EventMasterdataReset] frame and nil on every other.
-	// A participant receiving it discards every binding it holds in the tenant
-	// and keeps its local records, and durably stores this frame's position
-	// before taking part in that tenant's initial load again: a resume from
-	// before it would deliver the reset once more, after the new bindings exist.
+	// Reset is set on an [EventMasterdataReset] frame and nil otherwise. On
+	// receipt, a participant discards every binding it holds in the tenant,
+	// keeps its local records, and durably stores this frame's position before
+	// rejoining the tenant's initial load. Resuming from an earlier position
+	// would deliver the reset again after the new bindings exist.
 	Reset *oapi.MasterdataResetEventData
 }
 
@@ -109,22 +104,15 @@ func (s *Stream) Close() error {
 // Events iterates the stream's frames until it ends, the context is canceled,
 // or a frame cannot be decoded.
 //
-// The iteration ending is not by itself proof of anything. On the live stream
-// it means the connection dropped and should be re-established from the last
-// durably applied position. On an initial-load stream it does not prove the
-// canonical set arrived — a dropped connection ends the response exactly as an
-// orderly completion does — so the endpoint's initial-load state is what has to
-// be consulted; see [GetInitialLoadStatus].
+// On the live stream, the iteration ending means the connection dropped;
+// reconnect from the last durably applied position. On the initial-load
+// stream, it does not prove the set arrived; check [GetInitialLoadStatus].
 func (s *Stream) Events() iter.Seq2[Event, error] {
 	return func(yield func(Event, error) bool) {
-		// The response is parsed with sse.Read rather than consumed through an
-		// sse.Client, as the SDK's other event streams are, because an
-		// sse.Client reconnects on its own and resumes from the id of the last
-		// frame it read. On the live stream the resume position must be the last
-		// frame the participant has durably applied, which only the participant
-		// knows, so a dropped connection ends the iteration instead and the
-		// participant reconnects with its own position. The initial-load stream
-		// carries no position at all and is restarted from the beginning.
+		// sse.Read, not sse.Client as the SDK's other streams use: sse.Client
+		// reconnects on its own from the last frame it read, but the live
+		// stream must resume from the last frame the participant durably
+		// applied, which only the participant knows.
 		maxEventSize := s.MaxEventSize
 		if maxEventSize <= 0 {
 			maxEventSize = DefaultMaxEventSize
@@ -188,31 +176,25 @@ func errIsStreamEnd(err error) bool {
 
 // Events opens the application's live master-data stream.
 //
-// The stream is application-scoped and carries every tenant the application is
-// routed to and every entity type it is opted into, so a receiver holding data
-// for several tenants partitions on each object's tenantId rather than on the
-// connection. agrirouter never echoes a change back to the endpoint it came
-// from, though it does deliver it to the application's other endpoints.
+// The stream is application-scoped: it carries every tenant the application is
+// routed to and every entity type it is opted into, so a receiver partitions
+// on each object's tenantId. agrirouter does not echo a change to the endpoint
+// that wrote it, but does deliver it to the application's other endpoints.
 //
-// lastEventID resumes from a previous position and MUST be the id of a frame
-// the participant has durably applied — not whatever its stream client last
-// read, delivery being at-least-once. A participant applying frames in parallel
-// resends the id of the earliest frame, in the order the stream delivered them,
-// that it has not yet applied.
-//
-// An empty lastEventID is served as a first connection: agrirouter delivers
+// lastEventID must be the ID of a frame the participant has durably applied,
+// not the last one it read, because delivery is at-least-once. A participant
+// applying frames in parallel resends the ID of the earliest frame, in
+// delivery order, that it has not yet applied. An empty lastEventID delivers
 // everything the application is entitled to.
 //
-// Positions do not expire. agrirouter serves catch-up from the current state of
-// each entity rather than from a retained log, so a long absence is a larger
-// catch-up rather than a failed one — and, for the same reason, a participant
-// receives each changed entity once carrying its current value and MUST NOT
-// assume it observed every intermediate change. Catch-up ends with an
-// [EventCaughtUp] frame.
+// Positions do not expire. agrirouter serves catch-up from each entity's
+// current state rather than a retained log, so a long absence means a larger
+// catch-up, and a participant sees each changed entity once with its current
+// value, not every intermediate change. Catch-up ends with an [EventCaughtUp]
+// frame.
 func Events(ctx context.Context, api *oapiclient.ClientWithResponses, lastEventID string) (*Stream, error) {
 	var params oapi.StreamMasterdataEventsParams
 	if lastEventID != "" {
-		// Passed back exactly as agrirouter issued it in the frame's id field.
 		params.LastEventID = &lastEventID
 	}
 	resp, err := api.StreamMasterdataEvents(ctx, &params, acceptEventStream)
@@ -227,16 +209,14 @@ func Events(ctx context.Context, api *oapiclient.ClientWithResponses, lastEventI
 //
 // The set is every object of every entity type the endpoint is entitled to.
 //
-// Order is agrirouter's. A referenced object precedes the objects that
-// reference it, and opt-in is dependency-closed, so every reference to a
-// selected type resolves as objects arrive and each can be applied on arrival.
-// A reference to a type not selected is ignored (ADR 13). That is the only property
-// of the order to rely on: a participant MUST NOT depend on the position of one
-// entity type relative to another, or read completeness of a type out of it.
+// A referenced object precedes the objects that reference it, and opt-in is
+// dependency-closed, so each object can be applied on arrival. A reference to
+// an unselected type is ignored. Do not rely on any other property of the
+// order, such as the position of one type relative to another or a type being
+// complete.
 //
-// The stream carries no position and takes no Last-Event-ID. A connection that
-// drops before the set is complete is recovered by connecting again and taking
-// the set from the beginning.
+// The stream carries no position. After a dropped connection, reconnect and
+// take the set from the beginning.
 func InitialLoadEvents(
 	ctx context.Context, api *oapiclient.ClientWithResponses,
 	externalEndpointID string, tenantID uuid.UUID,
@@ -263,14 +243,10 @@ var acceptEventStream oapiclient.RequestEditorFn = func(
 // openStream turns the response of one of the generated stream operations into
 // a [Stream].
 //
-// Its callers reach for the generated low-level method rather than the
-// WithResponse wrapper the rest of this package uses: the wrapper reads the
-// whole body and closes it, which for a stream means waiting for agrirouter to
-// finish, buffering everything, and handing back nothing that can be read frame
-// by frame.
+// Callers use the generated low-level method, not the WithResponse wrapper,
+// because the wrapper reads the whole body before returning.
 //
-// positioned says whether the stream carries a delivery position, which the
-// live stream does and the initial-load stream does not.
+// positioned says whether the stream carries a delivery position.
 func openStream(resp *http.Response, positioned bool) (*Stream, error) {
 	const maxErrorBody = 4096
 	if resp.StatusCode != http.StatusOK {
@@ -278,8 +254,8 @@ func openStream(resp *http.Response, positioned bool) (*Stream, error) {
 		_ = resp.Body.Close()
 		return nil, writeResult{statusCode: resp.StatusCode, body: body}.err()
 	}
-	// A 200 in another media type is not a stream and parsed as one it would yield no
-	// frames and no error.
+	// Parsed as a stream, a 200 in another media type would yield no frames
+	// and no error.
 	if mt, _, err := mime.ParseMediaType(resp.Header.Get("Content-Type")); err != nil || mt != "text/event-stream" {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, maxErrorBody))
 		_ = resp.Body.Close()

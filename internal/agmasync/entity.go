@@ -9,17 +9,16 @@ import (
 
 // EntityType is one of the master-data entity types.
 //
-// The values are the ones the `type` discriminator carries on the wire, and an
-// `entityType` toggle carries the same, so a capability declaration or a routing
-// selection can be compared against an entity's own type directly.
+// The values match both the `type` discriminator on an entity and the
+// `entityType` toggle, so a capability declaration or a routing selection
+// compares against an entity's type directly.
 //
-// The collection segments in the paths are spelled differently — plural and
-// kebab-cased, `field-boundaries` for `fieldBoundary` — but nothing here
-// converts between the two: the paths are only reached through the generated
-// client, which has an operation per collection.
+// URL paths spell collections differently (`field-boundaries` for
+// `fieldBoundary`). Nothing here converts between the two because the
+// generated client has one operation per collection.
 type EntityType string
 
-// The entity types. See "Scope" in specification.md.
+// The entity types.
 const (
 	TypeParty         EntityType = "party"
 	TypeFarm          EntityType = "farm"
@@ -33,19 +32,15 @@ var EntityTypes = []EntityType{
 }
 
 // DependencyOrder lists the types so that a referenced type precedes the types
-// that reference it. See "Entity dependencies" in specification.md.
+// that reference it. A participant sends in this order, and agrirouter
+// delivers in it.
 //
-// It is the order a participant sends in, and the property agrirouter's own
-// delivery order guarantees. A reference is carried as the sender's own
-// identifier and resolved against the mapping, so a field sent before the farm
-// it names has nothing to resolve to; sending in this order means every
-// reference's target is already bound by the time it is used.
+// agrirouter resolves a reference against the sender's identifier mapping, so
+// a field sent before the farm it names has nothing to resolve to. Sending in
+// this order binds every reference target before it is used.
 //
-// It is not [EntityTypes], which is the set rather than an order.
-//
-// Parties are the one type it does not order fully: a membership references a
-// party from a party, so within parties the order is per object — see
-// [PartyTier].
+// Within parties the order is per object, because a membership references one
+// party from another; see [PartyTier].
 var DependencyOrder = []EntityType{
 	TypeParty, TypeFarm, TypeField, TypeFieldBoundary,
 }
@@ -61,15 +56,12 @@ func (t EntityType) Valid() bool {
 }
 
 // Envelope is the set of fields every entity shares, plus the type
-// discriminator, read off an entity without regard to which type it is.
+// discriminator.
 //
-// See "Common envelope" in specification.md. Every field but Type is a pointer
-// because every one of them is assigned by agrirouter and therefore absent on
-// an object a participant is about to send for the first time. LocalId is
-// absent for a second reason as well, and that absence is meaningful: on a
-// delivered object it states that agrirouter holds no mapping for the
-// receiving application, which is what makes the object recognizable as one
-// the receiver must create locally and bind.
+// Every field but Type is a pointer because agrirouter assigns it, so it is
+// absent on an object not yet sent. A delivered object without LocalId has no
+// mapping for the receiving application: the receiver must create it locally
+// and bind it.
 type Envelope struct {
 	oapi.Envelope
 	Type EntityType `json:"type"`
@@ -77,10 +69,8 @@ type Envelope struct {
 
 // EnvelopeOf reads the common fields of an entity of any type from its JSON.
 //
-// The event stream carries all four types over one connection, so a receiver
-// has to read `type`, `revision`, and `localId` before it knows which concrete
-// schema to decode into. That ordering is why this exists rather than a
-// four-way type switch at every call site.
+// The event stream carries all types over one connection, so a receiver reads
+// the envelope before it knows which schema to decode into.
 func EnvelopeOf(raw []byte) (Envelope, error) {
 	var env Envelope
 	if err := json.Unmarshal(raw, &env); err != nil {
@@ -94,9 +84,8 @@ func EnvelopeOf(raw []byte) (Envelope, error) {
 
 // Object is a canonical object of any entity type, decoded into its model.
 type Object struct {
-	// Envelope holds the object's common fields and its type, which says which
-	// of Party, Farm, Field, and FieldBoundary is set. A receiver needs the
-	// type and the revision before it can decide what to do with the object.
+	// Envelope holds the object's common fields. Its Type says which of Party,
+	// Farm, Field, and FieldBoundary is set.
 	Envelope Envelope
 
 	// The object, decoded into its model. Exactly one is set, the one
@@ -162,19 +151,17 @@ func decodeObject(env Envelope, raw []byte) (Object, error) {
 // LocalRef builds a reference to another entity from the referencing
 // endpoint's own identifier for the target.
 //
-// See "References" in specification.md. On send a participant may use either
-// identifier, and using its own is what keeps agrirouterId off the write path:
-// references can be built out of a participant's own keys, without first
-// capturing and correlating canonical ones. agrirouter resolves the localId
-// against the sending endpoint's mapping and rejects the write if that endpoint
-// has not sent the target yet, so the target must be sent before the first
-// reference to it — through the same endpoint.
+// A reference may carry either identifier on send. Using localId lets a
+// participant build references from its own keys without tracking canonical
+// ones. agrirouter resolves the localId against the sending endpoint's mapping
+// and rejects the write if that endpoint has not sent the target yet, so send
+// the target first, through the same endpoint.
 func LocalRef(localID string) oapi.EntityReference {
 	return oapi.EntityReference{LocalId: &localID}
 }
 
 // The party types `details` states. A party without `details` is of unknown
-// party type. See "Party details" in specification.md.
+// party type.
 const (
 	PartyTypePerson       = "PERSON"
 	PartyTypeOrganization = "ORGANIZATION"
@@ -201,9 +188,8 @@ func PartyTypeOf(p oapi.Party) (string, error) {
 // party with person `details`, which may name organizations through its
 // memberships, and 0 for any other, which references nothing.
 //
-// Sending tier 0 before tier 1 means every membership target is bound by the
-// time a person names it. See "Entity dependencies" in specification.md and
-// ADR 07.
+// Sending tier 0 before tier 1 binds every membership target before a person
+// names it.
 func PartyTier(p oapi.Party) (int, error) {
 	t, err := PartyTypeOf(p)
 	if err != nil {
