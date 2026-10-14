@@ -135,12 +135,19 @@ func (c *Client) DeleteEndpoint(
 // SendMessages sends a message to the agrirouter API.
 //
 // The body of the request must be a valid payload of agrirouter message.
+// body can be any reader, including a stream such as an *os.File;
+// params.ContentLength must be its exact size in bytes.
 func (c *Client) SendMessages(
 	ctx context.Context,
 	params *SendMessagesParams,
 	body io.Reader,
 ) error {
-	res, err := c.oapiClient.SendMessagesWithBodyWithResponse(ctx, params, "application/octet-stream", body)
+	var reqEditors []oapi.RequestEditorFn
+	if params != nil {
+		reqEditors = append(reqEditors, setContentLength(params.ContentLength))
+	}
+	res, err := c.oapiClient.SendMessagesWithBodyWithResponse(
+		ctx, params, "application/octet-stream", body, reqEditors...)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrAPICallFailed, err)
 	}
@@ -150,6 +157,20 @@ func (c *Client) SendMessages(
 	}
 
 	return fmt.Errorf("%w: unexpected status code %d, body: %s", ErrFailedStatusCode, res.StatusCode(), string(res.Body))
+}
+
+// setContentLength sets req.ContentLength unless http.NewRequest already
+// derived it. net/http writes Content-Length from that field and ignores the
+// header the generated client sets. http.NewRequest fills the field only for
+// *bytes.Buffer, *bytes.Reader and *strings.Reader; any other body is sent
+// chunked without Content-Length, which agrirouter rejects.
+func setContentLength(contentLength int64) oapi.RequestEditorFn {
+	return func(_ context.Context, req *http.Request) error {
+		if req.ContentLength == 0 {
+			req.ContentLength = contentLength
+		}
+		return nil
+	}
 }
 
 // ListAuthorizedTenants returns all tenants for which the current application
