@@ -1263,6 +1263,23 @@ type TenantInfo struct {
 	// endpoints.
 	Endpoints []TenantEndpointInfo `json:"endpoints"`
 
+	// State The `state` value the application supplied on the OAuth2
+	// authorization request of the most recent grant for this tenant.
+	// Omitted when that grant carried no `state`. When the user grants
+	// the authorization again, this field reflects the new grant.
+	//
+	// This lets your backend match a pending authorization request to
+	// the tenant via `GET /tenants`, without needing an open events
+	// stream.
+	//
+	// The authorization request accepts a `state` of at most 512
+	// characters. Values stored before this limit was introduced may be
+	// longer.
+	//
+	// `TenantInfo` is also delivered as `tenant` in the
+	// `AUTHORIZATION_ADDED` event, so this field appears there too.
+	State *string `json:"state,omitempty"`
+
 	// TenantId Authorized tenant ID.
 	TenantId openapi_types.UUID `json:"tenant_id"`
 }
