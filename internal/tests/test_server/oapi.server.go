@@ -42,6 +42,21 @@ func (e ApplicationType) Valid() bool {
 	}
 }
 
+// Defines values for AreaUnitOfMeasureCode.
+const (
+	Ha AreaUnitOfMeasureCode = "ha"
+)
+
+// Valid indicates whether the value is a known member of the AreaUnitOfMeasureCode enum.
+func (e AreaUnitOfMeasureCode) Valid() bool {
+	switch e {
+	case Ha:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AuthorizationAddedEventDataEventType.
 const (
 	AuthorizationAddedEventDataEventTypeAUTHORIZATIONADDED AuthorizationAddedEventDataEventType = "AUTHORIZATION_ADDED"
@@ -252,16 +267,19 @@ func (e ReceiveEventsParamsTypes) Valid() bool {
 	}
 }
 
-// Address defines model for Address.
-type Address struct {
-	City *string `json:"city,omitempty"`
-
-	// Country ISO 3166-1 alpha-2 country code.
-	Country    *string `json:"country,omitempty"`
-	PoBox      *string `json:"po_box,omitempty"`
-	PostalCode *string `json:"postal_code,omitempty"`
-	State      *string `json:"state,omitempty"`
-	Street     *string `json:"street,omitempty"`
+// AddressContactMethod An address of a party or a farm, based on the ADAPT `AddressContactMethod`. Replaced whole on write.
+type AddressContactMethod struct {
+	// AddressContactTypeCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT AddressContactType list. Plus `BILLING` for a billing address.
+	//
+	//
+	// Examples: PHYSICAL, POSTAL, LEGAL, BILLING
+	AddressContactTypeCode string    `json:"addressContactTypeCode"`
+	AddressLines           *[]string `json:"addressLines,omitempty"`
+	City                   *string   `json:"city,omitempty"`
+	Country                *string   `json:"country,omitempty"`
+	CountryCode            *string   `json:"countryCode,omitempty"`
+	CountrySubdivision     *string   `json:"countrySubdivision,omitempty"`
+	PostalCode             *string   `json:"postalCode,omitempty"`
 }
 
 // ApplicationCapabilities defines model for ApplicationCapabilities.
@@ -277,6 +295,15 @@ type ApplicationCapabilities struct {
 // connected: a `COMMUNICATION_UNIT` is onboarded with a registration
 // code entered on the machine, every other type via its own deep URL.
 type ApplicationType string
+
+// Area An area, based on the ADAPT measurement type. Always in hectares.
+type Area struct {
+	NumericValue      float32               `json:"numericValue"`
+	UnitOfMeasureCode AreaUnitOfMeasureCode `json:"unitOfMeasureCode"`
+}
+
+// AreaUnitOfMeasureCode defines model for Area.UnitOfMeasureCode.
+type AreaUnitOfMeasureCode string
 
 // AuthorizationAddedEventData Data structure for AUTHORIZATION_ADDED events. This event would arrive
 // whenever a user adds an authorization for a tenant to the current
@@ -340,6 +367,35 @@ type AuthorizationRevokedEventData struct {
 // AuthorizationRevokedEventDataEventType defines model for AuthorizationRevokedEventData.EventType.
 type AuthorizationRevokedEventDataEventType string
 
+// Boundary The geometry of a field boundary, based on the ADAPT `Boundary`.
+type Boundary struct {
+	// BoundaryCreationMethodCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT BoundaryCreationMethod list.
+	//
+	//
+	// Examples: UNKNOWN, MANUAL, DRIVEN, SURVEYED, AUTO_OPERATION, AUTO_IMAGERY, ADMINISTRATIVE
+	BoundaryCreationMethodCode *string `json:"boundaryCreationMethodCode,omitempty"`
+
+	// GNSSBaseStationTypeCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT GNSSBaseStationType list.
+	//
+	//
+	// Examples: PHYSICAL, VIRTUAL
+	GNSSBaseStationTypeCode *string `json:"gNSSBaseStationTypeCode,omitempty"`
+
+	// GNSSBaseSurveyTypeCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT GNSSBaseSurveyType list.
+	//
+	//
+	// Examples: MOBILE_BASE, PROFESSIONAL, VIRTUAL
+	GNSSBaseSurveyTypeCode     *string `json:"gNSSBaseSurveyTypeCode,omitempty"`
+	GNSSCorrectionNetworkBrand *string `json:"gNSSCorrectionNetworkBrand,omitempty"`
+	GNSSCorrectionNetworkName  *string `json:"gNSSCorrectionNetworkName,omitempty"`
+
+	// Geometry A polygon or multipolygon as Well-Known Text in WGS84. It MUST be in the canonical form of "Encoding" in specification.md, which the pattern does not check: it checks the geometry type only.
+	//
+	//
+	// Examples: POLYGON ((9.56 52.205, 9.566 52.205, 9.5665 52.208, 9.5605 52.2085, 9.56 52.205))
+	Geometry WktArea `json:"geometry"`
+}
+
 // CompatibleApplication defines model for CompatibleApplication.
 type CompatibleApplication struct {
 	// ApplicationId The catalog ID of the compatible application.
@@ -376,11 +432,10 @@ type ConfirmMessagesRequest struct {
 	Confirmations []MessageConfirmation `json:"confirmations"`
 }
 
-// Contact defines model for Contact.
-type Contact struct {
-	Email  *openapi_types.Email `json:"email,omitempty"`
-	Mobile *string              `json:"mobile,omitempty"`
-	Phone  *string              `json:"phone,omitempty"`
+// ContactInfo Contact data of a party, based on the ADAPT `ContactInfo`. Each list holds at most one entry per type code, and is replaced whole on write.
+type ContactInfo struct {
+	AddressContactMethods           *[]AddressContactMethod           `json:"addressContactMethods,omitempty"`
+	TelecommunicationContactMethods *[]TelecommunicationContactMethod `json:"telecommunicationContactMethods,omitempty"`
 }
 
 // Endpoint defines model for Endpoint.
@@ -493,19 +548,6 @@ type EndpointsListResponse struct {
 	Endpoints []TenantEndpointInfo `json:"endpoints"`
 }
 
-// EntityReference A reference to another entity by canonical and/or local id. On send either identifier suffices: a local_id is resolved against the sender's own mapping, and is rejected if the target has not been sent yet. On delivery agrirouter populates agrirouter_id, since the sender's local_id does not resolve in the receiver's namespace.
-type EntityReference struct {
-	AgrirouterId *openapi_types.UUID `json:"agrirouter_id,omitempty"`
-	LocalId      *string             `json:"local_id,omitempty"`
-	union        json.RawMessage
-}
-
-// EntityReference0 defines model for EntityReference.0.
-type EntityReference0 = interface{}
-
-// EntityReference1 defines model for EntityReference.1.
-type EntityReference1 = interface{}
-
 // EntityRequest A lazy-loading request for a single canonical object.
 type EntityRequest struct {
 	// AgrirouterId The canonical identifier of the wanted entity.
@@ -521,21 +563,13 @@ type EntityTypeToggle struct {
 	EntityType string `json:"entity_type"`
 }
 
-// Envelope Fields common to every master-data entity. The concrete entity type is determined by the path; each entity schema pins the `type` discriminator so that objects remain self-describing on the event stream.
+// Envelope Sync state common to every master-data entity. The master data itself, identity included, is in `content`. The concrete entity type is determined by the path; each entity schema pins the `type` discriminator so that objects remain self-describing on the event stream.
 //
-// agrirouter assigns `agrirouter_id`, `revision`, `modified_at`, `tenant_id`, `source_endpoint_id`, and `type`. An object may be sent back as it was delivered, these included: `revision`, `modified_at`, and `source_endpoint_id` are ignored on send; `agrirouter_id`, `tenant_id`, and `type` must match the object written, or the write is a 400.
+// agrirouter assigns `revision`, `modified_at`, `tenant_id`, `source_endpoint_id`, and `type`. An object may be sent back as it was delivered, these included: `revision`, `modified_at`, and `source_endpoint_id` are ignored on send; `tenant_id` and `type` must match the object written, or the write is a 400.
 //
-// An optional attribute declared nullable accepts `null` on a write, where it removes the attribute. agrirouter never delivers `null`: an attribute absent from a delivered object is unset.
+// `content` is based on the corresponding ADAPT 2.0.2 type. Properties ADAPT has no slot for are prefixed `_agmasync_`, and unknown properties are rejected. See "Relation to ADAPT" in specification.md for every deviation from ADAPT. An optional attribute declared nullable accepts `null` on a write, where it removes the attribute. agrirouter never delivers `null`: an attribute absent from a delivered object is unset.
 type Envelope struct {
 	Active *bool `json:"active,omitempty"`
-
-	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send. If sent, it must be the object `local_id` is bound to.
-	AgrirouterId *openapi_types.UUID `json:"agrirouter_id,omitempty"`
-
-	// LocalId Always the *calling* application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. It never carries another application's identifier. One store per application, so the identifier is the same whichever of the application's endpoints sends or receives it.
-	//
-	// Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — an object the application has not bound, or has unbound. An absent `local_id` means "you do not hold this object": create it locally and bind the identifier you issue.
-	LocalId *string `json:"local_id,omitempty"`
 
 	// ModifiedAt Assigned by agrirouter. Ignored on send.
 	ModifiedAt *time.Time `json:"modified_at,omitempty"`
@@ -560,38 +594,19 @@ type ErrorResponse struct {
 
 // Farm A grouping of fields that the farmer considers part of the same management group.
 type Farm struct {
-	Active  *bool    `json:"active,omitempty"`
-	Address *Address `json:"address,omitempty"`
+	Active *bool `json:"active,omitempty"`
 
-	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send. If sent, it must be the object `local_id` is bound to.
-	AgrirouterId *openapi_types.UUID `json:"agrirouter_id,omitempty"`
-
-	// GeoReference A GeoJSON Point (longitude, latitude) locating the farm.
-	GeoReference *Geometry `json:"geo_reference,omitempty"`
-
-	// LocalId Always the *calling* application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. It never carries another application's identifier. One store per application, so the identifier is the same whichever of the application's endpoints sends or receives it.
-	//
-	// Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — an object the application has not bound, or has unbound. An absent `local_id` means "you do not hold this object": create it locally and bind the identifier you issue.
-	LocalId *string `json:"local_id,omitempty"`
+	// Content Based on the ADAPT `Farm`.
+	Content FarmContent `json:"content"`
 
 	// ModifiedAt Assigned by agrirouter. Ignored on send.
 	ModifiedAt *time.Time `json:"modified_at,omitempty"`
-	Name       string     `json:"name"`
-
-	// Owner The party that holds the farm. Absent where the farm's system does not record parties.
-	Owner *EntityReference `json:"owner,omitempty"`
-
-	// Partners Parties holding a role on this farm, such as the contractor that works it or the advisor that reads it.
-	Partners *[]Partner `json:"partners,omitempty"`
 
 	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the `x-agrirouter-base-revision` header, where it is compared and discarded. Ignored on send.
 	Revision *int `json:"revision,omitempty"`
 
 	// SourceEndpointId The agrirouter identifier of the endpoint whose change produced this revision. It always belongs to `tenant_id`. Ignored on send.
 	SourceEndpointId *openapi_types.UUID `json:"source_endpoint_id,omitempty"`
-
-	// SpecialisedUsageType Production orientation of the farm (e.g. arable farming, dairy, vineyard, orchard). Free-form, drawn from AGROVOC where a matching concept exists.
-	SpecialisedUsageType *string `json:"specialised_usage_type,omitempty"`
 
 	// TenantId The tenant the object belongs to. Assigned by agrirouter. On send the tenant follows from the endpoint named in `x-agrirouter-endpoint-id`; a `tenant_id` sent must be that tenant.
 	//
@@ -602,38 +617,46 @@ type Farm struct {
 	Type interface{} `json:"type"`
 }
 
+// FarmContent Based on the ADAPT `Farm`.
+type FarmContent struct {
+	UnderscoreAgmasyncAddress *AddressContactMethod `json:"_agmasync_address,omitempty"`
+
+	// UnderscoreAgmasyncGeoReference The point locating the farm.
+	UnderscoreAgmasyncGeoReference *WktPoint `json:"_agmasync_geoReference,omitempty"`
+
+	// UnderscoreAgmasyncGrowerRef The party that holds the farm, in place of ADAPT's Grower. Absent where the farm's system does not record parties.
+	UnderscoreAgmasyncGrowerRef *Ref `json:"_agmasync_growerRef,omitempty"`
+
+	// UnderscoreAgmasyncPartners Parties holding a role on this farm, such as the contractor that works it or the advisor that reads it.
+	UnderscoreAgmasyncPartners *[]Partner `json:"_agmasync_partners,omitempty"`
+
+	// UnderscoreAgmasyncSpecialisedUsageType Production orientation of the farm (e.g. arable farming, dairy, vineyard, orchard). Free-form, drawn from AGROVOC where a matching concept exists.
+	UnderscoreAgmasyncSpecialisedUsageType *string `json:"_agmasync_specialisedUsageType,omitempty"`
+	Description                            *string `json:"description,omitempty"`
+
+	// Id Identity of an object, based on the ADAPT `Id`. Used for the object's own `id` and inside every `Ref`. Both identifiers it can carry are those of the near end of the transfer: on send the sender's, on delivery the receiving application's. It never carries another application's identifier.
+	//
+	// On delivery `uniqueIds` holds the agrirouter entry, the canonical identifier, and a local entry, the receiving application's local identifier, in that order, and `referenceId` is present exactly when the local entry is and equals its `idText`. The local entry's `idTypeCode` and `idSource` are the ones the application last sent for that object: `idTypeCode` is `STRING` and `idSource` is absent when it sent none.
+	//
+	// On send the local identifier is `referenceId`, and the local entry is the entry whose `idText` equals it. Of the rest, agrirouter reads only an entry with `idSource` `https://agrirouter.com`, at most one, and ignores every other entry.
+	//
+	// As an object's own `id`, on send `referenceId` must equal the `{local_id}` in the path, and an agrirouter entry, if any, must be the object that `local_id` is bound to. On delivery the local entry and `referenceId` are absent when the receiving application has not bound the object, or has unbound it. Their absence means "you do not hold this object": create it locally and bind the identifier you issue.
+	Id   Id     `json:"id"`
+	Name string `json:"name"`
+}
+
 // Field A named physical space where production agriculture takes place, used to partition and identify data.
 type Field struct {
 	Active *bool `json:"active,omitempty"`
 
-	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send. If sent, it must be the object `local_id` is bound to.
-	AgrirouterId *openapi_types.UUID `json:"agrirouter_id,omitempty"`
-
-	// Area Nominal area in square metres.
-	Area *float32 `json:"area,omitempty"`
-
-	// Farm The farm this field belongs to.
-	Farm          *EntityReference `json:"farm,omitempty"`
-	HarvestPeriod *HarvestPeriod   `json:"harvest_period,omitempty"`
-
-	// LocalId Always the *calling* application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. It never carries another application's identifier. One store per application, so the identifier is the same whichever of the application's endpoints sends or receives it.
-	//
-	// Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — an object the application has not bound, or has unbound. An absent `local_id` means "you do not hold this object": create it locally and bind the identifier you issue.
-	LocalId *string `json:"local_id,omitempty"`
-
-	// Metadata Additional key/value metadata. A participant leaves the keys it does not understand out of its writes, which keeps them.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	// Content Based on the ADAPT `Field`.
+	Content FieldContent `json:"content"`
 
 	// ModifiedAt Assigned by agrirouter. Ignored on send.
 	ModifiedAt *time.Time `json:"modified_at,omitempty"`
-	Name       string     `json:"name"`
-
-	// Owner The party holding this field, for systems that attribute fields to a party directly. When absent, the field is held by its farm's owner. When present, it takes precedence for this field, which is how a field held by one party but managed under another's farm is expressed.
-	Owner *EntityReference `json:"owner,omitempty"`
 
 	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the `x-agrirouter-base-revision` header, where it is compared and discarded. Ignored on send.
-	Revision *int      `json:"revision,omitempty"`
-	Soil     *SoilInfo `json:"soil,omitempty"`
+	Revision *int `json:"revision,omitempty"`
 
 	// SourceEndpointId The agrirouter identifier of the endpoint whose change produced this revision. It always belongs to `tenant_id`. Ignored on send.
 	SourceEndpointId *openapi_types.UUID `json:"source_endpoint_id,omitempty"`
@@ -642,9 +665,6 @@ type Field struct {
 	//
 	// One application stream carries every tenant the application is routed to, so on delivery this is the field that says which of them an object belongs to. A receiver holding data for several tenants partitions on it rather than on the connection.
 	TenantId *openapi_types.UUID `json:"tenant_id,omitempty"`
-
-	// Topography Slope / gradient, e.g. 7 (degrees).
-	Topography *float32 `json:"topography,omitempty"`
 
 	// Type Discriminator, set by agrirouter. Implied by the path on send. If sent, it must match the path.
 	Type interface{} `json:"type"`
@@ -654,48 +674,11 @@ type Field struct {
 type FieldBoundary struct {
 	Active *bool `json:"active,omitempty"`
 
-	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send. If sent, it must be the object `local_id` is bound to.
-	AgrirouterId *openapi_types.UUID `json:"agrirouter_id,omitempty"`
-
-	// Boundary A GeoJSON Polygon or MultiPolygon.
-	Boundary Geometry `json:"boundary"`
-
-	// BoundaryType [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). The boundary classification.
-	//
-	//
-	// Examples: CONCEPTUAL, OPERATIONAL, ECONOMIC_DEFINED, ADMINISTRATIVE_RECEIVED
-	BoundaryType *string `json:"boundary_type,omitempty"`
-
-	// CreationMethod [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). How the boundary was produced.
-	//
-	//
-	// Examples: UNKNOWN, MANUAL, DRIVEN, SURVEYED, AUTO_OPERATION, AUTO_IMAGERY, ADMINISTRATIVE
-	CreationMethod *string `json:"creation_method,omitempty"`
-
-	// Field The field this boundary describes. A field's boundaries are the boundaries that name it.
-	Field         EntityReference `json:"field"`
-	HarvestPeriod *HarvestPeriod  `json:"harvest_period,omitempty"`
-
-	// LocalId Always the *calling* application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. It never carries another application's identifier. One store per application, so the identifier is the same whichever of the application's endpoints sends or receives it.
-	//
-	// Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — an object the application has not bound, or has unbound. An absent `local_id` means "you do not hold this object": create it locally and bind the identifier you issue.
-	LocalId *string `json:"local_id,omitempty"`
-
-	// Metadata Additional key/value metadata. A participant leaves the keys it does not understand out of its writes, which keeps them.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	// Content Based on the ADAPT `FieldBoundary`.
+	Content FieldBoundaryContent `json:"content"`
 
 	// ModifiedAt Assigned by agrirouter. Ignored on send.
 	ModifiedAt *time.Time `json:"modified_at,omitempty"`
-
-	// Name The name the boundary is known by, e.g. a field name and season.
-	Name      *string     `json:"name,omitempty"`
-	Obstacles *[]Obstacle `json:"obstacles,omitempty"`
-
-	// RegulatoryRequirements [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). A regulatory constraint applying to the boundary.
-	//
-	//
-	// Examples: RED_ZONE_NITROGEN, WATER_PROTECTION_AREA
-	RegulatoryRequirements *string `json:"regulatory_requirements,omitempty"`
 
 	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the `x-agrirouter-base-revision` header, where it is compared and discarded. Ignored on send.
 	Revision *int `json:"revision,omitempty"`
@@ -710,6 +693,77 @@ type FieldBoundary struct {
 
 	// Type Discriminator, set by agrirouter. Implied by the path on send. If sent, it must match the path.
 	Type interface{} `json:"type"`
+}
+
+// FieldBoundaryContent Based on the ADAPT `FieldBoundary`.
+type FieldBoundaryContent struct {
+	// UnderscoreAgmasyncBoundaryType [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). The boundary classification.
+	//
+	//
+	// Examples: CONCEPTUAL, OPERATIONAL, ECONOMIC_DEFINED, ADMINISTRATIVE_RECEIVED
+	UnderscoreAgmasyncBoundaryType *string `json:"_agmasync_boundaryType,omitempty"`
+
+	// UnderscoreAgmasyncFieldRef The field this boundary describes. A field's boundaries are the boundaries that name it.
+	UnderscoreAgmasyncFieldRef      Ref            `json:"_agmasync_fieldRef"`
+	UnderscoreAgmasyncHarvestPeriod *HarvestPeriod `json:"_agmasync_harvestPeriod,omitempty"`
+
+	// UnderscoreAgmasyncMetadata Additional key/value metadata. A participant leaves the keys it does not understand out of its writes, which keeps them.
+	UnderscoreAgmasyncMetadata *map[string]interface{} `json:"_agmasync_metadata,omitempty"`
+
+	// UnderscoreAgmasyncRegulatoryRequirements [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). A regulatory constraint applying to the boundary.
+	//
+	//
+	// Examples: RED_ZONE_NITROGEN, WATER_PROTECTION_AREA
+	UnderscoreAgmasyncRegulatoryRequirements *string `json:"_agmasync_regulatoryRequirements,omitempty"`
+
+	// Boundary The geometry of a field boundary, based on the ADAPT `Boundary`.
+	Boundary    Boundary `json:"boundary"`
+	Description *string  `json:"description,omitempty"`
+
+	// Id Identity of an object, based on the ADAPT `Id`. Used for the object's own `id` and inside every `Ref`. Both identifiers it can carry are those of the near end of the transfer: on send the sender's, on delivery the receiving application's. It never carries another application's identifier.
+	//
+	// On delivery `uniqueIds` holds the agrirouter entry, the canonical identifier, and a local entry, the receiving application's local identifier, in that order, and `referenceId` is present exactly when the local entry is and equals its `idText`. The local entry's `idTypeCode` and `idSource` are the ones the application last sent for that object: `idTypeCode` is `STRING` and `idSource` is absent when it sent none.
+	//
+	// On send the local identifier is `referenceId`, and the local entry is the entry whose `idText` equals it. Of the rest, agrirouter reads only an entry with `idSource` `https://agrirouter.com`, at most one, and ignores every other entry.
+	//
+	// As an object's own `id`, on send `referenceId` must equal the `{local_id}` in the path, and an agrirouter entry, if any, must be the object that `local_id` is bound to. On delivery the local entry and `referenceId` are absent when the receiving application has not bound the object, or has unbound it. Their absence means "you do not hold this object": create it locally and bind the identifier you issue.
+	Id        Id          `json:"id"`
+	Name      *string     `json:"name,omitempty"`
+	Obstacles *[]Obstacle `json:"obstacles,omitempty"`
+}
+
+// FieldContent Based on the ADAPT `Field`.
+type FieldContent struct {
+	// UnderscoreAgmasyncFarmRef The farm this field belongs to.
+	UnderscoreAgmasyncFarmRef *Ref `json:"_agmasync_farmRef,omitempty"`
+
+	// UnderscoreAgmasyncGrowerRef The party holding this field, for systems that attribute fields to a party directly. When absent, the field is held by its farm's grower. When present, it takes precedence for this field, which is how a field held by one party but managed under another's farm is expressed.
+	UnderscoreAgmasyncGrowerRef     *Ref           `json:"_agmasync_growerRef,omitempty"`
+	UnderscoreAgmasyncHarvestPeriod *HarvestPeriod `json:"_agmasync_harvestPeriod,omitempty"`
+
+	// UnderscoreAgmasyncMetadata Additional key/value metadata. A participant leaves the keys it does not understand out of its writes, which keeps them.
+	UnderscoreAgmasyncMetadata *map[string]interface{} `json:"_agmasync_metadata,omitempty"`
+	UnderscoreAgmasyncSoil     *SoilInfo               `json:"_agmasync_soil,omitempty"`
+
+	// UnderscoreAgmasyncTopography Slope / gradient, e.g. 7 (degrees).
+	UnderscoreAgmasyncTopography *float32 `json:"_agmasync_topography,omitempty"`
+
+	// ArableArea Nominal area of the field.
+	ArableArea  *Area   `json:"arableArea,omitempty"`
+	Description *string `json:"description,omitempty"`
+
+	// Id Identity of an object, based on the ADAPT `Id`. Used for the object's own `id` and inside every `Ref`. Both identifiers it can carry are those of the near end of the transfer: on send the sender's, on delivery the receiving application's. It never carries another application's identifier.
+	//
+	// On delivery `uniqueIds` holds the agrirouter entry, the canonical identifier, and a local entry, the receiving application's local identifier, in that order, and `referenceId` is present exactly when the local entry is and equals its `idText`. The local entry's `idTypeCode` and `idSource` are the ones the application last sent for that object: `idTypeCode` is `STRING` and `idSource` is absent when it sent none.
+	//
+	// On send the local identifier is `referenceId`, and the local entry is the entry whose `idText` equals it. Of the rest, agrirouter reads only an entry with `idSource` `https://agrirouter.com`, at most one, and ignores every other entry.
+	//
+	// As an object's own `id`, on send `referenceId` must equal the `{local_id}` in the path, and an agrirouter entry, if any, must be the object that `local_id` is bound to. On delivery the local entry and `referenceId` are absent when the receiving application has not bound the object, or has unbound it. Their absence means "you do not hold this object": create it locally and bind the identifier you issue.
+	Id   Id     `json:"id"`
+	Name string `json:"name"`
+
+	// TimeZone IANA time zone of the field, e.g. Europe/Berlin.
+	TimeZone *string `json:"timeZone,omitempty"`
 }
 
 // FileReceivedEventData Data structure for FILE_RECEIVED events. This event shall arrive whenever a big file transfer
@@ -780,26 +834,29 @@ type GenericEventData struct {
 	union json.RawMessage
 }
 
-// Geometry A GeoJSON geometry (RFC 7946). Positions are [longitude, latitude] and, optionally, altitude.
-type Geometry struct {
-	// Coordinates Nesting depth depends on `type`.
-	Coordinates interface{} `json:"coordinates"`
-
-	// Type [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). The GeoJSON geometry type.
-	//
-	//
-	// Examples: Point, LineString, Polygon, MultiPolygon
-	Type string `json:"type"`
-}
-
 // HarvestPeriod Canonical harvest period as an interval. A discrete year is mapped to an interval on send; `label` may round-trip the native presentation.
 type HarvestPeriod struct {
 	// Label Human-facing designation, e.g. "2026" or "2025/2026".
 	Label     *string            `json:"label,omitempty"`
-	ValidFrom openapi_types.Date `json:"valid_from"`
+	ValidFrom openapi_types.Date `json:"validFrom"`
 
 	// ValidTo Absent means open / current.
-	ValidTo *openapi_types.Date `json:"valid_to,omitempty"`
+	ValidTo *openapi_types.Date `json:"validTo,omitempty"`
+}
+
+// Id Identity of an object, based on the ADAPT `Id`. Used for the object's own `id` and inside every `Ref`. Both identifiers it can carry are those of the near end of the transfer: on send the sender's, on delivery the receiving application's. It never carries another application's identifier.
+//
+// On delivery `uniqueIds` holds the agrirouter entry, the canonical identifier, and a local entry, the receiving application's local identifier, in that order, and `referenceId` is present exactly when the local entry is and equals its `idText`. The local entry's `idTypeCode` and `idSource` are the ones the application last sent for that object: `idTypeCode` is `STRING` and `idSource` is absent when it sent none.
+//
+// On send the local identifier is `referenceId`, and the local entry is the entry whose `idText` equals it. Of the rest, agrirouter reads only an entry with `idSource` `https://agrirouter.com`, at most one, and ignores every other entry.
+//
+// As an object's own `id`, on send `referenceId` must equal the `{local_id}` in the path, and an agrirouter entry, if any, must be the object that `local_id` is bound to. On delivery the local entry and `referenceId` are absent when the receiving application has not bound the object, or has unbound it. Their absence means "you do not hold this object": create it locally and bind the identifier you issue.
+type Id struct {
+	// ReferenceId The near end's local identifier. Absent when it has none, which ADAPT does not allow.
+	ReferenceId *string `json:"referenceId,omitempty"`
+
+	// UniqueIds Always present on delivery. May be absent on send, where `referenceId` alone identifies the object.
+	UniqueIds *[]UniqueId `json:"uniqueIds,omitempty"`
 }
 
 // IdMappingBinding One binding of a local identifier to a canonical object, as carried in bulk on the initial-load confirmation.
@@ -886,7 +943,7 @@ type InitialLoadStatus struct {
 	// EndpointId The agrirouter identifier of the endpoint this resource belongs to. The path addresses it by the participant's own `external_id`.
 	EndpointId *openapi_types.UUID `json:"endpoint_id,omitempty"`
 
-	// PreviousLoadCompletedAt When this endpoint last reached `COMPLETED`, present only if it has. Its presence means the canonical set now arriving is a repeat load — the endpoint was a participant before and has returned, having been deselected, had its masterdata route removed, or had a further entity type selected on it. Each of those is the user's act: an application cannot ask for the set again. The identifier mapping survived all of them, so the objects arrive carrying the endpoint's own `local_id` and match rather than reconcile. An endpoint MUST NOT take the arrival of a canonical set as evidence of a first connection: without this check it creates local duplicates of data it already holds.
+	// PreviousLoadCompletedAt When this endpoint last reached `COMPLETED`, present only if it has. Its presence means the canonical set now arriving is a repeat load — the endpoint was a participant before and has returned, having been deselected, had its masterdata route removed, or had a further entity type selected on it. Each of those is the user's act: an application cannot ask for the set again. The identifier mapping survived all of them, so the objects arrive carrying the endpoint's own `referenceId` and match rather than reconcile. An endpoint MUST NOT take the arrival of a canonical set as evidence of a first connection: without this check it creates local duplicates of data it already holds.
 	PreviousLoadCompletedAt *time.Time `json:"previous_load_completed_at,omitempty"`
 
 	// RejectedIdMappings Bindings supplied on this request that could not be recorded, each with its `reason` and, where one exists, the mapping that stands in its way. They do not fail the transition: one unresolvable pair should not block the load of a set. The endpoint resolves them as it resolves a `409` on the per-entity operation, and rebinds through that operation once it has. Recomputed on every request that carries `id_mappings`, including a repeat of the transition, so a retry after a lost response reports the current outcome rather than the first.
@@ -936,14 +993,14 @@ type MasterdataError struct {
 
 // Membership A role held by a person in one organization.
 type Membership struct {
-	// MemberRole [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). A role drawn from the ADAPT Role data type.
+	// OrganizationRef The organization the person belongs to: a party whose `_agmasync_details` is an organization. A write naming any other party is a `400`, and so is a change or removal of party type on an organization that persons still name.
+	OrganizationRef Ref `json:"organizationRef"`
+
+	// RoleCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT Role list.
 	//
 	//
 	// Examples: UNKNOWN, AUTHORIZER, CROP_ADVISOR, CUSTOMER, CUSTOM_SERVICE_PROVIDER, DATA_SERVICES_PROVIDER, END_USER, FARM_MANAGER, FINANCIER, STATIONARY_ASSET_SUPPLIER, GOVERNMENT_AGENCY, GROWER, INPUT_SUPPLIER, INSURANCE_AGENT, IRRIGATION_MANAGER, LABORER, MARKET_ADVISOR, MARKET_PROVIDER, MOBILE_ASSET_SUPPLIER, OPERATOR, OWNER, TRANSPORTER, COLLECTOR
-	MemberRole Role `json:"member_role"`
-
-	// OrganizationId The organization the person belongs to: a party whose `details` is an organization. A write naming any other party is a `400`, and so is a change or removal of party type on an organization that persons still name.
-	OrganizationId EntityReference `json:"organization_id"`
+	RoleCode Role `json:"roleCode"`
 }
 
 // MessageConfirmation defines model for MessageConfirmation.
@@ -1009,59 +1066,74 @@ type MessageReceivedEventData struct {
 // MessageReceivedEventDataEventType defines model for MessageReceivedEventData.EventType.
 type MessageReceivedEventDataEventType string
 
-// Obstacle A GeoJSON Feature describing an in-field obstacle whose geometry is a Point, LineString, or Polygon.
+// Obstacle An in-field obstacle, based on the ADAPT `Obstacle`.
 type Obstacle struct {
-	// Geometry A GeoJSON geometry (RFC 7946). Positions are [longitude, latitude] and, optionally, altitude.
-	Geometry   Geometry `json:"geometry"`
-	Properties struct {
-		// Kind Obstacle kind, e.g. "pole", "tree", "waterhole".
-		Kind string `json:"kind"`
-	} `json:"properties"`
-	Type interface{} `json:"type"`
+	// UnderscoreAgmasyncKind Obstacle kind, e.g. "pole", "tree", "waterhole".
+	UnderscoreAgmasyncKind string `json:"_agmasync_kind"`
+
+	// Boundary The geometry of an obstacle, based on the ADAPT `Boundary`.
+	Boundary   ObstacleBoundary `json:"boundary"`
+	IsPassable *bool            `json:"isPassable,omitempty"`
+	Name       *string          `json:"name,omitempty"`
+}
+
+// ObstacleBoundary The geometry of an obstacle, based on the ADAPT `Boundary`.
+type ObstacleBoundary struct {
+	// BoundaryCreationMethodCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT BoundaryCreationMethod list.
+	//
+	//
+	// Examples: UNKNOWN, MANUAL, DRIVEN, SURVEYED, AUTO_OPERATION, AUTO_IMAGERY, ADMINISTRATIVE
+	BoundaryCreationMethodCode *string `json:"boundaryCreationMethodCode,omitempty"`
+
+	// GNSSBaseStationTypeCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT GNSSBaseStationType list.
+	//
+	//
+	// Examples: PHYSICAL, VIRTUAL
+	GNSSBaseStationTypeCode *string `json:"gNSSBaseStationTypeCode,omitempty"`
+
+	// GNSSBaseSurveyTypeCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT GNSSBaseSurveyType list.
+	//
+	//
+	// Examples: MOBILE_BASE, PROFESSIONAL, VIRTUAL
+	GNSSBaseSurveyTypeCode     *string `json:"gNSSBaseSurveyTypeCode,omitempty"`
+	GNSSCorrectionNetworkBrand *string `json:"gNSSCorrectionNetworkBrand,omitempty"`
+	GNSSCorrectionNetworkName  *string `json:"gNSSCorrectionNetworkName,omitempty"`
+
+	// Geometry A point, line string, or polygon as Well-Known Text in WGS84. It MUST be in the canonical form of "Encoding" in specification.md, which the pattern does not check: it checks the geometry type only.
+	//
+	//
+	// Examples: POINT (9.5621 52.2062)
+	Geometry WktObstacle `json:"geometry"`
 }
 
 // OrganizationDetails A legal entity to which persons may belong.
 type OrganizationDetails struct {
 	// CommercialRegistryNumber Identifier from the commercial register.
-	CommercialRegistryNumber *string     `json:"commercial_registry_number,omitempty"`
-	PartyType                interface{} `json:"party_type"`
+	CommercialRegistryNumber *string     `json:"commercialRegistryNumber,omitempty"`
+	PartyTypeCode            interface{} `json:"partyTypeCode"`
 }
 
-// Partner A party holding a role on a farm — the contractor that works it, the advisor that reads it. Records a business relationship only. It does NOT grant visibility of the farm: what an endpoint receives is decided by opt-in and routing.
+// Partner A party holding a role on a farm — the contractor that works it, the advisor that reads it. Shaped like the ADAPT `PartyRole`. Records a business relationship only. It does NOT grant visibility of the farm: what an endpoint receives is decided by opt-in and routing.
 type Partner struct {
-	// PartnerId The party acting as partner.
-	PartnerId EntityReference `json:"partner_id"`
+	// PartyRef The party acting as partner.
+	PartyRef Ref `json:"partyRef"`
 
-	// PartnerRole [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). A role drawn from the ADAPT Role data type.
+	// RoleCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT Role list.
 	//
 	//
 	// Examples: UNKNOWN, AUTHORIZER, CROP_ADVISOR, CUSTOMER, CUSTOM_SERVICE_PROVIDER, DATA_SERVICES_PROVIDER, END_USER, FARM_MANAGER, FINANCIER, STATIONARY_ASSET_SUPPLIER, GOVERNMENT_AGENCY, GROWER, INPUT_SUPPLIER, INSURANCE_AGENT, IRRIGATION_MANAGER, LABORER, MARKET_ADVISOR, MARKET_PROVIDER, MOBILE_ASSET_SUPPLIER, OPERATOR, OWNER, TRANSPORTER, COLLECTOR
-	PartnerRole Role `json:"partner_role"`
+	RoleCode Role `json:"roleCode"`
 }
 
 // Party A legal or natural actor: a person, an organization, or a party whose party type its sender does not record. It plays no fixed role: whether it acts as a contractor or as a client follows from the relations it stands in, not from an attribute.
 type Party struct {
-	Active  *bool    `json:"active,omitempty"`
-	Address *Address `json:"address,omitempty"`
+	Active *bool `json:"active,omitempty"`
 
-	// AgrirouterId Canonical identifier, assigned by agrirouter. Absent on first send. If sent, it must be the object `local_id` is bound to.
-	AgrirouterId   *openapi_types.UUID `json:"agrirouter_id,omitempty"`
-	BillingAddress *Address            `json:"billing_address,omitempty"`
-	Contact        *Contact            `json:"contact,omitempty"`
-
-	// Details Whether the party is a person or an organization, with the attributes specific to that party type. Absent means the party type is unknown. Whatever a write sends here is stated to every participant.
-	Details *PartyDetails `json:"details,omitempty"`
-
-	// LocalId Always the *calling* application's own identifier for the entity, in both directions: on send the sender's, on delivery the receiving application's. It never carries another application's identifier. One store per application, so the identifier is the same whichever of the application's endpoints sends or receives it.
-	//
-	// Required on send. On delivery it is present when agrirouter holds a mapping for the receiving application, and absent when it does not — an object the application has not bound, or has unbound. An absent `local_id` means "you do not hold this object": create it locally and bind the identifier you issue.
-	LocalId *string `json:"local_id,omitempty"`
+	// Content Based on the ADAPT `Party`. The party type is the `partyTypeCode` of `_agmasync_details`, not a `partyTypeCode` on the party itself.
+	Content PartyContent `json:"content"`
 
 	// ModifiedAt Assigned by agrirouter. Ignored on send.
 	ModifiedAt *time.Time `json:"modified_at,omitempty"`
-
-	// Name The name the party is known by: an organization's name, a person's full name.
-	Name string `json:"name"`
 
 	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the `x-agrirouter-base-revision` header, where it is compared and discarded. Ignored on send.
 	Revision *int `json:"revision,omitempty"`
@@ -1069,25 +1141,45 @@ type Party struct {
 	// SourceEndpointId The agrirouter identifier of the endpoint whose change produced this revision. It always belongs to `tenant_id`. Ignored on send.
 	SourceEndpointId *openapi_types.UUID `json:"source_endpoint_id,omitempty"`
 
-	// TaxId Numerical identifier assigned by tax authorities.
-	TaxId *string `json:"tax_id,omitempty"`
-
-	// TaxNumber Identifier assigned by tax authorities.
-	TaxNumber *string `json:"tax_number,omitempty"`
-
 	// TenantId The tenant the object belongs to. Assigned by agrirouter. On send the tenant follows from the endpoint named in `x-agrirouter-endpoint-id`; a `tenant_id` sent must be that tenant.
 	//
 	// One application stream carries every tenant the application is routed to, so on delivery this is the field that says which of them an object belongs to. A receiver holding data for several tenants partitions on it rather than on the connection.
 	TenantId *openapi_types.UUID `json:"tenant_id,omitempty"`
 
-	// TradeId Numerical identifier assigned by public authorities.
-	TradeId *string `json:"trade_id,omitempty"`
-
 	// Type Discriminator, set by agrirouter. Implied by the path on send. If sent, it must match the path.
 	Type interface{} `json:"type"`
 }
 
-// PartyDetails The type of a party. `party_type` is a closed set, since it selects the schema of the remaining attributes, and each type admits only its own attributes.
+// PartyContent Based on the ADAPT `Party`. The party type is the `partyTypeCode` of `_agmasync_details`, not a `partyTypeCode` on the party itself.
+type PartyContent struct {
+	// UnderscoreAgmasyncDetails Whether the party is a person or an organization, with the attributes specific to that party type. Absent means the party type is unknown. Whatever a write sends here is stated to every participant.
+	UnderscoreAgmasyncDetails *PartyDetails `json:"_agmasync_details,omitempty"`
+
+	// UnderscoreAgmasyncTaxId Numerical identifier assigned by tax authorities.
+	UnderscoreAgmasyncTaxId *string `json:"_agmasync_taxId,omitempty"`
+
+	// UnderscoreAgmasyncTaxNumber Identifier assigned by tax authorities.
+	UnderscoreAgmasyncTaxNumber *string `json:"_agmasync_taxNumber,omitempty"`
+
+	// UnderscoreAgmasyncTradeId Numerical identifier assigned by public authorities.
+	UnderscoreAgmasyncTradeId *string      `json:"_agmasync_tradeId,omitempty"`
+	ContactInfo               *ContactInfo `json:"contactInfo,omitempty"`
+	Description               *string      `json:"description,omitempty"`
+
+	// Id Identity of an object, based on the ADAPT `Id`. Used for the object's own `id` and inside every `Ref`. Both identifiers it can carry are those of the near end of the transfer: on send the sender's, on delivery the receiving application's. It never carries another application's identifier.
+	//
+	// On delivery `uniqueIds` holds the agrirouter entry, the canonical identifier, and a local entry, the receiving application's local identifier, in that order, and `referenceId` is present exactly when the local entry is and equals its `idText`. The local entry's `idTypeCode` and `idSource` are the ones the application last sent for that object: `idTypeCode` is `STRING` and `idSource` is absent when it sent none.
+	//
+	// On send the local identifier is `referenceId`, and the local entry is the entry whose `idText` equals it. Of the rest, agrirouter reads only an entry with `idSource` `https://agrirouter.com`, at most one, and ignores every other entry.
+	//
+	// As an object's own `id`, on send `referenceId` must equal the `{local_id}` in the path, and an agrirouter entry, if any, must be the object that `local_id` is bound to. On delivery the local entry and `referenceId` are absent when the receiving application has not bound the object, or has unbound it. Their absence means "you do not hold this object": create it locally and bind the identifier you issue.
+	Id Id `json:"id"`
+
+	// Name The name the party is known by: an organization's name, a person's full name.
+	Name string `json:"name"`
+}
+
+// PartyDetails The type of a party. `partyTypeCode` is a closed set, since it selects the schema of the remaining attributes, and each type admits only its own attributes.
 type PartyDetails struct {
 	union json.RawMessage
 }
@@ -1100,13 +1192,13 @@ type PayloadURI = string
 
 // PersonDetails A natural person. A person may belong to one or more organizations through `memberships`.
 type PersonDetails struct {
-	FirstName *string `json:"first_name,omitempty"`
-	LastName  *string `json:"last_name,omitempty"`
+	FirstName *string `json:"firstName,omitempty"`
+	LastName  *string `json:"lastName,omitempty"`
 
 	// Memberships The organizations this person belongs to, each with the role held there. A person carrying at least one entry is a member.
-	Memberships *[]Membership `json:"memberships,omitempty"`
-	PartyType   interface{}   `json:"party_type"`
-	Title       *string       `json:"title,omitempty"`
+	Memberships   *[]Membership `json:"memberships,omitempty"`
+	PartyTypeCode interface{}   `json:"partyTypeCode"`
+	Title         *string       `json:"title,omitempty"`
 }
 
 // PutEndpointRequest defines model for PutEndpointRequest.
@@ -1161,6 +1253,20 @@ type PutEndpointRequest struct {
 	Subscriptions     []EndpointSubscription `json:"subscriptions"`
 }
 
+// Ref A reference to another entity, in place of ADAPT's `<name>Id` strings. A property `_agmasync_<name>Ref`, or `<name>Ref` inside a prefixed value.
+//
+// On send either identifier suffices: without an agrirouter entry, `referenceId` is resolved against the sender's own mapping in the calling endpoint's tenant, and is rejected if the target has not been sent yet. On delivery the agrirouter entry is always present, and the local entry and `referenceId` carry the receiving application's own identifier for the target, with the `idTypeCode` and `idSource` it last sent for the target, or are absent when it has none. A sent reference with neither an agrirouter entry nor a `referenceId` is rejected with `400`. A reference is replaced whole on write.
+type Ref struct {
+	// Id Identity of an object, based on the ADAPT `Id`. Used for the object's own `id` and inside every `Ref`. Both identifiers it can carry are those of the near end of the transfer: on send the sender's, on delivery the receiving application's. It never carries another application's identifier.
+	//
+	// On delivery `uniqueIds` holds the agrirouter entry, the canonical identifier, and a local entry, the receiving application's local identifier, in that order, and `referenceId` is present exactly when the local entry is and equals its `idText`. The local entry's `idTypeCode` and `idSource` are the ones the application last sent for that object: `idTypeCode` is `STRING` and `idSource` is absent when it sent none.
+	//
+	// On send the local identifier is `referenceId`, and the local entry is the entry whose `idText` equals it. Of the rest, agrirouter reads only an entry with `idSource` `https://agrirouter.com`, at most one, and ignores every other entry.
+	//
+	// As an object's own `id`, on send `referenceId` must equal the `{local_id}` in the path, and an agrirouter entry, if any, must be the object that `local_id` is bound to. On delivery the local entry and `referenceId` are absent when the receiving application has not bound the object, or has unbound it. Their absence means "you do not hold this object": create it locally and bind the identifier you issue.
+	Id Id `json:"id"`
+}
+
 // RevisionConflictError The `412` or `428` of a write: an `Error` carrying the revision the object is currently at, so that the client has the answer a rejected write would otherwise have to fetch separately.
 type RevisionConflictError struct {
 	// CurrentRevision The canonical object's current `revision`.
@@ -1168,7 +1274,7 @@ type RevisionConflictError struct {
 	Message         string `json:"message"`
 }
 
-// Role [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). A role drawn from the ADAPT Role data type.
+// Role [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT Role list.
 //
 // Examples: UNKNOWN, AUTHORIZER, CROP_ADVISOR, CUSTOMER, CUSTOM_SERVICE_PROVIDER, DATA_SERVICES_PROVIDER, END_USER, FARM_MANAGER, FINANCIER, STATIONARY_ASSET_SUPPLIER, GOVERNMENT_AGENCY, GROWER, INPUT_SUPPLIER, INSURANCE_AGENT, IRRIGATION_MANAGER, LABORER, MARKET_ADVISOR, MARKET_PROVIDER, MOBILE_ASSET_SUPPLIER, OPERATOR, OWNER, TRANSPORTER, COLLECTOR
 type Role = string
@@ -1190,13 +1296,23 @@ type RoutedEndpoints struct {
 // SoilInfo Soil characteristics of a field.
 type SoilInfo struct {
 	// RatingPoints Soil rating points (Bodenzahl / Ackerzahl). Germany only, as defined by the [Bodenschätzungsgesetz](https://www.bundesfinanzministerium.de/Content/DE/Standardartikel/Themen/Steuern/Weitere_Steuerthemen/2014-07-21-bodenschaetzung-anlage-VRBodSchaetzG.pdf?__blob=publicationFile&v=1).
-	RatingPoints *int `json:"rating_points,omitempty"`
+	RatingPoints *int `json:"ratingPoints,omitempty"`
 
 	// Type [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). The soil classification.
 	//
 	//
 	// Examples: SAND, LOAMY_SAND, HEAVY_LOAMY_SAND, SANDY_TO_SILTY_LOAM, CLAYEY_LOAM, CLAY
 	Type *string `json:"type,omitempty"`
+}
+
+// TelecommunicationContactMethod A phone number or e-mail address of a party, based on the ADAPT `TelecommunicationContactMethod`.
+type TelecommunicationContactMethod struct {
+	// TelecommunicationContactTypeCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT TelecommunicationContactType list.
+	//
+	//
+	// Examples: FIXED_PHONE, MOBILE_PHONE, FAX, EMAIL
+	TelecommunicationContactTypeCode string `json:"telecommunicationContactTypeCode"`
+	ValueText                        string `json:"valueText"`
 }
 
 // TenantEndpointCapabilities defines model for TenantEndpointCapabilities.
@@ -1271,6 +1387,37 @@ type TenantInfo struct {
 type TenantsListResponse struct {
 	Tenants []TenantInfo `json:"tenants"`
 }
+
+// UniqueId One identifier of an object, based on the ADAPT `UniqueId`.
+type UniqueId struct {
+	// IdSource `https://agrirouter.com` for the canonical identifier, assigned by agrirouter. For a local entry, whatever the application sent, relayed back to that application only, or absent if it sent none. `https://agrirouter.com` is reserved and is never a local entry's.
+	//
+	//
+	// Examples: https://agrirouter.com, https://fmis.example.com
+	IdSource *string `json:"idSource,omitempty"`
+	IdText   string  `json:"idText"`
+
+	// IdTypeCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT IdType list.
+	//
+	//
+	// Examples: UUID, STRING, LONGINT, URI, GLN
+	IdTypeCode string `json:"idTypeCode"`
+}
+
+// WktArea A polygon or multipolygon as Well-Known Text in WGS84. It MUST be in the canonical form of "Encoding" in specification.md, which the pattern does not check: it checks the geometry type only.
+//
+// Examples: POLYGON ((9.56 52.205, 9.566 52.205, 9.5665 52.208, 9.5605 52.2085, 9.56 52.205))
+type WktArea = string
+
+// WktObstacle A point, line string, or polygon as Well-Known Text in WGS84. It MUST be in the canonical form of "Encoding" in specification.md, which the pattern does not check: it checks the geometry type only.
+//
+// Examples: POINT (9.5621 52.2062)
+type WktObstacle = string
+
+// WktPoint A point as Well-Known Text in WGS84, in the canonical form of "Encoding" in specification.md.
+//
+// Examples: POINT (9.5531 52.2089)
+type WktPoint = string
 
 // AgrirouterEndpointId defines model for AgrirouterEndpointId.
 type AgrirouterEndpointId = openapi_types.UUID
@@ -1738,116 +1885,6 @@ type RequestPartyJSONRequestBody = EntityRequest
 // PutPartyJSONRequestBody defines body for PutParty for application/json ContentType.
 type PutPartyJSONRequestBody = Party
 
-// AsEntityReference0 returns the union data inside the EntityReference as a EntityReference0
-func (t EntityReference) AsEntityReference0() (EntityReference0, error) {
-	var body EntityReference0
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromEntityReference0 overwrites any union data inside the EntityReference as the provided EntityReference0
-func (t *EntityReference) FromEntityReference0(v EntityReference0) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeEntityReference0 performs a merge with any union data inside the EntityReference, using the provided EntityReference0
-func (t *EntityReference) MergeEntityReference0(v EntityReference0) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-// AsEntityReference1 returns the union data inside the EntityReference as a EntityReference1
-func (t EntityReference) AsEntityReference1() (EntityReference1, error) {
-	var body EntityReference1
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromEntityReference1 overwrites any union data inside the EntityReference as the provided EntityReference1
-func (t *EntityReference) FromEntityReference1(v EntityReference1) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeEntityReference1 performs a merge with any union data inside the EntityReference, using the provided EntityReference1
-func (t *EntityReference) MergeEntityReference1(v EntityReference1) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-func (t EntityReference) MarshalJSON() ([]byte, error) {
-	b, err := t.union.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	object := make(map[string]json.RawMessage)
-	if t.union != nil {
-		err = json.Unmarshal(b, &object)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if t.AgrirouterId != nil {
-		object["agrirouter_id"], err = json.Marshal(t.AgrirouterId)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'agrirouter_id': %w", err)
-		}
-	}
-
-	if t.LocalId != nil {
-		object["local_id"], err = json.Marshal(t.LocalId)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'local_id': %w", err)
-		}
-	}
-	b, err = json.Marshal(object)
-	return b, err
-}
-
-func (t *EntityReference) UnmarshalJSON(b []byte) error {
-	err := t.union.UnmarshalJSON(b)
-	if err != nil {
-		return err
-	}
-	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["agrirouter_id"]; found {
-		err = json.Unmarshal(raw, &t.AgrirouterId)
-		if err != nil {
-			return fmt.Errorf("error reading 'agrirouter_id': %w", err)
-		}
-	}
-
-	if raw, found := object["local_id"]; found {
-		err = json.Unmarshal(raw, &t.LocalId)
-		if err != nil {
-			return fmt.Errorf("error reading 'local_id': %w", err)
-		}
-	}
-
-	return err
-}
-
 // AsMessageReceivedEventData returns the union data inside the GenericEventData as a MessageReceivedEventData
 func (t GenericEventData) AsMessageReceivedEventData() (MessageReceivedEventData, error) {
 	var body MessageReceivedEventData
@@ -2106,7 +2143,7 @@ func (t *PartyDetails) FromPersonDetails(v PersonDetails) error {
 	if err != nil {
 		return err
 	}
-	b, err = runtime.JSONMerge(b, []byte(`{"party_type":"PERSON"}`))
+	b, err = runtime.JSONMerge(b, []byte(`{"partyTypeCode":"PERSON"}`))
 	t.union = b
 	return err
 }
@@ -2117,7 +2154,7 @@ func (t *PartyDetails) MergePersonDetails(v PersonDetails) error {
 	if err != nil {
 		return err
 	}
-	b, err = runtime.JSONMerge(b, []byte(`{"party_type":"PERSON"}`))
+	b, err = runtime.JSONMerge(b, []byte(`{"partyTypeCode":"PERSON"}`))
 	if err != nil {
 		return err
 	}
@@ -2140,7 +2177,7 @@ func (t *PartyDetails) FromOrganizationDetails(v OrganizationDetails) error {
 	if err != nil {
 		return err
 	}
-	b, err = runtime.JSONMerge(b, []byte(`{"party_type":"ORGANIZATION"}`))
+	b, err = runtime.JSONMerge(b, []byte(`{"partyTypeCode":"ORGANIZATION"}`))
 	t.union = b
 	return err
 }
@@ -2151,7 +2188,7 @@ func (t *PartyDetails) MergeOrganizationDetails(v OrganizationDetails) error {
 	if err != nil {
 		return err
 	}
-	b, err = runtime.JSONMerge(b, []byte(`{"party_type":"ORGANIZATION"}`))
+	b, err = runtime.JSONMerge(b, []byte(`{"partyTypeCode":"ORGANIZATION"}`))
 	if err != nil {
 		return err
 	}
@@ -2163,7 +2200,7 @@ func (t *PartyDetails) MergeOrganizationDetails(v OrganizationDetails) error {
 
 func (t PartyDetails) Discriminator() (string, error) {
 	var discriminator struct {
-		Discriminator string `json:"party_type"`
+		Discriminator string `json:"partyTypeCode"`
 	}
 	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err

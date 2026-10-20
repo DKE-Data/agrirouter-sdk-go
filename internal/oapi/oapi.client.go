@@ -262,8 +262,8 @@ type ClientInterface interface {
 
 	// PutFarmWithBody Send (create or update) a farm
 	//
-	// Submits a farm from the calling endpoint, identified by the application's own local_id. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a farm from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -272,8 +272,8 @@ type ClientInterface interface {
 
 	// PutFarm Send (create or update) a farm
 	//
-	// Submits a farm from the calling endpoint, identified by the application's own local_id. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a farm from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -289,7 +289,7 @@ type ClientInterface interface {
 
 	// UnbindFarmMapping Declare that this endpoint no longer holds a farm
 	//
-	// Declares that the endpoint no longer holds the canonical farm under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+	// Declares that the endpoint no longer holds the canonical farm under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 	//
 	// Corresponds with DELETE /masterdata/farms/{local_id}/id-mapping/{agrirouter_id} (the `UnbindFarmMapping` operationId).
 	UnbindFarmMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFarmMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -321,8 +321,8 @@ type ClientInterface interface {
 
 	// PutFieldBoundaryWithBody Send (create or update) a field boundary
 	//
-	// Submits a field boundary from the calling endpoint, identified by the application's own local_id. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a field boundary from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -331,8 +331,8 @@ type ClientInterface interface {
 
 	// PutFieldBoundary Send (create or update) a field boundary
 	//
-	// Submits a field boundary from the calling endpoint, identified by the application's own local_id. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a field boundary from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -348,7 +348,7 @@ type ClientInterface interface {
 
 	// UnbindFieldBoundaryMapping Declare that this endpoint no longer holds a field boundary
 	//
-	// Declares that the endpoint no longer holds the canonical field boundary under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+	// Declares that the endpoint no longer holds the canonical field boundary under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 	//
 	// Corresponds with DELETE /masterdata/field-boundaries/{local_id}/id-mapping/{agrirouter_id} (the `UnbindFieldBoundaryMapping` operationId).
 	UnbindFieldBoundaryMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldBoundaryMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -380,8 +380,8 @@ type ClientInterface interface {
 
 	// PutFieldWithBody Send (create or update) a field
 	//
-	// Submits a field from the calling endpoint, identified by the application's own local_id. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a field from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -390,8 +390,8 @@ type ClientInterface interface {
 
 	// PutField Send (create or update) a field
 	//
-	// Submits a field from the calling endpoint, identified by the application's own local_id. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a field from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -407,7 +407,7 @@ type ClientInterface interface {
 
 	// UnbindFieldMapping Declare that this endpoint no longer holds a field
 	//
-	// Declares that the endpoint no longer holds the canonical field under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+	// Declares that the endpoint no longer holds the canonical field under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 	//
 	// Corresponds with DELETE /masterdata/fields/{local_id}/id-mapping/{agrirouter_id} (the `UnbindFieldMapping` operationId).
 	UnbindFieldMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -439,8 +439,8 @@ type ClientInterface interface {
 
 	// PutPartyWithBody Send (create or update) a party
 	//
-	// Submits a party from the calling endpoint, identified by the application's own local_id. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a party from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -449,8 +449,8 @@ type ClientInterface interface {
 
 	// PutParty Send (create or update) a party
 	//
-	// Submits a party from the calling endpoint, identified by the application's own local_id. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a party from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -466,7 +466,7 @@ type ClientInterface interface {
 
 	// UnbindPartyMapping Declare that this endpoint no longer holds a party
 	//
-	// Declares that the endpoint no longer holds the canonical party under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+	// Declares that the endpoint no longer holds the canonical party under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 	//
 	// Corresponds with DELETE /masterdata/parties/{local_id}/id-mapping/{agrirouter_id} (the `UnbindPartyMapping` operationId).
 	UnbindPartyMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindPartyMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -848,8 +848,8 @@ func (c *Client) RequestFarm(ctx context.Context, params *RequestFarmParams, bod
 
 // PutFarmWithBody Send (create or update) a farm
 //
-// Submits a farm from the calling endpoint, identified by the application's own local_id. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a farm from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes any type of body and a specified content type.
 //
@@ -868,8 +868,8 @@ func (c *Client) PutFarmWithBody(ctx context.Context, localId LocalId, params *P
 
 // PutFarm Send (create or update) a farm
 //
-// Submits a farm from the calling endpoint, identified by the application's own local_id. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a farm from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -905,7 +905,7 @@ func (c *Client) DeactivateFarm(ctx context.Context, localId LocalId, params *De
 
 // UnbindFarmMapping Declare that this endpoint no longer holds a farm
 //
-// Declares that the endpoint no longer holds the canonical farm under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+// Declares that the endpoint no longer holds the canonical farm under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 //
 // Corresponds with DELETE /masterdata/farms/{local_id}/id-mapping/{agrirouter_id} (the `UnbindFarmMapping` operationId).
 func (c *Client) UnbindFarmMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFarmMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -977,8 +977,8 @@ func (c *Client) RequestFieldBoundary(ctx context.Context, params *RequestFieldB
 
 // PutFieldBoundaryWithBody Send (create or update) a field boundary
 //
-// Submits a field boundary from the calling endpoint, identified by the application's own local_id. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a field boundary from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes any type of body and a specified content type.
 //
@@ -997,8 +997,8 @@ func (c *Client) PutFieldBoundaryWithBody(ctx context.Context, localId LocalId, 
 
 // PutFieldBoundary Send (create or update) a field boundary
 //
-// Submits a field boundary from the calling endpoint, identified by the application's own local_id. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a field boundary from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -1034,7 +1034,7 @@ func (c *Client) DeactivateFieldBoundary(ctx context.Context, localId LocalId, p
 
 // UnbindFieldBoundaryMapping Declare that this endpoint no longer holds a field boundary
 //
-// Declares that the endpoint no longer holds the canonical field boundary under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+// Declares that the endpoint no longer holds the canonical field boundary under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 //
 // Corresponds with DELETE /masterdata/field-boundaries/{local_id}/id-mapping/{agrirouter_id} (the `UnbindFieldBoundaryMapping` operationId).
 func (c *Client) UnbindFieldBoundaryMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldBoundaryMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -1106,8 +1106,8 @@ func (c *Client) RequestField(ctx context.Context, params *RequestFieldParams, b
 
 // PutFieldWithBody Send (create or update) a field
 //
-// Submits a field from the calling endpoint, identified by the application's own local_id. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a field from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes any type of body and a specified content type.
 //
@@ -1126,8 +1126,8 @@ func (c *Client) PutFieldWithBody(ctx context.Context, localId LocalId, params *
 
 // PutField Send (create or update) a field
 //
-// Submits a field from the calling endpoint, identified by the application's own local_id. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a field from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -1163,7 +1163,7 @@ func (c *Client) DeactivateField(ctx context.Context, localId LocalId, params *D
 
 // UnbindFieldMapping Declare that this endpoint no longer holds a field
 //
-// Declares that the endpoint no longer holds the canonical field under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+// Declares that the endpoint no longer holds the canonical field under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 //
 // Corresponds with DELETE /masterdata/fields/{local_id}/id-mapping/{agrirouter_id} (the `UnbindFieldMapping` operationId).
 func (c *Client) UnbindFieldMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindFieldMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -1235,8 +1235,8 @@ func (c *Client) RequestParty(ctx context.Context, params *RequestPartyParams, b
 
 // PutPartyWithBody Send (create or update) a party
 //
-// Submits a party from the calling endpoint, identified by the application's own local_id. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a party from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes any type of body and a specified content type.
 //
@@ -1255,8 +1255,8 @@ func (c *Client) PutPartyWithBody(ctx context.Context, localId LocalId, params *
 
 // PutParty Send (create or update) a party
 //
-// Submits a party from the calling endpoint, identified by the application's own local_id. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a party from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -1292,7 +1292,7 @@ func (c *Client) DeactivateParty(ctx context.Context, localId LocalId, params *D
 
 // UnbindPartyMapping Declare that this endpoint no longer holds a party
 //
-// Declares that the endpoint no longer holds the canonical party under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+// Declares that the endpoint no longer holds the canonical party under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 //
 // Corresponds with DELETE /masterdata/parties/{local_id}/id-mapping/{agrirouter_id} (the `UnbindPartyMapping` operationId).
 func (c *Client) UnbindPartyMapping(ctx context.Context, localId LocalId, agrirouterId IdMappingAgrirouterId, params *UnbindPartyMappingParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -3659,8 +3659,8 @@ type ClientWithResponsesInterface interface {
 
 	// PutFarmWithBodyWithResponse Send (create or update) a farm
 	//
-	// Submits a farm from the calling endpoint, identified by the application's own local_id. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a farm from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -3669,8 +3669,8 @@ type ClientWithResponsesInterface interface {
 
 	// PutFarmWithResponse Send (create or update) a farm
 	//
-	// Submits a farm from the calling endpoint, identified by the application's own local_id. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a farm from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -3688,7 +3688,7 @@ type ClientWithResponsesInterface interface {
 
 	// UnbindFarmMappingWithResponse Declare that this endpoint no longer holds a farm
 	//
-	// Declares that the endpoint no longer holds the canonical farm under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+	// Declares that the endpoint no longer holds the canonical farm under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -3724,8 +3724,8 @@ type ClientWithResponsesInterface interface {
 
 	// PutFieldBoundaryWithBodyWithResponse Send (create or update) a field boundary
 	//
-	// Submits a field boundary from the calling endpoint, identified by the application's own local_id. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a field boundary from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -3734,8 +3734,8 @@ type ClientWithResponsesInterface interface {
 
 	// PutFieldBoundaryWithResponse Send (create or update) a field boundary
 	//
-	// Submits a field boundary from the calling endpoint, identified by the application's own local_id. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a field boundary from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -3753,7 +3753,7 @@ type ClientWithResponsesInterface interface {
 
 	// UnbindFieldBoundaryMappingWithResponse Declare that this endpoint no longer holds a field boundary
 	//
-	// Declares that the endpoint no longer holds the canonical field boundary under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+	// Declares that the endpoint no longer holds the canonical field boundary under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -3789,8 +3789,8 @@ type ClientWithResponsesInterface interface {
 
 	// PutFieldWithBodyWithResponse Send (create or update) a field
 	//
-	// Submits a field from the calling endpoint, identified by the application's own local_id. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a field from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -3799,8 +3799,8 @@ type ClientWithResponsesInterface interface {
 
 	// PutFieldWithResponse Send (create or update) a field
 	//
-	// Submits a field from the calling endpoint, identified by the application's own local_id. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a field from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -3818,7 +3818,7 @@ type ClientWithResponsesInterface interface {
 
 	// UnbindFieldMappingWithResponse Declare that this endpoint no longer holds a field
 	//
-	// Declares that the endpoint no longer holds the canonical field under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+	// Declares that the endpoint no longer holds the canonical field under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -3854,8 +3854,8 @@ type ClientWithResponsesInterface interface {
 
 	// PutPartyWithBodyWithResponse Send (create or update) a party
 	//
-	// Submits a party from the calling endpoint, identified by the application's own local_id. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a party from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -3864,8 +3864,8 @@ type ClientWithResponsesInterface interface {
 
 	// PutPartyWithResponse Send (create or update) a party
 	//
-	// Submits a party from the calling endpoint, identified by the application's own local_id. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
-	// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+	// Submits a party from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -3883,7 +3883,7 @@ type ClientWithResponsesInterface interface {
 
 	// UnbindPartyMappingWithResponse Declare that this endpoint no longer holds a party
 	//
-	// Declares that the endpoint no longer holds the canonical party under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+	// Declares that the endpoint no longer holds the canonical party under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	//
@@ -6168,8 +6168,8 @@ func (c *ClientWithResponses) RequestFarmWithResponse(ctx context.Context, param
 
 // PutFarmWithBodyWithResponse Send (create or update) a farm
 //
-// Submits a farm from the calling endpoint, identified by the application's own local_id. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a farm from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -6184,8 +6184,8 @@ func (c *ClientWithResponses) PutFarmWithBodyWithResponse(ctx context.Context, l
 
 // PutFarmWithResponse Send (create or update) a farm
 //
-// Submits a farm from the calling endpoint, identified by the application's own local_id. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a farm from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing farm must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -6215,7 +6215,7 @@ func (c *ClientWithResponses) DeactivateFarmWithResponse(ctx context.Context, lo
 
 // UnbindFarmMappingWithResponse Declare that this endpoint no longer holds a farm
 //
-// Declares that the endpoint no longer holds the canonical farm under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+// Declares that the endpoint no longer holds the canonical farm under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -6275,8 +6275,8 @@ func (c *ClientWithResponses) RequestFieldBoundaryWithResponse(ctx context.Conte
 
 // PutFieldBoundaryWithBodyWithResponse Send (create or update) a field boundary
 //
-// Submits a field boundary from the calling endpoint, identified by the application's own local_id. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a field boundary from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -6291,8 +6291,8 @@ func (c *ClientWithResponses) PutFieldBoundaryWithBodyWithResponse(ctx context.C
 
 // PutFieldBoundaryWithResponse Send (create or update) a field boundary
 //
-// Submits a field boundary from the calling endpoint, identified by the application's own local_id. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a field boundary from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -6322,7 +6322,7 @@ func (c *ClientWithResponses) DeactivateFieldBoundaryWithResponse(ctx context.Co
 
 // UnbindFieldBoundaryMappingWithResponse Declare that this endpoint no longer holds a field boundary
 //
-// Declares that the endpoint no longer holds the canonical field boundary under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+// Declares that the endpoint no longer holds the canonical field boundary under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -6382,8 +6382,8 @@ func (c *ClientWithResponses) RequestFieldWithResponse(ctx context.Context, para
 
 // PutFieldWithBodyWithResponse Send (create or update) a field
 //
-// Submits a field from the calling endpoint, identified by the application's own local_id. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a field from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -6398,8 +6398,8 @@ func (c *ClientWithResponses) PutFieldWithBodyWithResponse(ctx context.Context, 
 
 // PutFieldWithResponse Send (create or update) a field
 //
-// Submits a field from the calling endpoint, identified by the application's own local_id. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a field from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing field must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -6429,7 +6429,7 @@ func (c *ClientWithResponses) DeactivateFieldWithResponse(ctx context.Context, l
 
 // UnbindFieldMappingWithResponse Declare that this endpoint no longer holds a field
 //
-// Declares that the endpoint no longer holds the canonical field under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+// Declares that the endpoint no longer holds the canonical field under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 //
 // Returns a wrapper object for the known response body format(s).
 //
@@ -6489,8 +6489,8 @@ func (c *ClientWithResponses) RequestPartyWithResponse(ctx context.Context, para
 
 // PutPartyWithBodyWithResponse Send (create or update) a party
 //
-// Submits a party from the calling endpoint, identified by the application's own local_id. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a party from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -6505,8 +6505,8 @@ func (c *ClientWithResponses) PutPartyWithBodyWithResponse(ctx context.Context, 
 
 // PutPartyWithResponse Send (create or update) a party
 //
-// Submits a party from the calling endpoint, identified by the application's own local_id. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
-// The body is a JSON Merge Patch (RFC 7396) of the entity's attributes: an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays, references, and geometries are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
+// Submits a party from the calling endpoint, identified by the application's own local_id, which `content.id.referenceId` repeats. An update to an existing party must carry the revision it was edited from in x-agrirouter-base-revision.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, null removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never null. The response is always the whole resulting object.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //
@@ -6536,7 +6536,7 @@ func (c *ClientWithResponses) DeactivatePartyWithResponse(ctx context.Context, l
 
 // UnbindPartyMappingWithResponse Declare that this endpoint no longer holds a party
 //
-// Declares that the endpoint no longer holds the canonical party under this local_id. The canonical object itself is untouched and is delivered again, without a local_id, on its next change.
+// Declares that the endpoint no longer holds the canonical party under this local_id. The canonical object itself is untouched and is delivered again, without a referenceId, on its next change.
 //
 // Returns a wrapper object for the known response body format(s).
 //

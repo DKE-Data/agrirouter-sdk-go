@@ -9,7 +9,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(mdPutCmd("party",
-		func(p *agrirouter.Party, id string) { p.LocalId = &id },
+		func(p *agrirouter.Party, id string) { p.Content.Id.ReferenceId = &id },
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int, body *agrirouter.Party) (*agrirouter.Party, error) {
 			return c.PutParty(ctx, localID, ep, tn, br, body)
 		}))

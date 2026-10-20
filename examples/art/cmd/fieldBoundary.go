@@ -9,7 +9,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(mdPutCmd("field-boundary",
-		func(fb *agrirouter.FieldBoundary, id string) { fb.LocalId = &id },
+		func(fb *agrirouter.FieldBoundary, id string) { fb.Content.Id.ReferenceId = &id },
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int, body *agrirouter.FieldBoundary) (*agrirouter.FieldBoundary, error) {
 			return c.PutFieldBoundary(ctx, localID, ep, tn, br, body)
 		}))

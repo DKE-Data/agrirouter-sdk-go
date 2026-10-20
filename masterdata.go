@@ -77,7 +77,8 @@ func (c *Client) RequestEntity(
 // ------------------------------------------------------------------------ writes
 
 // PutParty sends (creates or updates) a party identified by the
-// application's own localID. On an update to an existing object, baseRevision
+// application's own localID, which is set as its content.id.referenceId. On an
+// update to an existing object, baseRevision
 // must carry the revision it was edited from; pass nil when creating.
 func (c *Client) PutParty(
 	ctx context.Context,
@@ -87,7 +88,7 @@ func (c *Client) PutParty(
 	party *Party,
 ) (*Party, error) {
 	v := *party
-	v.LocalId = &localID
+	v.Content.Id.ReferenceId = &localID
 	res, err := agmasync.PutParty(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
@@ -104,7 +105,7 @@ func (c *Client) PutFarm(
 	farm *Farm,
 ) (*Farm, error) {
 	v := *farm
-	v.LocalId = &localID
+	v.Content.Id.ReferenceId = &localID
 	res, err := agmasync.PutFarm(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
@@ -121,7 +122,7 @@ func (c *Client) PutField(
 	field *Field,
 ) (*Field, error) {
 	v := *field
-	v.LocalId = &localID
+	v.Content.Id.ReferenceId = &localID
 	res, err := agmasync.PutField(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
@@ -138,7 +139,7 @@ func (c *Client) PutFieldBoundary(
 	fieldBoundary *FieldBoundary,
 ) (*FieldBoundary, error) {
 	v := *fieldBoundary
-	v.LocalId = &localID
+	v.Content.Id.ReferenceId = &localID
 	res, err := agmasync.PutFieldBoundary(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)

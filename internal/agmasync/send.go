@@ -18,7 +18,8 @@ import (
 //
 // The entity is a merge patch: an omitted attribute is left unchanged, and one
 // sent as null is removed (the models' nullable fields allow this). It must
-// carry its local_id; its type is set from the model. Required attributes are
+// carry its local_id as `content.id.referenceId` ([LocalID] builds one); its
+// type is set from the model. Required attributes are
 // required on every write.
 //
 // The returned model is the resulting canonical object; apply it as you would
@@ -33,11 +34,12 @@ func PutParty(
 	endpointID, tenantID uuid.UUID,
 	v oapi.Party, base *int,
 ) (oapi.Party, error) {
-	if v.LocalId == nil || *v.LocalId == "" {
+	localID := v.Content.Id.ReferenceId
+	if localID == nil || *localID == "" {
 		return oapi.Party{}, localIDRequired(TypeParty)
 	}
 	v.Type = string(TypeParty)
-	r, err := api.PutPartyWithResponse(ctx, *v.LocalId, &oapi.PutPartyParams{
+	r, err := api.PutPartyWithResponse(ctx, *localID, &oapi.PutPartyParams{
 		XAgrirouterEndpointId: endpointID, XAgrirouterTenantId: tenantID, XAgrirouterBaseRevision: base,
 	}, v)
 	if err != nil {
@@ -66,11 +68,12 @@ func PutFarm(
 	endpointID, tenantID uuid.UUID,
 	v oapi.Farm, base *int,
 ) (oapi.Farm, error) {
-	if v.LocalId == nil || *v.LocalId == "" {
+	localID := v.Content.Id.ReferenceId
+	if localID == nil || *localID == "" {
 		return oapi.Farm{}, localIDRequired(TypeFarm)
 	}
 	v.Type = string(TypeFarm)
-	r, err := api.PutFarmWithResponse(ctx, *v.LocalId, &oapi.PutFarmParams{
+	r, err := api.PutFarmWithResponse(ctx, *localID, &oapi.PutFarmParams{
 		XAgrirouterEndpointId: endpointID, XAgrirouterTenantId: tenantID, XAgrirouterBaseRevision: base,
 	}, v)
 	if err != nil {
@@ -99,11 +102,12 @@ func PutField(
 	endpointID, tenantID uuid.UUID,
 	v oapi.Field, base *int,
 ) (oapi.Field, error) {
-	if v.LocalId == nil || *v.LocalId == "" {
+	localID := v.Content.Id.ReferenceId
+	if localID == nil || *localID == "" {
 		return oapi.Field{}, localIDRequired(TypeField)
 	}
 	v.Type = string(TypeField)
-	r, err := api.PutFieldWithResponse(ctx, *v.LocalId, &oapi.PutFieldParams{
+	r, err := api.PutFieldWithResponse(ctx, *localID, &oapi.PutFieldParams{
 		XAgrirouterEndpointId: endpointID, XAgrirouterTenantId: tenantID, XAgrirouterBaseRevision: base,
 	}, v)
 	if err != nil {
@@ -132,11 +136,12 @@ func PutFieldBoundary(
 	endpointID, tenantID uuid.UUID,
 	v oapi.FieldBoundary, base *int,
 ) (oapi.FieldBoundary, error) {
-	if v.LocalId == nil || *v.LocalId == "" {
+	localID := v.Content.Id.ReferenceId
+	if localID == nil || *localID == "" {
 		return oapi.FieldBoundary{}, localIDRequired(TypeFieldBoundary)
 	}
 	v.Type = string(TypeFieldBoundary)
-	r, err := api.PutFieldBoundaryWithResponse(ctx, *v.LocalId, &oapi.PutFieldBoundaryParams{
+	r, err := api.PutFieldBoundaryWithResponse(ctx, *localID, &oapi.PutFieldBoundaryParams{
 		XAgrirouterEndpointId: endpointID, XAgrirouterTenantId: tenantID, XAgrirouterBaseRevision: base,
 	}, v)
 	if err != nil {

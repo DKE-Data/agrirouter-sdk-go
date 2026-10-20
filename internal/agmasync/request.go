@@ -20,7 +20,7 @@ import (
 // many objects to name asks for the whole canonical set instead.
 //
 // It also unblocks an object whose reference target the participant does not
-// hold, such as a farm delivered with an owner reference that has no localId.
+// hold, such as a farm delivered with a grower reference that has no referenceId.
 // That object cannot be sent until the target is requested, created locally,
 // and bound with [Bind].
 func Request(
