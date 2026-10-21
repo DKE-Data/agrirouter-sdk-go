@@ -12,8 +12,9 @@ var listTenantEndpointsCmd = &cobra.Command{
 	Aliases: []string{"lte"},
 	Short:   "lists endpoints in one tenant with their capabilities and route information",
 	Long: `Calls GET /tenants/{tenantId}/endpoints and prints the current list of
-endpoints in the tenant together with their capabilities. Endpoints owned
-by the authorized application also include route-derived send/receive maps.`,
+endpoints in the tenant together with their capabilities, and the tenant's
+company name when known. Endpoints owned by the authorized application also
+include route-derived send/receive maps.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
@@ -27,13 +28,16 @@ by the authorized application also include route-derived send/receive maps.`,
 			return fmt.Errorf("failed to create agrirouter client: %w", err)
 		}
 
-		endpoints, err := client.ListTenantEndpoints(ctx, tenantID)
+		res, err := client.GetTenantEndpoints(ctx, tenantID)
 		if err != nil {
 			return fmt.Errorf("failed to list tenant endpoints: %w", err)
 		}
 
-		fmt.Printf("Endpoints in tenant %s (%d):\n", tenantID, len(endpoints))
-		for _, ep := range endpoints {
+		if res.CompanyName != nil {
+			fmt.Printf("Company: %s\n", *res.CompanyName)
+		}
+		fmt.Printf("Endpoints in tenant %s (%d):\n", tenantID, len(res.Endpoints))
+		for _, ep := range res.Endpoints {
 			printTenantEndpoint(ep, "  ")
 		}
 		return nil

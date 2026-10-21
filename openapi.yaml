@@ -2078,6 +2078,12 @@ components:
       required:
         - endpoints
       properties:
+        company_name:
+          type: string
+          description: |
+            The tenant's company name as entered in agrirouter. Omitted when
+            the company name is unknown or empty.
+          example: "Example Farm GmbH"
         endpoints:
           type: array
           items:
@@ -2101,6 +2107,15 @@ components:
           type: string
           format: uuid
           description: Authorized tenant ID.
+        company_name:
+          type: string
+          description: |
+            The tenant's company name as entered in agrirouter. Omitted when
+            the company name is unknown or empty.
+
+            `TenantInfo` is also delivered as `tenant` in the
+            `AUTHORIZATION_ADDED` event, so this field appears there too.
+          example: "Example Farm GmbH"
         endpoints:
           type: array
           description: |

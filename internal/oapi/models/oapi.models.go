@@ -570,7 +570,10 @@ type EndpointsListChangedEventDataEventType string
 
 // EndpointsListResponse defines model for EndpointsListResponse.
 type EndpointsListResponse struct {
-	Endpoints []TenantEndpointInfo `json:"endpoints"`
+	// CompanyName The tenant's company name as entered in agrirouter. Omitted when
+	// the company name is unknown or empty.
+	CompanyName *string              `json:"company_name,omitempty"`
+	Endpoints   []TenantEndpointInfo `json:"endpoints"`
 }
 
 // Entity Any master-data entity. Used only on the event stream, which carries every opted-in entity type over a single connection; the typed resources use the concrete schemas directly.
@@ -1449,6 +1452,13 @@ type TenantEndpointInfo struct {
 
 // TenantInfo defines model for TenantInfo.
 type TenantInfo struct {
+	// CompanyName The tenant's company name as entered in agrirouter. Omitted when
+	// the company name is unknown or empty.
+	//
+	// `TenantInfo` is also delivered as `tenant` in the
+	// `AUTHORIZATION_ADDED` event, so this field appears there too.
+	CompanyName *string `json:"company_name,omitempty"`
+
 	// Endpoints Endpoints visible in this tenant, subject to the following
 	// privacy rule:
 	//
