@@ -9,7 +9,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(mdPutCmd("field",
-		func(f *agrirouter.Field, id string) { f.LocalId = &id },
+		func(f *agrirouter.Field, id string) { f.Content.Id.ReferenceId = &id },
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int, body *agrirouter.Field) (*agrirouter.Field, error) {
 			return c.PutField(ctx, localID, ep, tn, br, body)
 		}))

@@ -3,6 +3,7 @@ package agrirouter_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -64,21 +65,24 @@ var (
 
 func TestPutFarmSendsMergePatchAsEndpoint(t *testing.T) {
 	client, rec := newMasterdataClient(t, fakeResponse{status: http.StatusOK,
-		body: `{"type":"farm","agrirouter_id":"33333333-3333-3333-3333-333333333333","local_id":"farm-1",` +
-			`"name":"Hof","revision":4}`})
+		body: `{"type":"farm","revision":4,"content":{"id":{"referenceId":"farm-1","uniqueIds":[` +
+			`{"idText":"33333333-3333-3333-3333-333333333333","idTypeCode":"UUID","idSource":"https://agrirouter.com"},` +
+			`{"idText":"farm-1","idTypeCode":"STRING"}]},"name":"Hof"}}`})
 
-	// A merge patch: owner removed by null, every other optional attribute left out.
+	// A merge patch: grower removed by null, every other optional attribute left out.
 	base := 3
 	farm, err := client.PutFarm(context.Background(), "farm-1", endpointID, tenantID, &base,
-		&agrirouter.Farm{Name: "Hof", Owner: nullable.NewNullNullable[agrirouter.EntityReference]()})
+		&agrirouter.Farm{Content: agrirouter.FarmContent{
+			Name: "Hof", UnderscoreAgmasyncGrowerRef: nullable.NewNullNullable[agrirouter.Ref](),
+		}})
 	require.NoError(t, err)
-	assert.Equal(t, "Hof", farm.Name)
+	assert.Equal(t, "Hof", farm.Content.Name)
 	require.NotNil(t, farm.Revision)
 	assert.Equal(t, 4, *farm.Revision)
 
 	assert.Equal(t, http.MethodPut, rec.method)
 	assert.Equal(t, "/masterdata/farms/farm-1", rec.path)
-	assert.JSONEq(t, `{"type":"farm","local_id":"farm-1","name":"Hof","owner":null}`, rec.body)
+	assert.JSONEq(t, `{"type":"farm","content":{"id":{"referenceId":"farm-1"},"name":"Hof","_agmasync_growerRef":null}}`, rec.body)
 	assert.Equal(t, endpointID.String(), rec.headers.Get("X-Agrirouter-Endpoint-Id"))
 	assert.Equal(t, tenantID.String(), rec.headers.Get("X-Agrirouter-Tenant-Id"))
 	assert.Equal(t, "3", rec.headers.Get("X-Agrirouter-Base-Revision"))
@@ -86,7 +90,7 @@ func TestPutFarmSendsMergePatchAsEndpoint(t *testing.T) {
 
 func TestDeactivateEntityDecodesTheObject(t *testing.T) {
 	client, rec := newMasterdataClient(t, fakeResponse{status: http.StatusOK,
-		body: `{"type":"field","name":"Acker","active":false}`})
+		body: `{"type":"field","content":{"id":{"referenceId":"field-1"},"name":"Acker"},"active":false}`})
 
 	base := 2
 	obj, err := client.DeactivateEntity(context.Background(), agrirouter.EntityTypeField, "field-1", endpointID, tenantID, &base)
@@ -101,18 +105,18 @@ func TestDeactivateEntityDecodesTheObject(t *testing.T) {
 func TestDeactivateEntityDecodesByTheRequestedType(t *testing.T) {
 	t.Run("body without type", func(t *testing.T) {
 		client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK,
-			body: `{"name":"Acker","active":false}`})
+			body: `{"content":{"id":{"referenceId":"field-1"},"name":"Acker"},"active":false}`})
 
 		obj, err := client.DeactivateEntity(context.Background(), agrirouter.EntityTypeField, "field-1", endpointID, tenantID, nil)
 		require.NoError(t, err)
 		assert.Equal(t, agrirouter.EntityTypeField, obj.Envelope.Type)
 		require.NotNil(t, obj.Field)
-		assert.Equal(t, "Acker", obj.Field.Name)
+		assert.Equal(t, "Acker", obj.Field.Content.Name)
 	})
 
 	t.Run("body of another type", func(t *testing.T) {
 		client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK,
-			body: `{"type":"farm","name":"Hof","active":false}`})
+			body: `{"type":"farm","content":{"id":{"referenceId":"field-1"},"name":"Hof"},"active":false}`})
 
 		obj, err := client.DeactivateEntity(context.Background(), agrirouter.EntityTypeField, "field-1", endpointID, tenantID, nil)
 		require.ErrorIs(t, err, agrirouter.ErrEntityTypeMismatch)
@@ -159,7 +163,8 @@ func TestStreamRejectsAResponseThatIsNotAnEventStream(t *testing.T) {
 
 func TestPutWithoutLocalIDIsMatchable(t *testing.T) {
 	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK})
-	_, err := client.PutFarm(context.Background(), "", endpointID, tenantID, nil, &agrirouter.Farm{Name: "Hof"})
+	farm := &agrirouter.Farm{Content: agrirouter.FarmContent{Name: "Hof"}}
+	_, err := client.PutFarm(context.Background(), "", endpointID, tenantID, nil, farm)
 	assert.ErrorIs(t, err, agrirouter.ErrLocalIDRequired)
 }
 
@@ -177,7 +182,7 @@ func TestInitialLoadAddressesEndpointByExternalID(t *testing.T) {
 func TestMasterdataErrors(t *testing.T) {
 	ctx := context.Background()
 	put := func(c *agrirouter.Client) error {
-		_, err := c.PutFarm(ctx, "farm-1", endpointID, tenantID, nil, &agrirouter.Farm{Name: "Hof"})
+		_, err := c.PutFarm(ctx, "farm-1", endpointID, tenantID, nil, &agrirouter.Farm{Content: agrirouter.FarmContent{Name: "Hof"}})
 		return err
 	}
 
@@ -224,7 +229,7 @@ func TestMasterdataErrors(t *testing.T) {
 
 func TestStreamMasterdataEventsDecodesFrames(t *testing.T) {
 	frames := "id: pos-1\nevent: MASTERDATA_CHANGED\n" +
-		`data: {"type":"farm","agrirouter_id":"33333333-3333-3333-3333-333333333333","name":"Hof","revision":2}` + "\n\n" +
+		"data: " + farmJSON("33333333-3333-3333-3333-333333333333", "Hof", 2) + "\n\n" +
 		"id: pos-1\nevent: CAUGHT_UP\ndata: {}\n\n"
 	client, rec := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frames, contentType: "text/event-stream"})
 
@@ -245,7 +250,7 @@ func TestStreamMasterdataEventsDecodesFrames(t *testing.T) {
 	assert.Equal(t, "pos-1", got[0].ID)
 	assert.Equal(t, agrirouter.EntityTypeFarm, got[0].Envelope.Type)
 	require.NotNil(t, got[0].Farm)
-	assert.Equal(t, "Hof", got[0].Farm.Name)
+	assert.Equal(t, "Hof", got[0].Farm.Content.Name)
 	assert.Equal(t, agrirouter.MasterdataEventCaughtUp, got[1].Type)
 	assert.False(t, got[1].HasEntity())
 }
@@ -255,7 +260,9 @@ func TestStreamMasterdataEventsReadsFramesLargerThan64KB(t *testing.T) {
 	// over the limit would fail every resume from before it.
 	name := strings.Repeat("x", 1<<20)
 	frames := "id: pos-1\nevent: MASTERDATA_CHANGED\n" +
-		`data: {"type":"farm","agrirouter_id":"33333333-3333-3333-3333-333333333333","name":"` + name + `","revision":2}` + "\n\n"
+		`data: {"type":"farm","revision":2,"content":{"id":{"uniqueIds":[{"idText":` +
+		`"33333333-3333-3333-3333-333333333333","idTypeCode":"UUID","idSource":"https://agrirouter.com"}]},` +
+		`"name":"` + name + `"}}` + "\n\n"
 	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frames, contentType: "text/event-stream"})
 
 	var got []agrirouter.MasterdataEvent
@@ -266,16 +273,23 @@ func TestStreamMasterdataEventsReadsFramesLargerThan64KB(t *testing.T) {
 	require.ErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
 	require.Len(t, got, 1)
 	require.NotNil(t, got[0].Farm)
-	assert.Len(t, got[0].Farm.Name, len(name))
+	assert.Len(t, got[0].Farm.Content.Name, len(name))
 }
 
 var errApply = errors.New("not applied")
 
+// farmJSON is a delivered farm: its canonical identifier, its name, and its revision.
+func farmJSON(agrirouterID, name string, revision int) string {
+	return fmt.Sprintf(`{"type":"farm","revision":%d,"content":{"id":{"uniqueIds":[`+
+		`{"idText":%q,"idTypeCode":"UUID","idSource":"https://agrirouter.com"}]},"name":%q}}`,
+		revision, agrirouterID, name)
+}
+
 func TestStreamsStopAtTheHandlersError(t *testing.T) {
 	frames := "id: pos-1\nevent: MASTERDATA_CHANGED\n" +
-		`data: {"type":"farm","agrirouter_id":"33333333-3333-3333-3333-333333333333","name":"Hof","revision":2}` + "\n\n" +
+		"data: " + farmJSON("33333333-3333-3333-3333-333333333333", "Hof", 2) + "\n\n" +
 		"id: pos-2\nevent: MASTERDATA_CHANGED\n" +
-		`data: {"type":"farm","agrirouter_id":"44444444-4444-4444-4444-444444444444","name":"Gut","revision":1}` + "\n\n"
+		"data: " + farmJSON("44444444-4444-4444-4444-444444444444", "Gut", 1) + "\n\n"
 	streams := map[string]func(*agrirouter.Client, agrirouter.MasterdataEventHandler) error{
 		"live": func(c *agrirouter.Client, h agrirouter.MasterdataEventHandler) error {
 			return c.StreamMasterdataEvents(context.Background(), "", h)
@@ -290,7 +304,7 @@ func TestStreamsStopAtTheHandlersError(t *testing.T) {
 
 			var got []string
 			err := stream(client, func(_ context.Context, ev *agrirouter.MasterdataEvent) error {
-				got = append(got, ev.Farm.Name)
+				got = append(got, ev.Farm.Content.Name)
 				return errApply
 			})
 			// The handler's own error, as is: the participant failed, not the call.
@@ -312,8 +326,9 @@ func TestDependencyOrderIsACopy(t *testing.T) {
 
 func TestWithMasterdataMaxEventSizeBoundsFrames(t *testing.T) {
 	frame := "id: pos-1\nevent: MASTERDATA_CHANGED\n" +
-		`data: {"type":"farm","agrirouter_id":"33333333-3333-3333-3333-333333333333",` +
-		`"name":"` + strings.Repeat("x", 2048) + `","revision":2}` + "\n\n"
+		`data: {"type":"farm","revision":2,"content":{"id":{"uniqueIds":[{"idText":` +
+		`"33333333-3333-3333-3333-333333333333","idTypeCode":"UUID","idSource":"https://agrirouter.com"}]},` +
+		`"name":"` + strings.Repeat("x", 2048) + `"}}` + "\n\n"
 	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frame, contentType: "text/event-stream"},
 		agrirouter.WithMasterdataMaxEventSize(1024))
 
@@ -342,7 +357,7 @@ func TestStreamMasterdataEventsReturnsContextErrorOnCancel(t *testing.T) {
 
 func TestStreamInitialLoadEventsEndsWithoutError(t *testing.T) {
 	frames := "event: MASTERDATA_CHANGED\n" +
-		`data: {"type":"farm","agrirouter_id":"33333333-3333-3333-3333-333333333333","name":"Hof","revision":2}` + "\n\n"
+		"data: " + farmJSON("33333333-3333-3333-3333-333333333333", "Hof", 2) + "\n\n"
 	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frames, contentType: "text/event-stream"})
 
 	var got []agrirouter.MasterdataEvent

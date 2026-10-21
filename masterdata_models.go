@@ -5,14 +5,19 @@ import (
 
 	"github.com/DKE-Data/agrirouter-sdk-go/internal/agmasync"
 	internal_models "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
+	"github.com/google/uuid"
 )
 
 // Re-exporting master-data models for convenience, so users can access them
 // directly from the agrirouter package, e.g. agrirouter.Party.
 
 // Party is a master-data party: a person, an organization, or a party whose
-// party type its sender does not record (no Details).
+// party type its sender does not record (no _agmasync_details). Its master
+// data is in Content.
 type Party = internal_models.Party
+
+// PartyContent is a party's master data, based on the ADAPT Party.
+type PartyContent = internal_models.PartyContent
 
 // PartyDetails states a party's party type, with the attributes specific to it.
 type PartyDetails = internal_models.PartyDetails
@@ -33,29 +38,54 @@ type MasterdataResetEventData = internal_models.MasterdataResetEventData
 // Farm is a master-data farm, optionally held by a party and worked by partners.
 type Farm = internal_models.Farm
 
+// FarmContent is a farm's master data, based on the ADAPT Farm.
+type FarmContent = internal_models.FarmContent
+
 // Field is a master-data field, optionally belonging to a farm and held by a party.
 type Field = internal_models.Field
 
-// FieldBoundary is a master-data boundary of the field it references, carrying a GeoJSON geometry.
+// FieldContent is a field's master data, based on the ADAPT Field.
+type FieldContent = internal_models.FieldContent
+
+// FieldBoundary is a master-data boundary of the field it references.
 type FieldBoundary = internal_models.FieldBoundary
 
-// Address is a postal address used by parties.
-type Address = internal_models.Address
+// FieldBoundaryContent is a field boundary's master data, based on the ADAPT FieldBoundary.
+type FieldBoundaryContent = internal_models.FieldBoundaryContent
 
-// Contact is contact information (phone, email, ...) of a party.
-type Contact = internal_models.Contact
+// Id identifies an object or a reference's target: the canonical identifier
+// and/or the near end's own local one in referenceId. See IdentityOf.
+type Id = internal_models.Id //nolint:revive // Name follows the specification.
+
+// UniqueId is one identifier in an Id.
+type UniqueId = internal_models.UniqueId //nolint:revive // Name follows the specification.
+
+// Ref references another master-data entity by its Id.
+type Ref = internal_models.Ref
+
+// ContactInfo is a party's contact data: addresses and telecommunication contacts.
+type ContactInfo = internal_models.ContactInfo
+
+// AddressContactMethod is an address of a party or a farm.
+type AddressContactMethod = internal_models.AddressContactMethod
+
+// TelecommunicationContactMethod is a phone number, fax number, or email address.
+type TelecommunicationContactMethod = internal_models.TelecommunicationContactMethod
+
+// Area is an area in hectares.
+type Area = internal_models.Area
+
+// Boundary is the geometry of a field boundary, as WKT, with how it was recorded.
+type Boundary = internal_models.Boundary
+
+// ObstacleBoundary is the geometry of an obstacle, as WKT.
+type ObstacleBoundary = internal_models.ObstacleBoundary
 
 // Membership links a person to an organization together with the role held there.
 type Membership = internal_models.Membership
 
 // Partner is a party holding a role on a farm, such as a contractor or advisor.
 type Partner = internal_models.Partner
-
-// EntityReference references another master-data entity by canonical and/or local id.
-type EntityReference = internal_models.EntityReference
-
-// Geometry is a GeoJSON geometry (RFC 7946) with positions as [longitude, latitude(, altitude)].
-type Geometry = internal_models.Geometry
 
 // HarvestPeriod is a harvest period expressed as an interval.
 type HarvestPeriod = internal_models.HarvestPeriod
@@ -113,6 +143,22 @@ const (
 	// InitialLoadStateCompleted means steady-state synchronization applies.
 	InitialLoadStateCompleted = internal_models.COMPLETED
 )
+
+// Identity is what an Id says: the canonical identifier and the local one.
+type Identity = agmasync.Identity
+
+// AgrirouterIDSource is the idSource of the canonical identifier in an Id.
+const AgrirouterIDSource = agmasync.AgrirouterIDSource
+
+// IdentityOf reads an Id, an object's own content.id or a reference's.
+func IdentityOf(id Id) (Identity, error) { return agmasync.IdentityOf(id) }
+
+// LocalRef builds a reference from the application's own identifier for the
+// target, which agrirouter resolves against its mapping. Send the target first.
+func LocalRef(localID string) Ref { return agmasync.LocalRef(localID) }
+
+// CanonicalRef builds a reference from the target's canonical identifier.
+func CanonicalRef(agrirouterID uuid.UUID) Ref { return agmasync.AgrirouterRef(agrirouterID) }
 
 // EntityType names a kind of master-data object.
 type EntityType = agmasync.EntityType

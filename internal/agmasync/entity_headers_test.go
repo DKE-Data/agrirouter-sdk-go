@@ -26,7 +26,7 @@ func recordHeaders(t *testing.T) (*oapiclient.ClientWithResponses, <-chan http.H
 			w.Header().Set("Content-Type", "application/json")
 			// Enough of a party to be read back as one, every call
 			// under test being about the request rather than the response.
-			_, _ = w.Write([]byte(`{"type":"party","local_id":"o-1","name":"Hof Nord"}`))
+			_, _ = w.Write([]byte(`{"type":"party","content":{"id":{"referenceId":"o-1"},"name":"Hof Nord"}}`))
 		}))
 	t.Cleanup(srv.Close)
 
@@ -47,8 +47,7 @@ func TestEntityCallsNameTheEndpointAndTheTenant(t *testing.T) {
 
 	api, seen := recordHeaders(t)
 
-	localID := "o-1"
-	party := oapi.Party{LocalId: &localID, Name: "Hof Nord"}
+	party := oapi.Party{Content: oapi.PartyContent{Id: agmasync.LocalID("o-1"), Name: "Hof Nord"}}
 
 	ctx := context.Background()
 	calls := map[string]func() error{
