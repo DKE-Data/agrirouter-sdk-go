@@ -12,7 +12,8 @@ import (
 // Request asks for a single entity by its canonical identifier.
 //
 // agrirouter answers 202 with no body and delivers the object on the
-// application's event stream, even when this endpoint was its last writer.
+// application's event stream, as a frame addressed to this endpoint, even when
+// this endpoint was its last writer.
 //
 // A request never widens what a participant can see. It recovers an object
 // lost locally, or one referenced by a live-stream object that the

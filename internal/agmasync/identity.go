@@ -62,9 +62,9 @@ func LocalID(localID string) oapi.Id {
 //
 // A reference may carry either identifier on send. Using the local one lets a
 // participant build references from its own keys without tracking canonical
-// ones. agrirouter resolves it against the sending application's mapping and
-// rejects the write if the target has not been sent yet, so send the target
-// first.
+// ones. agrirouter resolves it against the sending endpoint's own mapping and
+// rejects the write if that endpoint has not sent or bound the target yet, so
+// send or bind the target through the same endpoint first.
 func LocalRef(localID string) oapi.Ref {
 	return oapi.Ref{Id: LocalID(localID)}
 }

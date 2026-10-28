@@ -75,15 +75,29 @@ type RevisionConflict struct {
 	// written more than once since.
 	CurrentRevision int
 	Message         string
+	// Required marks a 428: the write carried no base revision at all, and
+	// the object exists. It matches [ErrBaseRevisionRequired] instead of
+	// [ErrRevisionConflict], and recovers the same way.
+	Required bool
 }
 
 func (e *RevisionConflict) Error() string {
+	if e.Required {
+		return fmt.Sprintf("agmasync: base revision required, current revision is %d: %s",
+			e.CurrentRevision, e.Message)
+	}
 	return fmt.Sprintf("agmasync: revision conflict, current revision is %d: %s",
 		e.CurrentRevision, e.Message)
 }
 
-// Is makes [errors.Is] match [ErrRevisionConflict].
-func (e *RevisionConflict) Is(target error) bool { return errors.Is(target, ErrRevisionConflict) }
+// Is makes [errors.Is] match [ErrRevisionConflict], or [ErrBaseRevisionRequired]
+// where Required.
+func (e *RevisionConflict) Is(target error) bool {
+	if e.Required {
+		return errors.Is(target, ErrBaseRevisionRequired)
+	}
+	return errors.Is(target, ErrRevisionConflict)
+}
 
 // MappingConflict reports a binding that could not be recorded.
 //
@@ -109,14 +123,14 @@ func (e *MappingConflict) Is(target error) bool { return errors.Is(target, ErrMa
 // rather than a closed enum, and a participant must handle an unknown value
 // in a default branch.
 const (
-	// ReasonLocalIDAlreadyBound means this application already knows a
-	// different canonical object in the tenant by that localId. Resolving it
-	// needs a user: two of their records are being claimed to be one. What the
-	// application has bound in another tenant never causes this: the mapping is
-	// keyed by the application and the tenant.
+	// ReasonLocalIDAlreadyBound means this endpoint already knows a different
+	// canonical object by that localId. Resolving it needs a user: two of their
+	// records are being claimed to be one. What a sibling endpoint has bound,
+	// in this tenant or another, never causes this: the mapping is keyed by the
+	// endpoint.
 	ReasonLocalIDAlreadyBound = "LOCAL_ID_ALREADY_BOUND"
 
-	// ReasonAgrirouterIDAlreadyBound means this application already knows that
+	// ReasonAgrirouterIDAlreadyBound means this endpoint already knows that
 	// canonical object under a different localId. The participant can usually
 	// resolve it without a user.
 	ReasonAgrirouterIDAlreadyBound = "AGRIROUTER_ID_ALREADY_BOUND"
@@ -199,11 +213,14 @@ func (r writeResult) err() error {
 		}
 		return &APIError{r.statusCode, "precondition failed", ErrRevisionConflict}
 	case http.StatusPreconditionRequired:
-		msg := "base revision required"
-		if r.required != nil && r.required.Message != "" {
-			msg = r.required.Message
+		if r.required != nil {
+			return &RevisionConflict{
+				CurrentRevision: r.required.CurrentRevision,
+				Message:         r.required.Message,
+				Required:        true,
+			}
 		}
-		return &APIError{r.statusCode, msg, ErrBaseRevisionRequired}
+		return &APIError{r.statusCode, "base revision required", ErrBaseRevisionRequired}
 	default:
 		return &APIError{r.statusCode, unexpected(r.body), nil}
 	}

@@ -55,8 +55,10 @@ type Event struct {
 	// catch-up.
 	//
 	// It is safe to resume from once this frame and every earlier one have
-	// been durably applied. It is empty on the initial-load stream, which has
-	// no position.
+	// been durably applied. The frames one object fans out into, one per
+	// recipient endpoint, carry the same ID, so a resume between them delivers
+	// all of them again. It is empty on the initial-load stream, which has no
+	// position.
 	ID string
 
 	// Object is the canonical object the frame carries. It is the zero value
@@ -68,8 +70,10 @@ type Event struct {
 	RouteChange *oapi.RouteChangedEventData
 
 	// Reset is set on an [EventMasterdataReset] frame and nil otherwise. On
-	// receipt, a participant discards every binding it holds in the tenant,
-	// keeps its local records, and durably stores this frame's position before
+	// receipt, a participant discards every binding it holds in the tenant and
+	// every correspondence table it kept there for a removed endpoint (the
+	// event reaches an application with no endpoint left in the tenant for that
+	// reason), keeps its local records, and durably stores this frame's position before
 	// rejoining the tenant's initial load. Resuming from an earlier position
 	// would deliver the reset again after the new bindings exist.
 	Reset *oapi.MasterdataResetEventData
@@ -180,6 +184,12 @@ func errIsStreamEnd(err error) bool {
 // routed to and every entity type it is opted into, so a receiver partitions
 // on each object's tenantId. agrirouter does not echo a change to the endpoint
 // that wrote it, but does deliver it to the application's other endpoints.
+//
+// The mapping is scoped to the endpoint, so a frame is rendered for one
+// endpoint, named by the object's RecipientEndpointId, and every localId in it
+// is that endpoint's. An object entitled to several of the application's
+// endpoints arrives once for each; a receiver applies each frame to the store
+// behind its recipient.
 //
 // lastEventID must be the ID of a frame the participant has durably applied,
 // not the last one it read, because delivery is at-least-once. A participant

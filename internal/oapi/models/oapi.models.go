@@ -414,7 +414,7 @@ type Boundary struct {
 	GNSSCorrectionNetworkBrand nullable.Nullable[string] `json:"gNSSCorrectionNetworkBrand,omitempty"`
 	GNSSCorrectionNetworkName  nullable.Nullable[string] `json:"gNSSCorrectionNetworkName,omitempty"`
 
-	// Geometry A polygon or multipolygon as Well-Known Text in WGS84. It MUST be in the canonical form of "Encoding" in specification.md, which the pattern does not check: it checks the geometry type only.
+	// Geometry A POLYGON or MULTIPOLYGON as Well-Known Text in WGS84. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
 	//
 	//
 	// Examples: POLYGON ((9.56 52.205, 9.566 52.205, 9.5665 52.208, 9.5605 52.2085, 9.56 52.205))
@@ -595,7 +595,7 @@ type EntityTypeToggle struct {
 
 // Envelope Sync state common to every master-data entity. The master data itself, identity included, is in `content`. The concrete entity type is determined by the path; each entity schema pins the `type` discriminator so that objects remain self-describing on the event stream.
 //
-// agrirouter assigns `revision`, `modified_at`, `tenant_id`, `source_endpoint_id`, and `type`. An object may be sent back as it was delivered, these included: `revision`, `modified_at`, and `source_endpoint_id` are ignored on send; `tenant_id` and `type` must match the object written, or the write is a 400.
+// agrirouter assigns `revision`, `modified_at`, `tenant_id`, `source_endpoint_id`, `recipient_endpoint_id`, and `type`. An object may be sent back as it was delivered, these included: `revision`, `modified_at`, `source_endpoint_id`, and `recipient_endpoint_id` are ignored on send; `tenant_id` and `type` must match the object written, or the write is a 400.
 //
 // `content` is based on the corresponding ADAPT 2.0.2 type. Properties ADAPT has no slot for are prefixed `_agmasync_`, and unknown properties are rejected. See "Relation to ADAPT" in specification.md for every deviation from ADAPT. An optional attribute declared nullable accepts `null` on a write, where it removes the attribute. agrirouter never delivers `null`: an attribute absent from a delivered object is unset.
 type Envelope struct {
@@ -603,6 +603,9 @@ type Envelope struct {
 
 	// ModifiedAt Assigned by agrirouter. Ignored on send.
 	ModifiedAt *time.Time `json:"modified_at,omitempty"`
+
+	// RecipientEndpointId The agrirouter identifier of the endpoint this copy is for: the endpoint whose local identifiers `content.id` and every reference carry. It always belongs to `tenant_id`. The mapping is scoped to the endpoint, so an object entitled to several of an application's endpoints is delivered once for each. On a write response it is the calling endpoint. Ignored on send.
+	RecipientEndpointId *openapi_types.UUID `json:"recipient_endpoint_id,omitempty"`
 
 	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the `x-agrirouter-base-revision` header, where it is compared and discarded. Ignored on send.
 	Revision *int `json:"revision,omitempty"`
@@ -631,6 +634,9 @@ type Farm struct {
 
 	// ModifiedAt Assigned by agrirouter. Ignored on send.
 	ModifiedAt *time.Time `json:"modified_at,omitempty"`
+
+	// RecipientEndpointId The agrirouter identifier of the endpoint this copy is for: the endpoint whose local identifiers `content.id` and every reference carry. It always belongs to `tenant_id`. The mapping is scoped to the endpoint, so an object entitled to several of an application's endpoints is delivered once for each. On a write response it is the calling endpoint. Ignored on send.
+	RecipientEndpointId *openapi_types.UUID `json:"recipient_endpoint_id,omitempty"`
 
 	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the `x-agrirouter-base-revision` header, where it is compared and discarded. Ignored on send.
 	Revision *int `json:"revision,omitempty"`
@@ -685,6 +691,9 @@ type Field struct {
 	// ModifiedAt Assigned by agrirouter. Ignored on send.
 	ModifiedAt *time.Time `json:"modified_at,omitempty"`
 
+	// RecipientEndpointId The agrirouter identifier of the endpoint this copy is for: the endpoint whose local identifiers `content.id` and every reference carry. It always belongs to `tenant_id`. The mapping is scoped to the endpoint, so an object entitled to several of an application's endpoints is delivered once for each. On a write response it is the calling endpoint. Ignored on send.
+	RecipientEndpointId *openapi_types.UUID `json:"recipient_endpoint_id,omitempty"`
+
 	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the `x-agrirouter-base-revision` header, where it is compared and discarded. Ignored on send.
 	Revision *int `json:"revision,omitempty"`
 
@@ -709,6 +718,9 @@ type FieldBoundary struct {
 
 	// ModifiedAt Assigned by agrirouter. Ignored on send.
 	ModifiedAt *time.Time `json:"modified_at,omitempty"`
+
+	// RecipientEndpointId The agrirouter identifier of the endpoint this copy is for: the endpoint whose local identifiers `content.id` and every reference carry. It always belongs to `tenant_id`. The mapping is scoped to the endpoint, so an object entitled to several of an application's endpoints is delivered once for each. On a write response it is the calling endpoint. Ignored on send.
+	RecipientEndpointId *openapi_types.UUID `json:"recipient_endpoint_id,omitempty"`
 
 	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the `x-agrirouter-base-revision` header, where it is compared and discarded. Ignored on send.
 	Revision *int `json:"revision,omitempty"`
@@ -1154,11 +1166,11 @@ type ObstacleBoundary struct {
 	GNSSCorrectionNetworkBrand *string `json:"gNSSCorrectionNetworkBrand,omitempty"`
 	GNSSCorrectionNetworkName  *string `json:"gNSSCorrectionNetworkName,omitempty"`
 
-	// Geometry A point, line string, or polygon as Well-Known Text in WGS84. It MUST be in the canonical form of "Encoding" in specification.md, which the pattern does not check: it checks the geometry type only.
+	// Geometry A POLYGON or MULTIPOLYGON as Well-Known Text in WGS84. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
 	//
 	//
-	// Examples: POINT (9.5621 52.2062)
-	Geometry WktObstacle `json:"geometry"`
+	// Examples: POLYGON ((9.56 52.205, 9.566 52.205, 9.5665 52.208, 9.5605 52.2085, 9.56 52.205))
+	Geometry WktArea `json:"geometry"`
 }
 
 // OrganizationDetails A legal entity to which persons may belong.
@@ -1189,6 +1201,9 @@ type Party struct {
 
 	// ModifiedAt Assigned by agrirouter. Ignored on send.
 	ModifiedAt *time.Time `json:"modified_at,omitempty"`
+
+	// RecipientEndpointId The agrirouter identifier of the endpoint this copy is for: the endpoint whose local identifiers `content.id` and every reference carry. It always belongs to `tenant_id`. The mapping is scoped to the endpoint, so an object entitled to several of an application's endpoints is delivered once for each. On a write response it is the calling endpoint. Ignored on send.
+	RecipientEndpointId *openapi_types.UUID `json:"recipient_endpoint_id,omitempty"`
 
 	// Revision Monotonic per-object counter maintained by agrirouter. Never taken from the body: the revision a write was made from travels in the `x-agrirouter-base-revision` header, where it is compared and discarded. Ignored on send.
 	Revision *int `json:"revision,omitempty"`
@@ -1492,17 +1507,12 @@ type UniqueId struct {
 	IdTypeCode string `json:"idTypeCode"`
 }
 
-// WktArea A polygon or multipolygon as Well-Known Text in WGS84. It MUST be in the canonical form of "Encoding" in specification.md, which the pattern does not check: it checks the geometry type only.
+// WktArea A POLYGON or MULTIPOLYGON as Well-Known Text in WGS84. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
 //
 // Examples: POLYGON ((9.56 52.205, 9.566 52.205, 9.5665 52.208, 9.5605 52.2085, 9.56 52.205))
 type WktArea = string
 
-// WktObstacle A point, line string, or polygon as Well-Known Text in WGS84. It MUST be in the canonical form of "Encoding" in specification.md, which the pattern does not check: it checks the geometry type only.
-//
-// Examples: POINT (9.5621 52.2062)
-type WktObstacle = string
-
-// WktPoint A point as Well-Known Text in WGS84, in the canonical form of "Encoding" in specification.md.
+// WktPoint A POINT as Well-Known Text in WGS84. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
 //
 // Examples: POINT (9.5531 52.2089)
 type WktPoint = string

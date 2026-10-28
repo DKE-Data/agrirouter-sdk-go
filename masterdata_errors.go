@@ -20,7 +20,7 @@ var (
 	ErrRevisionConflict = agmasync.ErrRevisionConflict
 
 	// ErrBaseRevisionRequired is a 428: an update was sent without a base
-	// revision.
+	// revision. RevisionConflict, with Required set, carries the current one.
 	ErrBaseRevisionRequired = agmasync.ErrBaseRevisionRequired
 
 	// ErrMappingConflict is a 409 on a write or a binding: an identifier is
@@ -69,8 +69,8 @@ var (
 	ErrMasterdataStreamEnded = errors.New("master-data stream ended")
 )
 
-// RevisionConflict is the error of a 412: a rejected write and the revision
-// that stands.
+// RevisionConflict is the error of a 412, or of a 428 where Required: a
+// rejected write and the revision that stands.
 type RevisionConflict = agmasync.RevisionConflict
 
 // MappingConflict is the error of a mapping 409: a binding that could not be

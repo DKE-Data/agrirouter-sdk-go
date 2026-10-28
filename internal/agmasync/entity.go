@@ -62,8 +62,9 @@ func (t EntityType) Valid() bool {
 // Every field but Type is a pointer because agrirouter assigns it, so it is
 // absent on an object not yet sent. AgrirouterID and LocalID are not envelope
 // fields on the wire but the two entries of `content.id` (see [IdentityOf]). A
-// delivered object without LocalID has no mapping for the receiving
-// application: the receiver must create it locally and bind it.
+// delivered object without LocalID has no mapping for the receiving endpoint,
+// the one RecipientEndpointId names: the receiver must create it locally and
+// bind it.
 type Envelope struct {
 	oapi.Envelope
 	Type EntityType `json:"type"`

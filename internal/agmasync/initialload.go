@@ -210,6 +210,11 @@ func SetInitialLoadState(
 // Bindings are applied independently: a pair that cannot be recorded comes back
 // in the status's RejectedIdMappings instead of failing the transition. Resolve
 // each and rebind it with [Bind]; [NeedsUser] tells which need a person.
+//
+// It is also how an endpoint onboarded again under an externalEndpointID it was
+// removed under re-declares the participant's retained correspondence table:
+// agrirouter discarded the mapping with the removed endpoint, so the set
+// arrives with no localIds and only this confirmation matches it.
 func ConfirmReconciled(
 	ctx context.Context, api *oapiclient.ClientWithResponses,
 	externalEndpointID string, tenantID uuid.UUID,
