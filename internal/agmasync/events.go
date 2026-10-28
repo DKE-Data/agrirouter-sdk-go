@@ -70,10 +70,8 @@ type Event struct {
 	RouteChange *oapi.RouteChangedEventData
 
 	// Reset is set on an [EventMasterdataReset] frame and nil otherwise. On
-	// receipt, a participant discards every binding it holds in the tenant and
-	// every correspondence table it kept there for a removed endpoint (the
-	// event reaches an application with no endpoint left in the tenant for that
-	// reason), keeps its local records, and durably stores this frame's position before
+	// receipt, a participant discards every binding it holds in the tenant,
+	// keeps its local records, and durably stores this frame's position before
 	// rejoining the tenant's initial load. Resuming from an earlier position
 	// would deliver the reset again after the new bindings exist.
 	Reset *oapi.MasterdataResetEventData

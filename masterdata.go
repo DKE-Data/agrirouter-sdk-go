@@ -29,15 +29,17 @@ func (c *Client) BindMapping(
 	return nil
 }
 
-// UnbindMapping declares that this endpoint no longer holds the canonical
-// object of entityType under localID. The canonical object itself is untouched.
-func (c *Client) UnbindMapping(
+// CorrectMappings replaces bindings of entityType that this endpoint's user
+// found wrong: each entry's localID ends mapped to its canonical object, or to
+// none. The set is applied whole or not at all, so a crosswise swap is one
+// call. Build the entries with MappingCorrection.
+func (c *Client) CorrectMappings(
 	ctx context.Context,
 	entityType EntityType,
-	localID string,
-	agrirouterID, endpointID, tenantID uuid.UUID,
+	entries []IDMappingCorrectionEntry,
+	endpointID, tenantID uuid.UUID,
 ) error {
-	if err := agmasync.Unbind(ctx, c.oapiClient, endpointID, tenantID, entityType, localID, agrirouterID); err != nil {
+	if err := agmasync.CorrectMappings(ctx, c.oapiClient, endpointID, tenantID, entityType, entries); err != nil {
 		return fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
 	return nil

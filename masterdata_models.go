@@ -35,7 +35,7 @@ type RouteChangedEventData = internal_models.RouteChangedEventData
 // MasterdataResetEventData is the payload of a MasterdataEventReset frame.
 type MasterdataResetEventData = internal_models.MasterdataResetEventData
 
-// Farm is a master-data farm, optionally held by a party and worked by partners.
+// Farm is a master-data farm, optionally held by a party.
 type Farm = internal_models.Farm
 
 // FarmContent is a farm's master data, based on the ADAPT Farm.
@@ -81,12 +81,6 @@ type Boundary = internal_models.Boundary
 // ObstacleBoundary is the geometry of an obstacle, as WKT.
 type ObstacleBoundary = internal_models.ObstacleBoundary
 
-// Membership links a person to an organization together with the role held there.
-type Membership = internal_models.Membership
-
-// Partner is a party holding a role on a farm, such as a contractor or advisor.
-type Partner = internal_models.Partner
-
 // HarvestPeriod is a harvest period expressed as an interval.
 type HarvestPeriod = internal_models.HarvestPeriod
 
@@ -119,6 +113,10 @@ type InitialLoadState = internal_models.InitialLoadState
 
 // IDMappingBinding binds a canonical object to a local identifier during reconciliation.
 type IDMappingBinding = internal_models.IdMappingBinding
+
+// IDMappingCorrectionEntry is one entry of a CorrectMappings request: a local
+// identifier and the canonical object it ends mapped to, or none.
+type IDMappingCorrectionEntry = internal_models.IdMappingCorrectionEntry
 
 // IDMappingRejection reports a binding that could not be recorded, with its reason.
 type IDMappingRejection = internal_models.IdMappingRejection
@@ -153,12 +151,19 @@ const AgrirouterIDSource = agmasync.AgrirouterIDSource
 // IdentityOf reads an Id, an object's own content.id or a reference's.
 func IdentityOf(id Id) (Identity, error) { return agmasync.IdentityOf(id) }
 
-// LocalRef builds a reference from the application's own identifier for the
-// target, which agrirouter resolves against its mapping. Send the target first.
+// LocalRef builds a reference from the sending endpoint's own identifier for
+// the target, which agrirouter resolves against that endpoint's mapping. Send
+// or bind the target through the same endpoint first.
 func LocalRef(localID string) Ref { return agmasync.LocalRef(localID) }
 
 // CanonicalRef builds a reference from the target's canonical identifier.
 func CanonicalRef(agrirouterID uuid.UUID) Ref { return agmasync.AgrirouterRef(agrirouterID) }
+
+// MappingCorrection builds a CorrectMappings entry: localID ends mapped to
+// agrirouterID, or to nothing where agrirouterID is nil.
+func MappingCorrection(localID string, agrirouterID *uuid.UUID) IDMappingCorrectionEntry {
+	return agmasync.Correction(localID, agrirouterID)
+}
 
 // EntityType names a kind of master-data object.
 type EntityType = agmasync.EntityType

@@ -14,8 +14,8 @@ const (
 	IDTypeUUID         = "UUID"
 )
 
-// IDTypeString is the `idTypeCode` agrirouter delivers on a local entry when
-// the application sent none.
+// IDTypeString is the ADAPT IdType of an identifier that is an opaque string,
+// for a participant that sends a local entry for one.
 const IDTypeString = "STRING"
 
 // Identity is what an `Id` says: the canonical identifier and the near end's

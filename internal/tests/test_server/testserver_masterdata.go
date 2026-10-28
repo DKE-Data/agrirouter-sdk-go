@@ -20,8 +20,8 @@ func (s *Server) BindPartyMapping(_ context.Context, _ BindPartyMappingRequestOb
 	return BindPartyMapping204Response{}, nil
 }
 
-func (s *Server) UnbindPartyMapping(_ context.Context, _ UnbindPartyMappingRequestObject) (UnbindPartyMappingResponseObject, error) {
-	return UnbindPartyMapping204Response{}, nil
+func (s *Server) CorrectPartyMappings(_ context.Context, _ CorrectPartyMappingsRequestObject) (CorrectPartyMappingsResponseObject, error) {
+	return CorrectPartyMappings204Response{}, nil
 }
 
 func (s *Server) DeactivateParty(_ context.Context, _ DeactivatePartyRequestObject) (DeactivatePartyResponseObject, error) {
@@ -42,8 +42,8 @@ func (s *Server) BindFarmMapping(_ context.Context, _ BindFarmMappingRequestObje
 	return BindFarmMapping204Response{}, nil
 }
 
-func (s *Server) UnbindFarmMapping(_ context.Context, _ UnbindFarmMappingRequestObject) (UnbindFarmMappingResponseObject, error) {
-	return UnbindFarmMapping204Response{}, nil
+func (s *Server) CorrectFarmMappings(_ context.Context, _ CorrectFarmMappingsRequestObject) (CorrectFarmMappingsResponseObject, error) {
+	return CorrectFarmMappings204Response{}, nil
 }
 
 func (s *Server) DeactivateFarm(_ context.Context, _ DeactivateFarmRequestObject) (DeactivateFarmResponseObject, error) {
@@ -64,8 +64,8 @@ func (s *Server) BindFieldMapping(_ context.Context, _ BindFieldMappingRequestOb
 	return BindFieldMapping204Response{}, nil
 }
 
-func (s *Server) UnbindFieldMapping(_ context.Context, _ UnbindFieldMappingRequestObject) (UnbindFieldMappingResponseObject, error) {
-	return UnbindFieldMapping204Response{}, nil
+func (s *Server) CorrectFieldMappings(_ context.Context, _ CorrectFieldMappingsRequestObject) (CorrectFieldMappingsResponseObject, error) {
+	return CorrectFieldMappings204Response{}, nil
 }
 
 func (s *Server) DeactivateField(_ context.Context, _ DeactivateFieldRequestObject) (DeactivateFieldResponseObject, error) {
@@ -86,8 +86,8 @@ func (s *Server) BindFieldBoundaryMapping(_ context.Context, _ BindFieldBoundary
 	return BindFieldBoundaryMapping204Response{}, nil
 }
 
-func (s *Server) UnbindFieldBoundaryMapping(_ context.Context, _ UnbindFieldBoundaryMappingRequestObject) (UnbindFieldBoundaryMappingResponseObject, error) {
-	return UnbindFieldBoundaryMapping204Response{}, nil
+func (s *Server) CorrectFieldBoundaryMappings(_ context.Context, _ CorrectFieldBoundaryMappingsRequestObject) (CorrectFieldBoundaryMappingsResponseObject, error) {
+	return CorrectFieldBoundaryMappings204Response{}, nil
 }
 
 func (s *Server) DeactivateFieldBoundary(_ context.Context, _ DeactivateFieldBoundaryRequestObject) (DeactivateFieldBoundaryResponseObject, error) {
