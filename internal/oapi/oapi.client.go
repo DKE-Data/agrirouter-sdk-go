@@ -136,7 +136,7 @@ type ClientInterface interface {
 	// PutEndpointWithBody Create or update endpoint
 	//
 	// This resource could be used to create new endpoint or reconfigure existing one.
-	// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well. A configuration that is not dependency-closed is rejected with `400`. Every other reference is optional, so any other combination of entity types is valid, for example parties and fields without farms, or farms and fields without parties.
+	// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well, and enabling parties and fields requires farms, the only link between them. A configuration that is not dependency-closed is rejected with `400` naming the missing entity type, never widened. Any other combination of entity types is valid, for example farms and fields without parties, or fields alone.
 	//
 	// Takes any type of body and a specified content type.
 	//
@@ -146,7 +146,7 @@ type ClientInterface interface {
 	// PutEndpoint Create or update endpoint
 	//
 	// This resource could be used to create new endpoint or reconfigure existing one.
-	// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well. A configuration that is not dependency-closed is rejected with `400`. Every other reference is optional, so any other combination of entity types is valid, for example parties and fields without farms, or farms and fields without parties.
+	// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well, and enabling parties and fields requires farms, the only link between them. A configuration that is not dependency-closed is rejected with `400` naming the missing entity type, never widened. Any other combination of entity types is valid, for example farms and fields without parties, or fields alone.
 	//
 	// Takes a body of the `application/json` content type.
 	//
@@ -673,7 +673,7 @@ func (c *Client) DeleteEndpoint(ctx context.Context, externalId ExternalId, para
 // PutEndpointWithBody Create or update endpoint
 //
 // This resource could be used to create new endpoint or reconfigure existing one.
-// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well. A configuration that is not dependency-closed is rejected with `400`. Every other reference is optional, so any other combination of entity types is valid, for example parties and fields without farms, or farms and fields without parties.
+// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well, and enabling parties and fields requires farms, the only link between them. A configuration that is not dependency-closed is rejected with `400` naming the missing entity type, never widened. Any other combination of entity types is valid, for example farms and fields without parties, or fields alone.
 //
 // Takes any type of body and a specified content type.
 //
@@ -693,7 +693,7 @@ func (c *Client) PutEndpointWithBody(ctx context.Context, externalId ExternalId,
 // PutEndpoint Create or update endpoint
 //
 // This resource could be used to create new endpoint or reconfigure existing one.
-// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well. A configuration that is not dependency-closed is rejected with `400`. Every other reference is optional, so any other combination of entity types is valid, for example parties and fields without farms, or farms and fields without parties.
+// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well, and enabling parties and fields requires farms, the only link between them. A configuration that is not dependency-closed is rejected with `400` naming the missing entity type, never widened. Any other combination of entity types is valid, for example farms and fields without parties, or fields alone.
 //
 // Takes a body of the `application/json` content type.
 //
@@ -3681,7 +3681,7 @@ type ClientWithResponsesInterface interface {
 	// PutEndpointWithBodyWithResponse Create or update endpoint
 	//
 	// This resource could be used to create new endpoint or reconfigure existing one.
-	// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well. A configuration that is not dependency-closed is rejected with `400`. Every other reference is optional, so any other combination of entity types is valid, for example parties and fields without farms, or farms and fields without parties.
+	// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well, and enabling parties and fields requires farms, the only link between them. A configuration that is not dependency-closed is rejected with `400` naming the missing entity type, never widened. Any other combination of entity types is valid, for example farms and fields without parties, or fields alone.
 	//
 	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -3691,7 +3691,7 @@ type ClientWithResponsesInterface interface {
 	// PutEndpointWithResponse Create or update endpoint
 	//
 	// This resource could be used to create new endpoint or reconfigure existing one.
-	// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well. A configuration that is not dependency-closed is rejected with `400`. Every other reference is optional, so any other combination of entity types is valid, for example parties and fields without farms, or farms and fields without parties.
+	// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well, and enabling parties and fields requires farms, the only link between them. A configuration that is not dependency-closed is rejected with `400` naming the missing entity type, never widened. Any other combination of entity types is valid, for example farms and fields without parties, or fields alone.
 	//
 	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	//
@@ -6233,7 +6233,7 @@ func (c *ClientWithResponses) DeleteEndpointWithResponse(ctx context.Context, ex
 // PutEndpointWithBodyWithResponse Create or update endpoint
 //
 // This resource could be used to create new endpoint or reconfigure existing one.
-// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well. A configuration that is not dependency-closed is rejected with `400`. Every other reference is optional, so any other combination of entity types is valid, for example parties and fields without farms, or farms and fields without parties.
+// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well, and enabling parties and fields requires farms, the only link between them. A configuration that is not dependency-closed is rejected with `400` naming the missing entity type, never widened. Any other combination of entity types is valid, for example farms and fields without parties, or fields alone.
 //
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
@@ -6249,7 +6249,7 @@ func (c *ClientWithResponses) PutEndpointWithBodyWithResponse(ctx context.Contex
 // PutEndpointWithResponse Create or update endpoint
 //
 // This resource could be used to create new endpoint or reconfigure existing one.
-// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well. A configuration that is not dependency-closed is rejected with `400`. Every other reference is optional, so any other combination of entity types is valid, for example parties and fields without farms, or farms and fields without parties.
+// The master-data configuration MUST be dependency-closed: enabling field boundaries requires the fields they reference to be enabled as well, and enabling parties and fields requires farms, the only link between them. A configuration that is not dependency-closed is rejected with `400` naming the missing entity type, never widened. Any other combination of entity types is valid, for example farms and fields without parties, or fields alone.
 //
 // Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 //

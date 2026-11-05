@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	oapiclient "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi"
 	oapi "github.com/DKE-Data/agrirouter-sdk-go/internal/oapi/models"
@@ -35,8 +37,8 @@ const (
 	StateCompleted = oapi.COMPLETED
 )
 
-// DeclareCapabilities builds the masterdata configuration declaring the given entity
-// types, closed over entity dependencies (see [DependencyClosure]).
+// DeclareCapabilities builds the masterdata configuration declaring exactly the
+// given entity types.
 //
 // The result goes in the `masterdata` field of the application's PutEndpoint
 // call. This package does not make that call: PutEndpoint replaces the whole
@@ -46,20 +48,49 @@ const (
 // Withdrawing a type removes it from any selection naming it, as if the user
 // had deselected it. A declaration never adds to what is delivered.
 func DeclareCapabilities(types ...EntityType) oapi.MasterdataConfig {
-	closure := DependencyClosure(types)
-	capabilities := make([]oapi.EntityTypeToggle, 0, len(closure))
-	for _, t := range closure {
+	capabilities := make([]oapi.EntityTypeToggle, 0, len(types))
+	for _, t := range types {
 		capabilities = append(capabilities, oapi.EntityTypeToggle{EntityType: string(t)})
 	}
 	return oapi.MasterdataConfig{Capabilities: capabilities}
 }
 
-// DependencyClosure expands a set of entity types to the dependency-closed set
-// that a declaration or a selection carries.
-//
-// agrirouter rejects a declaration that is not closed. It closes the user's
-// selection itself, so a participant uses this to predict what opting into a
-// type brings with it.
+// NotClosedError is a declaration or selection that is not dependency-closed.
+type NotClosedError struct {
+	// Requiring are the enabled entity types that need Missing: field
+	// boundaries, or parties and fields together.
+	Requiring []EntityType
+	// Missing is the entity type they need and the set lacks.
+	Missing EntityType
+}
+
+func (e *NotClosedError) Error() string {
+	quoted := make([]string, len(e.Requiring))
+	for i, t := range e.Requiring {
+		quoted[i] = strconv.Quote(string(t))
+	}
+	return fmt.Sprintf("enabling %s requires %q to be enabled as well", strings.Join(quoted, " and "), e.Missing)
+}
+
+// CheckClosed reports whether a declaration or selection is dependency-closed,
+// as agrirouter checks it: nil, or a [*NotClosedError] naming the first type it
+// lacks.
+func CheckClosed(types []EntityType) error {
+	has := make(map[EntityType]bool, len(types))
+	for _, t := range types {
+		has[t] = true
+	}
+	if has[TypeFieldBoundary] && !has[TypeField] {
+		return &NotClosedError{Requiring: []EntityType{TypeFieldBoundary}, Missing: TypeField}
+	}
+	if has[TypeParty] && has[TypeField] && !has[TypeFarm] {
+		return &NotClosedError{Requiring: []EntityType{TypeParty, TypeField}, Missing: TypeFarm}
+	}
+	return nil
+}
+
+// DependencyClosure expands a set of entity types to the smallest
+// dependency-closed set containing it.
 func DependencyClosure(types []EntityType) []EntityType {
 	want := make(map[EntityType]bool, len(EntityTypes))
 	var add func(EntityType)
@@ -76,6 +107,10 @@ func DependencyClosure(types []EntityType) []EntityType {
 	}
 	for _, t := range types {
 		add(t)
+	}
+	// Parties and fields are linked only through a farm.
+	if want[TypeParty] && want[TypeField] {
+		add(TypeFarm)
 	}
 
 	// Ordered by EntityTypes so the result is stable rather than map-ordered.

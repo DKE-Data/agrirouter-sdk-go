@@ -78,17 +78,11 @@ type Area = internal_models.Area
 // Boundary is the geometry of a field boundary, as WKT, with how it was recorded.
 type Boundary = internal_models.Boundary
 
-// ObstacleBoundary is the geometry of an obstacle, as WKT.
-type ObstacleBoundary = internal_models.ObstacleBoundary
-
 // HarvestPeriod is a harvest period expressed as an interval.
 type HarvestPeriod = internal_models.HarvestPeriod
 
 // SoilInfo describes the soil characteristics of a field.
 type SoilInfo = internal_models.SoilInfo
-
-// Obstacle is an obstacle located within a field boundary.
-type Obstacle = internal_models.Obstacle
 
 // EntityRequest is the body used to lazy-load a master-data entity by its canonical id.
 type EntityRequest = internal_models.EntityRequest
@@ -186,10 +180,18 @@ const (
 )
 
 // DeclareCapabilities builds the MasterdataConfig an endpoint declares on
-// PutEndpoint, closed over entity dependencies.
+// PutEndpoint, with exactly the given types. agrirouter rejects a set that is
+// not dependency-closed with a 400 naming what it lacks; see CheckClosed.
 func DeclareCapabilities(types ...EntityType) MasterdataConfig {
 	return agmasync.DeclareCapabilities(types...)
 }
+
+// NotClosedError names the entity type a declaration or selection lacks.
+type NotClosedError = agmasync.NotClosedError
+
+// CheckClosed reports whether types are dependency-closed, as agrirouter checks
+// a declaration or selection: nil, or a *NotClosedError naming what is missing.
+func CheckClosed(types []EntityType) error { return agmasync.CheckClosed(types) }
 
 // SelectedTypes reads the entity types a MasterdataEventRouteChanged frame says
 // the user has selected, in dependency order.

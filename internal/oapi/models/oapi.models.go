@@ -414,10 +414,10 @@ type Boundary struct {
 	GNSSCorrectionNetworkBrand nullable.Nullable[string] `json:"gNSSCorrectionNetworkBrand,omitempty"`
 	GNSSCorrectionNetworkName  nullable.Nullable[string] `json:"gNSSCorrectionNetworkName,omitempty"`
 
-	// Geometry A POLYGON or MULTIPOLYGON as Well-Known Text in WGS84. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
+	// Geometry A POLYGON or MULTIPOLYGON as Well-Known Text in WGS84. A polygon's first ring is its exterior, every further ring a hole, and it must be valid as in OGC Simple Features. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
 	//
 	//
-	// Examples: POLYGON ((9.56 52.205, 9.566 52.205, 9.5665 52.208, 9.5605 52.2085, 9.56 52.205))
+	// Examples: POLYGON ((9.5605 52.2085, 9.56 52.205, 9.566 52.205, 9.5665 52.208, 9.5605 52.2085), (9.5646 52.2072, 9.5646 52.2068, 9.564 52.2068, 9.564 52.2072, 9.5646 52.2072))
 	Geometry WktArea `json:"geometry"`
 }
 
@@ -706,7 +706,7 @@ type Field struct {
 	Type interface{} `json:"type,omitempty"`
 }
 
-// FieldBoundary A geometry identifying the geo-spatial coordinates of a field, including its outer boundary and any obstacles left out. A field may have several boundaries that differ in geometry by intended use.
+// FieldBoundary A geometry identifying the geo-spatial coordinates of a field, including its outer boundary and the holes of areas left out. A field may have several boundaries that differ in geometry by intended use.
 type FieldBoundary struct {
 	Active *bool `json:"active,omitempty"`
 
@@ -766,18 +766,14 @@ type FieldBoundaryContent struct {
 	// On send the local identifier is `referenceId`, and the local entry is the entry whose `idText` equals it. `uniqueIds` holds at most the local entry and the agrirouter entry, the one with `idSource` `https://agrirouter.com`, one of each: any other entry is a `400`.
 	//
 	// As an object's own `id`, on send `referenceId` must equal the `{local_id}` in the path, and an agrirouter entry, if any, must be the object that `local_id` is bound to. On delivery `referenceId` and the local entry are absent when the receiving endpoint has not bound the object, or has unbound it. An absent `referenceId` means "you do not hold this object": create it locally and bind the identifier you issue.
-	Id        Id                            `json:"id"`
-	Name      nullable.Nullable[string]     `json:"name,omitempty"`
-	Obstacles nullable.Nullable[[]Obstacle] `json:"obstacles,omitempty"`
+	Id   Id                        `json:"id"`
+	Name nullable.Nullable[string] `json:"name,omitempty"`
 }
 
 // FieldContent Based on the ADAPT `Field`.
 type FieldContent struct {
-	// UnderscoreAgmasyncFarmRef The farm this field belongs to.
-	UnderscoreAgmasyncFarmRef nullable.Nullable[Ref] `json:"_agmasync_farmRef,omitempty"`
-
-	// UnderscoreAgmasyncGrowerRef The party holding this field, for systems that attribute fields to a party directly. When absent, the field is held by its farm's grower. When present, it takes precedence for this field, which is how a field held by one party but managed under another's farm is expressed.
-	UnderscoreAgmasyncGrowerRef     nullable.Nullable[Ref]           `json:"_agmasync_growerRef,omitempty"`
+	// UnderscoreAgmasyncFarmRef The farm this field belongs to. The field's grower is its farm's `_agmasync_growerRef`.
+	UnderscoreAgmasyncFarmRef       nullable.Nullable[Ref]           `json:"_agmasync_farmRef,omitempty"`
 	UnderscoreAgmasyncHarvestPeriod nullable.Nullable[HarvestPeriod] `json:"_agmasync_harvestPeriod,omitempty"`
 
 	// UnderscoreAgmasyncMetadata Additional key/value metadata. A participant leaves the keys it does not understand out of its writes, which keeps them.
@@ -1130,46 +1126,6 @@ type MessageReceivedEventData struct {
 // MessageReceivedEventDataEventType defines model for MessageReceivedEventData.EventType.
 type MessageReceivedEventDataEventType string
 
-// Obstacle An in-field obstacle, based on the ADAPT `Obstacle`.
-type Obstacle struct {
-	// UnderscoreAgmasyncKind Obstacle kind, e.g. "pole", "tree", "waterhole".
-	UnderscoreAgmasyncKind string `json:"_agmasync_kind"`
-
-	// Boundary The geometry of an obstacle, based on the ADAPT `Boundary`.
-	Boundary   ObstacleBoundary `json:"boundary"`
-	IsPassable *bool            `json:"isPassable,omitempty"`
-	Name       *string          `json:"name,omitempty"`
-}
-
-// ObstacleBoundary The geometry of an obstacle, based on the ADAPT `Boundary`.
-type ObstacleBoundary struct {
-	// BoundaryCreationMethodCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT BoundaryCreationMethod list.
-	//
-	//
-	// Examples: UNKNOWN, MANUAL, DRIVEN, SURVEYED, AUTO_OPERATION, AUTO_IMAGERY, ADMINISTRATIVE
-	BoundaryCreationMethodCode *string `json:"boundaryCreationMethodCode,omitempty"`
-
-	// GNSSBaseStationTypeCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT GNSSBaseStationType list.
-	//
-	//
-	// Examples: PHYSICAL, VIRTUAL
-	GNSSBaseStationTypeCode *string `json:"gNSSBaseStationTypeCode,omitempty"`
-
-	// GNSSBaseSurveyTypeCode [Extensible enum](https://github.com/DKE-Data/masterdata-sync-working-group/blob/main/specification.md#extensible-enumerations). From the ADAPT GNSSBaseSurveyType list.
-	//
-	//
-	// Examples: MOBILE_BASE, PROFESSIONAL, VIRTUAL
-	GNSSBaseSurveyTypeCode     *string `json:"gNSSBaseSurveyTypeCode,omitempty"`
-	GNSSCorrectionNetworkBrand *string `json:"gNSSCorrectionNetworkBrand,omitempty"`
-	GNSSCorrectionNetworkName  *string `json:"gNSSCorrectionNetworkName,omitempty"`
-
-	// Geometry A POLYGON or MULTIPOLYGON as Well-Known Text in WGS84. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
-	//
-	//
-	// Examples: POLYGON ((9.56 52.205, 9.566 52.205, 9.5665 52.208, 9.5605 52.2085, 9.56 52.205))
-	Geometry WktArea `json:"geometry"`
-}
-
 // OrganizationDetails A legal entity to which persons may belong.
 type OrganizationDetails struct {
 	// CommercialRegistryNumber Identifier from the commercial register.
@@ -1487,9 +1443,9 @@ type UniqueId struct {
 	IdTypeCode string `json:"idTypeCode"`
 }
 
-// WktArea A POLYGON or MULTIPOLYGON as Well-Known Text in WGS84. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
+// WktArea A POLYGON or MULTIPOLYGON as Well-Known Text in WGS84. A polygon's first ring is its exterior, every further ring a hole, and it must be valid as in OGC Simple Features. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
 //
-// Examples: POLYGON ((9.56 52.205, 9.566 52.205, 9.5665 52.208, 9.5605 52.2085, 9.56 52.205))
+// Examples: POLYGON ((9.5605 52.2085, 9.56 52.205, 9.566 52.205, 9.5665 52.208, 9.5605 52.2085), (9.5646 52.2072, 9.5646 52.2068, 9.564 52.2068, 9.564 52.2072, 9.5646 52.2072))
 type WktArea = string
 
 // WktPoint A POINT as Well-Known Text in WGS84. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
