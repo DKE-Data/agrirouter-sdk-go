@@ -63,6 +63,11 @@ type UniqueId = internal_models.UniqueId //nolint:revive // Name follows the spe
 // Ref references another master-data entity by its Id.
 type Ref = internal_models.Ref
 
+// WeakRef is a reference outside the dependency order: on send it resolves as
+// a Ref does, and on delivery its target may arrive after the object
+// referencing it. A field's active boundary is one.
+type WeakRef = internal_models.WeakRef
+
 // ContactInfo is a party's contact data: addresses and telecommunication contacts.
 type ContactInfo = internal_models.ContactInfo
 
@@ -149,6 +154,10 @@ func IdentityOf(id Id) (Identity, error) { return agmasync.IdentityOf(id) }
 // the target, which agrirouter resolves against that endpoint's mapping. Send
 // or bind the target through the same endpoint first.
 func LocalRef(localID string) Ref { return agmasync.LocalRef(localID) }
+
+// LocalWeakRef builds a weak reference from the sender's local identifier for
+// the target, which must have been sent or bound first.
+func LocalWeakRef(localID string) WeakRef { return WeakRef(LocalRef(localID)) }
 
 // CanonicalRef builds a reference from the target's canonical identifier.
 func CanonicalRef(agrirouterID uuid.UUID) Ref { return agmasync.AgrirouterRef(agrirouterID) }
