@@ -72,7 +72,7 @@ func TestPutSendsBackWhatAgrirouterAssigns(t *testing.T) {
 		SourceEndpointId: &sourceEndpointID, ModifiedAt: &modifiedAt,
 	}
 
-	if _, err := agmasync.PutParty(context.Background(), api, actingEndpointID, actingTenantID, party, &revision); err != nil {
+	if _, err := agmasync.PutParty(context.Background(), api, actingEndpointID, actingTenantID, party, true, &revision); err != nil {
 		t.Fatalf("Put: %v", err)
 	}
 
@@ -114,16 +114,14 @@ func TestPutSendsTheEntityAsTheParticipantBuiltIt(t *testing.T) {
 	// A farm as a platform holds it: no grower, because the reference it was
 	// delivered with resolved to nothing it holds, a usage type it has cleared,
 	// and no address, which it does not model.
-	active := true
 	farm := oapi.Farm{
-		Active: &active,
 		Content: oapi.FarmContent{
 			Id: agmasync.LocalID("f-1"), Name: "Hof Nord",
 			UnderscoreAgmasyncSpecialisedUsageType: nullable.NewNullNullable[string](),
 		},
 	}
 
-	if _, err := agmasync.PutFarm(context.Background(), api, actingEndpointID, actingTenantID, farm, nil); err != nil {
+	if _, err := agmasync.PutFarm(context.Background(), api, actingEndpointID, actingTenantID, farm, true, nil); err != nil {
 		t.Fatalf("Put: %v", err)
 	}
 
@@ -166,19 +164,20 @@ func TestPutSetsTheTypeFromTheModel(t *testing.T) {
 	ctx, id, endpointID, tenantID := context.Background(), agmasync.LocalID("x-1"), uuid.New(), uuid.New()
 	calls := map[agmasync.EntityType]func() error{
 		agmasync.TypeParty: func() error {
-			_, err := agmasync.PutParty(ctx, api, endpointID, tenantID, oapi.Party{Content: oapi.PartyContent{Id: id}}, nil)
+			_, err := agmasync.PutParty(ctx, api, endpointID, tenantID, oapi.Party{Content: oapi.PartyContent{Id: id}}, true, nil)
 			return err
 		},
 		agmasync.TypeFarm: func() error {
-			_, err := agmasync.PutFarm(ctx, api, endpointID, tenantID, oapi.Farm{Content: oapi.FarmContent{Id: id}}, nil)
+			_, err := agmasync.PutFarm(ctx, api, endpointID, tenantID, oapi.Farm{Content: oapi.FarmContent{Id: id}}, true, nil)
 			return err
 		},
 		agmasync.TypeField: func() error {
-			_, err := agmasync.PutField(ctx, api, endpointID, tenantID, oapi.Field{Content: oapi.FieldContent{Id: id}}, nil)
+			_, err := agmasync.PutField(ctx, api, endpointID, tenantID, oapi.Field{Content: oapi.FieldContent{Id: id}}, true, nil)
 			return err
 		},
 		agmasync.TypeFieldBoundary: func() error {
-			_, err := agmasync.PutFieldBoundary(ctx, api, endpointID, tenantID, oapi.FieldBoundary{Content: oapi.FieldBoundaryContent{Id: id}}, nil)
+			_, err := agmasync.PutFieldBoundary(ctx, api, endpointID, tenantID,
+				oapi.FieldBoundary{Content: oapi.FieldBoundaryContent{Id: id}}, true, nil)
 			return err
 		},
 	}

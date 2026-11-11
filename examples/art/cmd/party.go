@@ -10,8 +10,8 @@ import (
 func init() {
 	rootCmd.AddCommand(mdPutCmd("party",
 		func(p *agrirouter.Party, id string) { p.Content.Id.ReferenceId = &id },
-		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int, body *agrirouter.Party) (*agrirouter.Party, error) {
-			return c.PutParty(ctx, localID, ep, tn, br, body)
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, active bool, br *int, body *agrirouter.Party) (*agrirouter.Party, error) {
+			return c.PutParty(ctx, localID, ep, tn, active, br, body)
 		}))
 
 	rootCmd.AddCommand(mdMappingCmd("bind-party-mapping",
@@ -31,6 +31,15 @@ func init() {
 	rootCmd.AddCommand(mdDeactivateCmd("party",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Party, error) {
 			obj, err := c.DeactivateEntity(ctx, agrirouter.EntityTypeParty, localID, ep, tn, br)
+			if err != nil {
+				return nil, err
+			}
+			return obj.Party, nil
+		}))
+
+	rootCmd.AddCommand(mdReactivateCmd("party",
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Party, error) {
+			obj, err := c.ReactivateEntity(ctx, agrirouter.EntityTypeParty, localID, ep, tn, br)
 			if err != nil {
 				return nil, err
 			}

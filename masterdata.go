@@ -48,6 +48,7 @@ func (c *Client) CorrectMappings(
 // DeactivateEntity signals that the entity of entityType under localID was
 // deactivated in the source system. The canonical object is kept but marked
 // inactive; the result is the canonical object as it now stands.
+// ReactivateEntity is the way back: a Put never changes the state.
 func (c *Client) DeactivateEntity(
 	ctx context.Context,
 	entityType EntityType,
@@ -56,6 +57,28 @@ func (c *Client) DeactivateEntity(
 	baseRevision *int,
 ) (*MasterdataObject, error) {
 	res, err := agmasync.Deactivate(ctx, c.oapiClient, endpointID, tenantID, entityType, localID, baseRevision)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
+	}
+	return &res, nil
+}
+
+// ReactivateEntity signals that the entity of entityType under localID, which
+// was deactivated earlier, is active again in the source system. It is the
+// mirror image of DeactivateEntity and the only way back from it: the canonical
+// object becomes active again with its content unchanged. Reactivating an
+// active entity is a no-op that ignores baseRevision; reactivating an inactive
+// one is a write under concurrency control, so baseRevision must carry the
+// revision it was made from. The result is the canonical object as it now
+// stands.
+func (c *Client) ReactivateEntity(
+	ctx context.Context,
+	entityType EntityType,
+	localID string,
+	endpointID, tenantID uuid.UUID,
+	baseRevision *int,
+) (*MasterdataObject, error) {
+	res, err := agmasync.Reactivate(ctx, c.oapiClient, endpointID, tenantID, entityType, localID, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
@@ -82,67 +105,79 @@ func (c *Client) RequestEntity(
 // application's own localID, which is set as its content.id.referenceId. On an
 // update to an existing object, baseRevision
 // must carry the revision it was edited from; pass nil when creating.
+//
+// active is the lifecycle state the write states, and it is sent as given,
+// overriding the model's Active. On a create it sets the initial state: false
+// uploads a record the application holds as archived as inactive, in one
+// write. On an update it must equal the object's current state, or the write
+// fails with a *LifecycleConflict (ErrLifecycleConflict) carrying it. A Put
+// never changes the state of an existing object; DeactivateEntity and
+// ReactivateEntity do.
 func (c *Client) PutParty(
 	ctx context.Context,
 	localID string,
 	endpointID, tenantID uuid.UUID,
+	active bool,
 	baseRevision *int,
 	party *Party,
 ) (*Party, error) {
 	v := *party
 	v.Content.Id.ReferenceId = &localID
-	res, err := agmasync.PutParty(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
+	res, err := agmasync.PutParty(ctx, c.oapiClient, endpointID, tenantID, v, active, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
 	return &res, nil
 }
 
-// PutFarm sends (creates or updates) a farm. See PutParty for baseRevision.
+// PutFarm sends (creates or updates) a farm. See PutParty for active and baseRevision.
 func (c *Client) PutFarm(
 	ctx context.Context,
 	localID string,
 	endpointID, tenantID uuid.UUID,
+	active bool,
 	baseRevision *int,
 	farm *Farm,
 ) (*Farm, error) {
 	v := *farm
 	v.Content.Id.ReferenceId = &localID
-	res, err := agmasync.PutFarm(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
+	res, err := agmasync.PutFarm(ctx, c.oapiClient, endpointID, tenantID, v, active, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
 	return &res, nil
 }
 
-// PutField sends (creates or updates) a field. See PutParty for baseRevision.
+// PutField sends (creates or updates) a field. See PutParty for active and baseRevision.
 func (c *Client) PutField(
 	ctx context.Context,
 	localID string,
 	endpointID, tenantID uuid.UUID,
+	active bool,
 	baseRevision *int,
 	field *Field,
 ) (*Field, error) {
 	v := *field
 	v.Content.Id.ReferenceId = &localID
-	res, err := agmasync.PutField(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
+	res, err := agmasync.PutField(ctx, c.oapiClient, endpointID, tenantID, v, active, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}
 	return &res, nil
 }
 
-// PutFieldBoundary sends (creates or updates) a field boundary. See PutParty for baseRevision.
+// PutFieldBoundary sends (creates or updates) a field boundary. See PutParty for active and baseRevision.
 func (c *Client) PutFieldBoundary(
 	ctx context.Context,
 	localID string,
 	endpointID, tenantID uuid.UUID,
+	active bool,
 	baseRevision *int,
 	fieldBoundary *FieldBoundary,
 ) (*FieldBoundary, error) {
 	v := *fieldBoundary
 	v.Content.Id.ReferenceId = &localID
-	res, err := agmasync.PutFieldBoundary(ctx, c.oapiClient, endpointID, tenantID, v, baseRevision)
+	res, err := agmasync.PutFieldBoundary(ctx, c.oapiClient, endpointID, tenantID, v, active, baseRevision)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrMasterdataCallFailed, err)
 	}

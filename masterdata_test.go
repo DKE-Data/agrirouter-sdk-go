@@ -2,6 +2,7 @@ package agrirouter_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -71,7 +72,7 @@ func TestPutFarmSendsMergePatchAsEndpoint(t *testing.T) {
 
 	// A merge patch: grower removed by null, every other optional attribute left out.
 	base := 3
-	farm, err := client.PutFarm(context.Background(), "farm-1", endpointID, tenantID, &base,
+	farm, err := client.PutFarm(context.Background(), "farm-1", endpointID, tenantID, true, &base,
 		&agrirouter.Farm{Content: agrirouter.FarmContent{
 			Name: "Hof", UnderscoreAgmasyncGrowerRef: nullable.NewNullNullable[agrirouter.Ref](),
 		}})
@@ -82,7 +83,8 @@ func TestPutFarmSendsMergePatchAsEndpoint(t *testing.T) {
 
 	assert.Equal(t, http.MethodPut, rec.method)
 	assert.Equal(t, "/masterdata/farms/farm-1", rec.path)
-	assert.JSONEq(t, `{"type":"farm","content":{"id":{"referenceId":"farm-1"},"name":"Hof","_agmasync_growerRef":null}}`, rec.body)
+	assert.JSONEq(t, `{"type":"farm","active":true,`+
+		`"content":{"id":{"referenceId":"farm-1"},"name":"Hof","_agmasync_growerRef":null}}`, rec.body)
 	assert.Equal(t, endpointID.String(), rec.headers.Get("X-Agrirouter-Endpoint-Id"))
 	assert.Equal(t, tenantID.String(), rec.headers.Get("X-Agrirouter-Tenant-Id"))
 	assert.Equal(t, "3", rec.headers.Get("X-Agrirouter-Base-Revision"))
@@ -97,8 +99,7 @@ func TestDeactivateEntityDecodesTheObject(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, agrirouter.EntityTypeField, obj.Envelope.Type)
 	require.NotNil(t, obj.Field)
-	require.NotNil(t, obj.Field.Active)
-	assert.False(t, *obj.Field.Active)
+	assert.False(t, obj.Field.Active)
 	assert.Equal(t, "/masterdata/fields/field-1/deactivation", rec.path)
 }
 
@@ -123,6 +124,97 @@ func TestDeactivateEntityDecodesByTheRequestedType(t *testing.T) {
 		assert.ErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
 		assert.Nil(t, obj)
 	})
+}
+
+func TestReactivateEntitySendsAPOSTForEveryType(t *testing.T) {
+	for _, tc := range []struct {
+		entityType agrirouter.EntityType
+		collection string
+		name       func(*agrirouter.MasterdataObject) string
+	}{
+		{agrirouter.EntityTypeParty, "parties", func(o *agrirouter.MasterdataObject) string { return o.Party.Content.Name }},
+		{agrirouter.EntityTypeFarm, "farms", func(o *agrirouter.MasterdataObject) string { return o.Farm.Content.Name }},
+		{agrirouter.EntityTypeField, "fields", func(o *agrirouter.MasterdataObject) string { return o.Field.Content.Name }},
+		{agrirouter.EntityTypeFieldBoundary, "field-boundaries",
+			func(o *agrirouter.MasterdataObject) string { return o.FieldBoundary.Content.Name.MustGet() }},
+	} {
+		t.Run(string(tc.entityType), func(t *testing.T) {
+			client, rec := newMasterdataClient(t, fakeResponse{status: http.StatusOK,
+				body: `{"type":"` + string(tc.entityType) + `","revision":5,"active":true,` +
+					`"content":{"id":{"referenceId":"x-1"},"name":"Back"}}`})
+
+			base := 4
+			obj, err := client.ReactivateEntity(context.Background(), tc.entityType, "x-1", endpointID, tenantID, &base)
+			require.NoError(t, err)
+
+			assert.Equal(t, http.MethodPost, rec.method)
+			assert.Equal(t, "/masterdata/"+tc.collection+"/x-1/reactivation", rec.path)
+			assert.Empty(t, rec.body)
+			assert.Equal(t, endpointID.String(), rec.headers.Get("X-Agrirouter-Endpoint-Id"))
+			assert.Equal(t, tenantID.String(), rec.headers.Get("X-Agrirouter-Tenant-Id"))
+			assert.Equal(t, "4", rec.headers.Get("X-Agrirouter-Base-Revision"))
+
+			assert.Equal(t, tc.entityType, obj.Envelope.Type)
+			assert.True(t, obj.Envelope.Active)
+			require.NotNil(t, obj.Envelope.Revision)
+			assert.Equal(t, 5, *obj.Envelope.Revision)
+			assert.Equal(t, "Back", tc.name(obj))
+		})
+	}
+}
+
+func TestReactivateEntityWithoutABaseSendsNoBaseRevision(t *testing.T) {
+	client, rec := newMasterdataClient(t, fakeResponse{status: http.StatusOK,
+		body: `{"type":"farm","active":true,"content":{"id":{"referenceId":"farm-1"},"name":"Hof"}}`})
+
+	_, err := client.ReactivateEntity(context.Background(), agrirouter.EntityTypeFarm, "farm-1", endpointID, tenantID, nil)
+	require.NoError(t, err)
+	_, sent := rec.headers["X-Agrirouter-Base-Revision"]
+	assert.False(t, sent)
+}
+
+func TestPutSendsActiveAsGiven(t *testing.T) {
+	// The model's own Active is set to the opposite of the argument: the
+	// argument is what the write states.
+	puts := map[agrirouter.EntityType]func(c *agrirouter.Client, active bool) error{
+		agrirouter.EntityTypeParty: func(c *agrirouter.Client, active bool) error {
+			_, err := c.PutParty(context.Background(), "x-1", endpointID, tenantID, active, nil,
+				&agrirouter.Party{Active: !active, Content: agrirouter.PartyContent{Name: "Hof"}})
+			return err
+		},
+		agrirouter.EntityTypeFarm: func(c *agrirouter.Client, active bool) error {
+			_, err := c.PutFarm(context.Background(), "x-1", endpointID, tenantID, active, nil,
+				&agrirouter.Farm{Active: !active, Content: agrirouter.FarmContent{Name: "Hof"}})
+			return err
+		},
+		agrirouter.EntityTypeField: func(c *agrirouter.Client, active bool) error {
+			_, err := c.PutField(context.Background(), "x-1", endpointID, tenantID, active, nil,
+				&agrirouter.Field{Active: !active, Content: agrirouter.FieldContent{Name: "Acker"}})
+			return err
+		},
+		agrirouter.EntityTypeFieldBoundary: func(c *agrirouter.Client, active bool) error {
+			_, err := c.PutFieldBoundary(context.Background(), "x-1", endpointID, tenantID, active, nil,
+				&agrirouter.FieldBoundary{Active: !active})
+			return err
+		},
+	}
+	for entityType, put := range puts {
+		for _, active := range []bool{true, false} {
+			t.Run(fmt.Sprintf("%s active=%t", entityType, active), func(t *testing.T) {
+				client, rec := newMasterdataClient(t, fakeResponse{status: http.StatusCreated,
+					body: fmt.Sprintf(`{"type":%q,"active":%t,"content":{"id":{"referenceId":"x-1"}}}`, entityType, active)})
+
+				require.NoError(t, put(client, active))
+
+				var sent struct {
+					Active *bool `json:"active"`
+				}
+				require.NoError(t, json.Unmarshal([]byte(rec.body), &sent))
+				require.NotNil(t, sent.Active, "active must be sent on every write")
+				assert.Equal(t, active, *sent.Active)
+			})
+		}
+	}
 }
 
 func TestMasterdataErrorsCarryTheServersMessage(t *testing.T) {
@@ -164,7 +256,7 @@ func TestStreamRejectsAResponseThatIsNotAnEventStream(t *testing.T) {
 func TestPutWithoutLocalIDIsMatchable(t *testing.T) {
 	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK})
 	farm := &agrirouter.Farm{Content: agrirouter.FarmContent{Name: "Hof"}}
-	_, err := client.PutFarm(context.Background(), "", endpointID, tenantID, nil, farm)
+	_, err := client.PutFarm(context.Background(), "", endpointID, tenantID, true, nil, farm)
 	assert.ErrorIs(t, err, agrirouter.ErrLocalIDRequired)
 }
 
@@ -182,7 +274,7 @@ func TestInitialLoadAddressesEndpointByExternalID(t *testing.T) {
 func TestMasterdataErrors(t *testing.T) {
 	ctx := context.Background()
 	put := func(c *agrirouter.Client) error {
-		_, err := c.PutFarm(ctx, "farm-1", endpointID, tenantID, nil, &agrirouter.Farm{Content: agrirouter.FarmContent{Name: "Hof"}})
+		_, err := c.PutFarm(ctx, "farm-1", endpointID, tenantID, true, nil, &agrirouter.Farm{Content: agrirouter.FarmContent{Name: "Hof"}})
 		return err
 	}
 
@@ -227,6 +319,54 @@ func TestMasterdataErrors(t *testing.T) {
 	})
 }
 
+// TestPutConflictsAreToldApartByTheirRequiredField pins the two 409 bodies of a
+// put: current_active for a lifecycle conflict, rejection for a mapping one.
+func TestPutConflictsAreToldApartByTheirRequiredField(t *testing.T) {
+	put := func(c *agrirouter.Client) error {
+		_, err := c.PutFarm(context.Background(), "farm-1", endpointID, tenantID, true, nil,
+			&agrirouter.Farm{Content: agrirouter.FarmContent{Name: "Hof"}})
+		return err
+	}
+
+	t.Run("409 on a put with current_active is a lifecycle conflict", func(t *testing.T) {
+		client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusConflict,
+			body: `{"message":"object is inactive; use /reactivation","current_active":false}`})
+		err := put(client)
+		assert.ErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
+		assert.ErrorIs(t, err, agrirouter.ErrLifecycleConflict)
+		assert.NotErrorIs(t, err, agrirouter.ErrMappingConflict)
+		var conflict *agrirouter.LifecycleConflict
+		require.True(t, errors.As(err, &conflict))
+		assert.False(t, conflict.CurrentActive)
+		assert.Equal(t, "object is inactive; use /reactivation", conflict.Message)
+	})
+
+	t.Run("409 on a put with rejection is a mapping conflict", func(t *testing.T) {
+		client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusConflict,
+			body: `{"message":"taken","rejection":{"local_id":"farm-1",` +
+				`"agrirouter_id":"33333333-3333-3333-3333-333333333333","reason":"AGRIROUTER_ID_ALREADY_BOUND"}}`})
+		err := put(client)
+		assert.ErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
+		assert.ErrorIs(t, err, agrirouter.ErrMappingConflict)
+		assert.NotErrorIs(t, err, agrirouter.ErrLifecycleConflict)
+		var conflict *agrirouter.MappingConflict
+		require.True(t, errors.As(err, &conflict))
+		assert.Equal(t, agrirouter.ReasonAgrirouterIDAlreadyBound, conflict.Rejection.Reason)
+		assert.Equal(t, "farm-1", conflict.Rejection.LocalId)
+	})
+
+	t.Run("409 on a put with neither field is neither conflict", func(t *testing.T) {
+		client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusConflict, body: `{"message":"odd"}`})
+		err := put(client)
+		assert.ErrorIs(t, err, agrirouter.ErrMasterdataCallFailed)
+		assert.NotErrorIs(t, err, agrirouter.ErrLifecycleConflict)
+		assert.NotErrorIs(t, err, agrirouter.ErrMappingConflict)
+		var apiErr *agrirouter.MasterdataAPIError
+		require.True(t, errors.As(err, &apiErr))
+		assert.Equal(t, http.StatusConflict, apiErr.StatusCode)
+	})
+}
+
 func TestStreamMasterdataEventsDecodesFrames(t *testing.T) {
 	frames := "id: pos-1\nevent: MASTERDATA_CHANGED\n" +
 		"data: " + farmJSON("33333333-3333-3333-3333-333333333333", "Hof", 2) + "\n\n" +
@@ -253,6 +393,26 @@ func TestStreamMasterdataEventsDecodesFrames(t *testing.T) {
 	assert.Equal(t, "Hof", got[0].Farm.Content.Name)
 	assert.Equal(t, agrirouter.MasterdataEventCaughtUp, got[1].Type)
 	assert.False(t, got[1].HasEntity())
+}
+
+func TestStreamMasterdataEventsDeliversAnInactiveObjectAsChanged(t *testing.T) {
+	frames := "id: pos-1\nevent: MASTERDATA_CHANGED\n" +
+		`data: {"type":"farm","revision":3,"active":false,"content":{"id":{"uniqueIds":[{"idText":` +
+		`"33333333-3333-3333-3333-333333333333","idTypeCode":"UUID","idSource":"https://agrirouter.com"}]},` +
+		`"name":"Hof"}}` + "\n\n"
+	client, _ := newMasterdataClient(t, fakeResponse{status: http.StatusOK, body: frames, contentType: "text/event-stream"})
+
+	var got []agrirouter.MasterdataEvent
+	err := client.StreamMasterdataEvents(context.Background(), "", func(_ context.Context, ev *agrirouter.MasterdataEvent) error {
+		got = append(got, *ev)
+		return nil
+	})
+	require.ErrorIs(t, err, agrirouter.ErrMasterdataStreamEnded)
+	require.Len(t, got, 1)
+	assert.Equal(t, agrirouter.MasterdataEventChanged, got[0].Type)
+	require.NotNil(t, got[0].Farm)
+	assert.False(t, got[0].Farm.Active)
+	assert.False(t, got[0].Envelope.Active)
 }
 
 func TestStreamMasterdataEventsReadsFramesLargerThan64KB(t *testing.T) {

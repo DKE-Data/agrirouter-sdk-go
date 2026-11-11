@@ -28,6 +28,10 @@ func (s *Server) DeactivateParty(_ context.Context, _ DeactivatePartyRequestObje
 	return DeactivateParty200JSONResponse{}, nil
 }
 
+func (s *Server) ReactivateParty(_ context.Context, _ ReactivatePartyRequestObject) (ReactivatePartyResponseObject, error) {
+	return ReactivateParty200JSONResponse{}, nil
+}
+
 func (s *Server) RequestParty(_ context.Context, _ RequestPartyRequestObject) (RequestPartyResponseObject, error) {
 	return RequestParty202Response{}, nil
 }
@@ -48,6 +52,10 @@ func (s *Server) CorrectFarmMappings(_ context.Context, _ CorrectFarmMappingsReq
 
 func (s *Server) DeactivateFarm(_ context.Context, _ DeactivateFarmRequestObject) (DeactivateFarmResponseObject, error) {
 	return DeactivateFarm200JSONResponse{}, nil
+}
+
+func (s *Server) ReactivateFarm(_ context.Context, _ ReactivateFarmRequestObject) (ReactivateFarmResponseObject, error) {
+	return ReactivateFarm200JSONResponse{}, nil
 }
 
 func (s *Server) RequestFarm(_ context.Context, _ RequestFarmRequestObject) (RequestFarmResponseObject, error) {
@@ -72,6 +80,10 @@ func (s *Server) DeactivateField(_ context.Context, _ DeactivateFieldRequestObje
 	return DeactivateField200JSONResponse{}, nil
 }
 
+func (s *Server) ReactivateField(_ context.Context, _ ReactivateFieldRequestObject) (ReactivateFieldResponseObject, error) {
+	return ReactivateField200JSONResponse{}, nil
+}
+
 func (s *Server) RequestField(_ context.Context, _ RequestFieldRequestObject) (RequestFieldResponseObject, error) {
 	return RequestField202Response{}, nil
 }
@@ -92,6 +104,10 @@ func (s *Server) CorrectFieldBoundaryMappings(_ context.Context, _ CorrectFieldB
 
 func (s *Server) DeactivateFieldBoundary(_ context.Context, _ DeactivateFieldBoundaryRequestObject) (DeactivateFieldBoundaryResponseObject, error) {
 	return DeactivateFieldBoundary200JSONResponse{}, nil
+}
+
+func (s *Server) ReactivateFieldBoundary(_ context.Context, _ ReactivateFieldBoundaryRequestObject) (ReactivateFieldBoundaryResponseObject, error) {
+	return ReactivateFieldBoundary200JSONResponse{}, nil
 }
 
 func (s *Server) RequestFieldBoundary(_ context.Context, _ RequestFieldBoundaryRequestObject) (RequestFieldBoundaryResponseObject, error) {

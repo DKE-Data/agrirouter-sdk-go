@@ -1,3 +1,4 @@
+//nolint:dupl // Deactivate and Reactivate are mirror images, each kept as one readable switch per entity type.
 package agmasync
 
 import (
@@ -21,7 +22,8 @@ import (
 // revision, and forwards nothing, so retrying a call with an unknown outcome
 // is safe.
 //
-// To reactivate, Put the entity with active set to true.
+// [Reactivate] is the way back. A Put never changes the state: it must carry
+// the object's current `active`.
 //
 // The result is the canonical object as it now stands.
 func Deactivate(

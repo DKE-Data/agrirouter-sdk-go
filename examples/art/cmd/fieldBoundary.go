@@ -10,8 +10,8 @@ import (
 func init() {
 	rootCmd.AddCommand(mdPutCmd("field-boundary",
 		func(fb *agrirouter.FieldBoundary, id string) { fb.Content.Id.ReferenceId = &id },
-		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int, body *agrirouter.FieldBoundary) (*agrirouter.FieldBoundary, error) {
-			return c.PutFieldBoundary(ctx, localID, ep, tn, br, body)
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, active bool, br *int, body *agrirouter.FieldBoundary) (*agrirouter.FieldBoundary, error) {
+			return c.PutFieldBoundary(ctx, localID, ep, tn, active, br, body)
 		}))
 
 	rootCmd.AddCommand(mdMappingCmd("bind-field-boundary-mapping",
@@ -31,6 +31,15 @@ func init() {
 	rootCmd.AddCommand(mdDeactivateCmd("field-boundary",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.FieldBoundary, error) {
 			obj, err := c.DeactivateEntity(ctx, agrirouter.EntityTypeFieldBoundary, localID, ep, tn, br)
+			if err != nil {
+				return nil, err
+			}
+			return obj.FieldBoundary, nil
+		}))
+
+	rootCmd.AddCommand(mdReactivateCmd("field-boundary",
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.FieldBoundary, error) {
+			obj, err := c.ReactivateEntity(ctx, agrirouter.EntityTypeFieldBoundary, localID, ep, tn, br)
 			if err != nil {
 				return nil, err
 			}

@@ -10,8 +10,8 @@ import (
 func init() {
 	rootCmd.AddCommand(mdPutCmd("farm",
 		func(f *agrirouter.Farm, id string) { f.Content.Id.ReferenceId = &id },
-		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int, body *agrirouter.Farm) (*agrirouter.Farm, error) {
-			return c.PutFarm(ctx, localID, ep, tn, br, body)
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, active bool, br *int, body *agrirouter.Farm) (*agrirouter.Farm, error) {
+			return c.PutFarm(ctx, localID, ep, tn, active, br, body)
 		}))
 
 	rootCmd.AddCommand(mdMappingCmd("bind-farm-mapping",
@@ -31,6 +31,15 @@ func init() {
 	rootCmd.AddCommand(mdDeactivateCmd("farm",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Farm, error) {
 			obj, err := c.DeactivateEntity(ctx, agrirouter.EntityTypeFarm, localID, ep, tn, br)
+			if err != nil {
+				return nil, err
+			}
+			return obj.Farm, nil
+		}))
+
+	rootCmd.AddCommand(mdReactivateCmd("farm",
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Farm, error) {
+			obj, err := c.ReactivateEntity(ctx, agrirouter.EntityTypeFarm, localID, ep, tn, br)
 			if err != nil {
 				return nil, err
 			}

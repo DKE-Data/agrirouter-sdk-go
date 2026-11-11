@@ -179,10 +179,11 @@ const (
 	EntityTypeFieldBoundary = agmasync.TypeFieldBoundary
 )
 
-// Master-data stream event types
+// Master-data stream event types. Every canonical object, active or inactive,
+// arrives as MasterdataEventChanged: its Active field is the only signal of its
+// lifecycle state.
 const (
 	MasterdataEventChanged      = agmasync.EventMasterdataChanged
-	MasterdataEventDeactivated  = agmasync.EventMasterdataDeactivated
 	MasterdataEventCaughtUp     = agmasync.EventCaughtUp
 	MasterdataEventRouteChanged = agmasync.EventRouteChanged
 	MasterdataEventReset        = agmasync.EventMasterdataReset

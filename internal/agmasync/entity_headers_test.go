@@ -52,7 +52,7 @@ func TestEntityCallsNameTheEndpointAndTheTenant(t *testing.T) {
 	ctx := context.Background()
 	calls := map[string]func() error{
 		"Put": func() error {
-			_, err := agmasync.PutParty(ctx, api, endpointID, tenant, party, nil)
+			_, err := agmasync.PutParty(ctx, api, endpointID, tenant, party, true, nil)
 			return err
 		},
 		"Bind": func() error {
@@ -65,6 +65,10 @@ func TestEntityCallsNameTheEndpointAndTheTenant(t *testing.T) {
 		},
 		"Deactivate": func() error {
 			_, err := agmasync.Deactivate(ctx, api, endpointID, tenant, agmasync.TypeParty, "o-1", nil)
+			return err
+		},
+		"Reactivate": func() error {
+			_, err := agmasync.Reactivate(ctx, api, endpointID, tenant, agmasync.TypeParty, "o-1", nil)
 			return err
 		},
 		"Request": func() error {

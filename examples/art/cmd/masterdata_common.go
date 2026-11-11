@@ -19,6 +19,7 @@ const (
 	localIDOpt            = "local-id"
 	agrirouterIDOpt       = "agrirouter-id"
 	baseRevisionOpt       = "base-revision"
+	activeOpt             = "active"
 	bodyOpt               = "body"
 	externalEndpointIDOpt = "external-endpoint-id"
 	stateOpt              = "state"
@@ -161,6 +162,11 @@ func addBaseRevisionFlag(cmd *cobra.Command) {
 	cmd.Flags().Int(baseRevisionOpt, 0, "Revision this write is based on; required when updating an existing object, omit when creating")
 }
 
+func addActiveFlag(cmd *cobra.Command) {
+	cmd.Flags().Bool(activeOpt, true, "Lifecycle state the write states: on a create it sets the initial state "+
+		"(--active=false creates the object inactive); on an update it must equal the current state")
+}
+
 func addBodyFlag(cmd *cobra.Command, entity string) {
 	cmd.Flags().String(bodyOpt, "", fmt.Sprintf("The %s as JSON, inline or @path to a file", humanize(entity)))
 	_ = cmd.MarkFlagRequired(bodyOpt)
@@ -175,7 +181,8 @@ func addExternalEndpointIDFlag(cmd *cobra.Command) {
 func mdPutCmd[T any](
 	entity string,
 	setLocalID func(*T, string),
-	put func(ctx context.Context, c *agrirouter.Client, localID string, endpointID, tenantID uuid.UUID, baseRevision *int, body *T) (*T, error),
+	put func(ctx context.Context, c *agrirouter.Client, localID string, endpointID, tenantID uuid.UUID,
+		active bool, baseRevision *int, body *T) (*T, error),
 ) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "put-" + entity,
@@ -184,8 +191,14 @@ func mdPutCmd[T any](
 
 The %[5]s body is supplied as JSON via --%[3]s, either inline or as @path to a
 file; --%[2]s is written into the body automatically. When updating an existing
-object, pass --%[4]s with the revision it was edited from.`,
-			withArticle(humanize(entity)), localIDOpt, bodyOpt, baseRevisionOpt, humanize(entity)),
+object, pass --%[4]s with the revision it was edited from.
+
+--%[6]s (default true) is the lifecycle state the write states and overrides any
+"active" in the body. On a create it sets the initial state: --%[6]s=false sends
+a record held as archived as inactive. On an update it must equal the object's
+current state, or the write is rejected; use deactivate-%[7]s or
+reactivate-%[7]s to change it.`,
+			withArticle(humanize(entity)), localIDOpt, bodyOpt, baseRevisionOpt, humanize(entity), activeOpt, entity),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			localID, err := requiredStringFlag(cmd, localIDOpt)
@@ -204,6 +217,10 @@ object, pass --%[4]s with the revision it was edited from.`,
 			if err != nil {
 				return err
 			}
+			active, err := cmd.Flags().GetBool(activeOpt)
+			if err != nil {
+				return fmt.Errorf("failed to get %s flag: %w", activeOpt, err)
+			}
 			body, err := readJSONBody[T](cmd, bodyOpt)
 			if err != nil {
 				return err
@@ -215,9 +232,10 @@ object, pass --%[4]s with the revision it was edited from.`,
 				return fmt.Errorf("failed to create agrirouter client: %w", err)
 			}
 
-			slog.Info("Sending "+humanize(entity), "localID", localID, "endpointID", endpointID, "tenantID", tenantID, "baseRevision", baseRev)
+			slog.Info("Sending "+humanize(entity), "localID", localID, "endpointID", endpointID, "tenantID", tenantID,
+				"active", active, "baseRevision", baseRev)
 
-			result, err := put(ctx, client, localID, endpointID, tenantID, baseRev, body)
+			result, err := put(ctx, client, localID, endpointID, tenantID, active, baseRev, body)
 			if err != nil {
 				return fmt.Errorf("failed to put %s: %w", humanize(entity), err)
 			}
@@ -228,6 +246,7 @@ object, pass --%[4]s with the revision it was edited from.`,
 	addEndpointIDFlag(cmd)
 	addTenantIDFlag(cmd)
 	addBaseRevisionFlag(cmd)
+	addActiveFlag(cmd)
 	addBodyFlag(cmd, entity)
 	return cmd
 }
@@ -281,17 +300,37 @@ func mdMappingCmd(
 	return cmd
 }
 
+// lifecycleFn changes the lifecycle state of the entity under localID and
+// returns the canonical object as it now stands.
+type lifecycleFn[T any] func(ctx context.Context, c *agrirouter.Client, localID string,
+	endpointID, tenantID uuid.UUID, baseRevision *int) (*T, error)
+
 // mdDeactivateCmd builds a "deactivate-<entity>" command.
-func mdDeactivateCmd[T any](
-	entity string,
-	fn func(ctx context.Context, c *agrirouter.Client, localID string, endpointID, tenantID uuid.UUID, baseRevision *int) (*T, error),
-) *cobra.Command {
+func mdDeactivateCmd[T any](entity string, fn lifecycleFn[T]) *cobra.Command {
+	return mdLifecycleCmd("deactivate", "Deactivating", entity,
+		fmt.Sprintf(`Signals that the %[1]s was deactivated in the source system. The canonical
+object is kept but marked inactive. When the object is active, pass --%[2]s
+with the revision it was edited from; on an inactive object it is ignored.
+Use reactivate-%[3]s to undo it.`, humanize(entity), baseRevisionOpt, entity), fn)
+}
+
+// mdReactivateCmd builds a "reactivate-<entity>" command.
+func mdReactivateCmd[T any](entity string, fn lifecycleFn[T]) *cobra.Command {
+	return mdLifecycleCmd("reactivate", "Reactivating", entity,
+		fmt.Sprintf(`Signals that the %[1]s, deactivated earlier, is active again in the source
+system. The canonical object becomes active with its content unchanged. When the
+object is inactive, pass --%[2]s with the revision it was edited from; on an
+active object it is ignored. A put never changes the lifecycle state, so this is
+the only way back from deactivate-%[3]s.`, humanize(entity), baseRevisionOpt, entity), fn)
+}
+
+// mdLifecycleCmd builds a "<verb>-<entity>" command that changes the lifecycle
+// state of an entity and prints the canonical object agrirouter returns.
+func mdLifecycleCmd[T any](verb, progress, entity, long string, fn lifecycleFn[T]) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deactivate-" + entity,
-		Short: fmt.Sprintf("Deactivate %s", withArticle(humanize(entity))),
-		Long: fmt.Sprintf(`Signals that the %[1]s was deactivated in the source system. The canonical
-object is kept but marked inactive. When the object already exists, pass --%[2]s
-with the revision it was edited from.`, humanize(entity), baseRevisionOpt),
+		Use:   verb + "-" + entity,
+		Short: fmt.Sprintf("%s %s", strings.ToUpper(verb[:1])+verb[1:], withArticle(humanize(entity))),
+		Long:  long,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			localID, err := requiredStringFlag(cmd, localIDOpt)
@@ -316,11 +355,11 @@ with the revision it was edited from.`, humanize(entity), baseRevisionOpt),
 				return fmt.Errorf("failed to create agrirouter client: %w", err)
 			}
 
-			slog.Info("Deactivating "+humanize(entity), "localID", localID, "endpointID", endpointID, "tenantID", tenantID, "baseRevision", baseRev)
+			slog.Info(progress+" "+humanize(entity), "localID", localID, "endpointID", endpointID, "tenantID", tenantID, "baseRevision", baseRev)
 
 			result, err := fn(ctx, client, localID, endpointID, tenantID, baseRev)
 			if err != nil {
-				return fmt.Errorf("failed to deactivate %s: %w", humanize(entity), err)
+				return fmt.Errorf("failed to %s %s: %w", verb, humanize(entity), err)
 			}
 			return printJSON(result)
 		},
