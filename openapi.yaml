@@ -1968,10 +1968,10 @@ components:
         know under that local_id.
 
 
-        A base behind the current revision is not necessarily a failure:
-        agrirouter merges where the client's change and the intervening ones
-        do not overlap and answers 200 with the merged object, and answers
-        412 with the current revision where they do overlap.
+        A base behind the current revision is 412 with the current revision,
+        even where the client's change and the intervening ones touch
+        different attributes: agrirouter does not merge them. The client
+        rebases on the current object and writes again.
       schema:
         type: integer
         minimum: 1
@@ -2055,9 +2055,8 @@ components:
     RevisionConflict:
       description: >
         The write could not be applied against its
-        x-agrirouter-base-revision: the base is behind the current revision
-        and the changes since overlap with the client's, so no merge is
-        possible; or the base is one agrirouter never issued for this
+        x-agrirouter-base-revision: the base is behind the current revision;
+        or the base is one agrirouter never issued for this
         object; or a base was given for a local_id that does not resolve to
         an existing object. The body carries the current revision.
       content:

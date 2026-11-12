@@ -34,8 +34,7 @@ import (
 // The returned model is the resulting canonical object; apply it as you would
 // a delivered one. agrirouter does not echo the write on the sender's own
 // stream, so this response is the only place the sender learns the
-// agrirouterId of a new object, or the merged result where agrirouter
-// reconciled the write with a concurrent change.
+// agrirouterId of a new object, or the attributes the write left out.
 //
 //nolint:dupl // One readable function per entity type is preferred over a generic helper.
 func PutParty(

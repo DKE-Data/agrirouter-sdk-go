@@ -1642,7 +1642,7 @@ type PutFarmParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1660,7 +1660,7 @@ type ArchiveFarmParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1689,7 +1689,7 @@ type UnarchiveFarmParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1729,7 +1729,7 @@ type PutFieldBoundaryParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1747,7 +1747,7 @@ type ArchiveFieldBoundaryParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1776,7 +1776,7 @@ type UnarchiveFieldBoundaryParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1816,7 +1816,7 @@ type PutFieldParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1834,7 +1834,7 @@ type ArchiveFieldParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1863,7 +1863,7 @@ type UnarchiveFieldParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1903,7 +1903,7 @@ type PutPartyParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1921,7 +1921,7 @@ type ArchivePartyParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
@@ -1950,7 +1950,7 @@ type UnarchivePartyParams struct {
 	//
 	// Required on a write to an object that already exists; absent there is 428, since omitting it would opt the client out of concurrency control. Absent on a create is normal, there being no base. Present on a request that does not resolve to an existing object it is 412: the client believes it is updating something agrirouter does not know under that local_id.
 	//
-	// A base behind the current revision is not necessarily a failure: agrirouter merges where the client's change and the intervening ones do not overlap and answers 200 with the merged object, and answers 412 with the current revision where they do overlap.
+	// A base behind the current revision is 412 with the current revision, even where the client's change and the intervening ones touch different attributes: agrirouter does not merge them. The client rebases on the current object and writes again.
 	XAgrirouterBaseRevision *BaseRevision `json:"x-agrirouter-base-revision,omitempty"`
 }
 
