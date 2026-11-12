@@ -21,12 +21,7 @@ func init() {
 			return c.BindMapping(ctx, agrirouter.EntityTypeFarm, localID, ar, ep, tn)
 		}))
 
-	rootCmd.AddCommand(mdMappingCmd("unbind-farm-mapping",
-		"Declare that this endpoint no longer holds a farm",
-		"Declares that the endpoint no longer holds the canonical farm under --local-id. The canonical object itself is untouched.",
-		func(ctx context.Context, c *agrirouter.Client, localID string, ar, ep, tn uuid.UUID) error {
-			return c.UnbindMapping(ctx, agrirouter.EntityTypeFarm, localID, ar, ep, tn)
-		}))
+	rootCmd.AddCommand(mdCorrectMappingsCmd("farm", agrirouter.EntityTypeFarm))
 
 	rootCmd.AddCommand(mdDeactivateCmd("farm",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Farm, error) {
