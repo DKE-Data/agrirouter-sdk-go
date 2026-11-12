@@ -19,8 +19,8 @@ import (
 // Event types carried on the streams.
 const (
 	// EventMasterdataChanged carries a canonical object: its state at that
-	// revision, active or inactive as its `active` says. It is the only frame
-	// that carries one, on either stream. An inactive object is not a removal:
+	// revision, archived or not as its `archived` says. It is the only frame
+	// that carries one, on either stream. An archived object is not a removal:
 	// the object and its identifier mapping are retained.
 	EventMasterdataChanged = "MASTERDATA_CHANGED"
 

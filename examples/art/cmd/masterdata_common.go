@@ -19,7 +19,7 @@ const (
 	localIDOpt            = "local-id"
 	agrirouterIDOpt       = "agrirouter-id"
 	baseRevisionOpt       = "base-revision"
-	activeOpt             = "active"
+	archivedOpt           = "archived"
 	bodyOpt               = "body"
 	externalEndpointIDOpt = "external-endpoint-id"
 	stateOpt              = "state"
@@ -162,9 +162,9 @@ func addBaseRevisionFlag(cmd *cobra.Command) {
 	cmd.Flags().Int(baseRevisionOpt, 0, "Revision this write is based on; required when updating an existing object, omit when creating")
 }
 
-func addActiveFlag(cmd *cobra.Command) {
-	cmd.Flags().Bool(activeOpt, true, "Lifecycle state the write states: on a create it sets the initial state "+
-		"(--active=false creates the object inactive); on an update it must equal the current state")
+func addArchivedFlag(cmd *cobra.Command) {
+	cmd.Flags().Bool(archivedOpt, false, "Lifecycle state the write states: on a create it sets the initial state "+
+		"(--archived creates the object archived); on an update it must equal the current state")
 }
 
 func addBodyFlag(cmd *cobra.Command, entity string) {
@@ -182,7 +182,7 @@ func mdPutCmd[T any](
 	entity string,
 	setLocalID func(*T, string),
 	put func(ctx context.Context, c *agrirouter.Client, localID string, endpointID, tenantID uuid.UUID,
-		active bool, baseRevision *int, body *T) (*T, error),
+		archived bool, baseRevision *int, body *T) (*T, error),
 ) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "put-" + entity,
@@ -193,12 +193,12 @@ The %[5]s body is supplied as JSON via --%[3]s, either inline or as @path to a
 file; --%[2]s is written into the body automatically. When updating an existing
 object, pass --%[4]s with the revision it was edited from.
 
---%[6]s (default true) is the lifecycle state the write states and overrides any
-"active" in the body. On a create it sets the initial state: --%[6]s=false sends
-a record held as archived as inactive. On an update it must equal the object's
-current state, or the write is rejected; use deactivate-%[7]s or
-reactivate-%[7]s to change it.`,
-			withArticle(humanize(entity)), localIDOpt, bodyOpt, baseRevisionOpt, humanize(entity), activeOpt, entity),
+--%[6]s (default false) is the lifecycle state the write states and overrides
+any "archived" in the body. On a create it sets the initial state: --%[6]s
+uploads an archived record. On an update it must equal the object's current
+state, or the write is rejected; use archive-%[7]s or unarchive-%[7]s to change
+it.`,
+			withArticle(humanize(entity)), localIDOpt, bodyOpt, baseRevisionOpt, humanize(entity), archivedOpt, entity),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := cmd.Context()
 			localID, err := requiredStringFlag(cmd, localIDOpt)
@@ -217,9 +217,9 @@ reactivate-%[7]s to change it.`,
 			if err != nil {
 				return err
 			}
-			active, err := cmd.Flags().GetBool(activeOpt)
+			archived, err := cmd.Flags().GetBool(archivedOpt)
 			if err != nil {
-				return fmt.Errorf("failed to get %s flag: %w", activeOpt, err)
+				return fmt.Errorf("failed to get %s flag: %w", archivedOpt, err)
 			}
 			body, err := readJSONBody[T](cmd, bodyOpt)
 			if err != nil {
@@ -233,9 +233,9 @@ reactivate-%[7]s to change it.`,
 			}
 
 			slog.Info("Sending "+humanize(entity), "localID", localID, "endpointID", endpointID, "tenantID", tenantID,
-				"active", active, "baseRevision", baseRev)
+				"archived", archived, "baseRevision", baseRev)
 
-			result, err := put(ctx, client, localID, endpointID, tenantID, active, baseRev, body)
+			result, err := put(ctx, client, localID, endpointID, tenantID, archived, baseRev, body)
 			if err != nil {
 				return fmt.Errorf("failed to put %s: %w", humanize(entity), err)
 			}
@@ -246,7 +246,7 @@ reactivate-%[7]s to change it.`,
 	addEndpointIDFlag(cmd)
 	addTenantIDFlag(cmd)
 	addBaseRevisionFlag(cmd)
-	addActiveFlag(cmd)
+	addArchivedFlag(cmd)
 	addBodyFlag(cmd, entity)
 	return cmd
 }
@@ -305,23 +305,24 @@ func mdMappingCmd(
 type lifecycleFn[T any] func(ctx context.Context, c *agrirouter.Client, localID string,
 	endpointID, tenantID uuid.UUID, baseRevision *int) (*T, error)
 
-// mdDeactivateCmd builds a "deactivate-<entity>" command.
-func mdDeactivateCmd[T any](entity string, fn lifecycleFn[T]) *cobra.Command {
-	return mdLifecycleCmd("deactivate", "Deactivating", entity,
-		fmt.Sprintf(`Signals that the %[1]s was deactivated in the source system. The canonical
-object is kept but marked inactive. When the object is active, pass --%[2]s
-with the revision it was edited from; on an inactive object it is ignored.
-Use reactivate-%[3]s to undo it.`, humanize(entity), baseRevisionOpt, entity), fn)
+// mdArchiveCmd builds an "archive-<entity>" command.
+func mdArchiveCmd[T any](entity string, fn lifecycleFn[T]) *cobra.Command {
+	return mdLifecycleCmd("archive", "Archiving", entity,
+		fmt.Sprintf(`Signals that the %[1]s was archived in the source system. The canonical
+object is kept but marked archived. When the object is not archived, pass
+--%[2]s with the revision it was edited from; on an archived object it is
+ignored. Use unarchive-%[3]s to undo it.`, humanize(entity), baseRevisionOpt, entity), fn)
 }
 
-// mdReactivateCmd builds a "reactivate-<entity>" command.
-func mdReactivateCmd[T any](entity string, fn lifecycleFn[T]) *cobra.Command {
-	return mdLifecycleCmd("reactivate", "Reactivating", entity,
-		fmt.Sprintf(`Signals that the %[1]s, deactivated earlier, is active again in the source
-system. The canonical object becomes active with its content unchanged. When the
-object is inactive, pass --%[2]s with the revision it was edited from; on an
-active object it is ignored. A put never changes the lifecycle state, so this is
-the only way back from deactivate-%[3]s.`, humanize(entity), baseRevisionOpt, entity), fn)
+// mdUnarchiveCmd builds an "unarchive-<entity>" command.
+func mdUnarchiveCmd[T any](entity string, fn lifecycleFn[T]) *cobra.Command {
+	return mdLifecycleCmd("unarchive", "Unarchiving", entity,
+		fmt.Sprintf(`Signals that the %[1]s, archived earlier, is no longer archived in the
+source system. The canonical object is no longer marked archived; its content
+is unchanged. When the object is archived, pass --%[2]s with the revision it
+was edited from; on an object that is not archived it is ignored. A put never
+changes the lifecycle state, so this is the only way back from
+archive-%[3]s.`, humanize(entity), baseRevisionOpt, entity), fn)
 }
 
 // mdLifecycleCmd builds a "<verb>-<entity>" command that changes the lifecycle

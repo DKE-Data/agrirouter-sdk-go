@@ -10,8 +10,8 @@ import (
 func init() {
 	rootCmd.AddCommand(mdPutCmd("party",
 		func(p *agrirouter.Party, id string) { p.Content.Id.ReferenceId = &id },
-		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, active bool, br *int, body *agrirouter.Party) (*agrirouter.Party, error) {
-			return c.PutParty(ctx, localID, ep, tn, active, br, body)
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, archived bool, br *int, body *agrirouter.Party) (*agrirouter.Party, error) {
+			return c.PutParty(ctx, localID, ep, tn, archived, br, body)
 		}))
 
 	rootCmd.AddCommand(mdMappingCmd("bind-party-mapping",
@@ -28,18 +28,18 @@ func init() {
 			return c.UnbindMapping(ctx, agrirouter.EntityTypeParty, localID, ar, ep, tn)
 		}))
 
-	rootCmd.AddCommand(mdDeactivateCmd("party",
+	rootCmd.AddCommand(mdArchiveCmd("party",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Party, error) {
-			obj, err := c.DeactivateEntity(ctx, agrirouter.EntityTypeParty, localID, ep, tn, br)
+			obj, err := c.ArchiveEntity(ctx, agrirouter.EntityTypeParty, localID, ep, tn, br)
 			if err != nil {
 				return nil, err
 			}
 			return obj.Party, nil
 		}))
 
-	rootCmd.AddCommand(mdReactivateCmd("party",
+	rootCmd.AddCommand(mdUnarchiveCmd("party",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Party, error) {
-			obj, err := c.ReactivateEntity(ctx, agrirouter.EntityTypeParty, localID, ep, tn, br)
+			obj, err := c.UnarchiveEntity(ctx, agrirouter.EntityTypeParty, localID, ep, tn, br)
 			if err != nil {
 				return nil, err
 			}

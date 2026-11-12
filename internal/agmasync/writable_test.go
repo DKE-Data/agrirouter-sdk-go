@@ -72,7 +72,7 @@ func TestPutSendsBackWhatAgrirouterAssigns(t *testing.T) {
 		SourceEndpointId: &sourceEndpointID, ModifiedAt: &modifiedAt,
 	}
 
-	if _, err := agmasync.PutParty(context.Background(), api, actingEndpointID, actingTenantID, party, true, &revision); err != nil {
+	if _, err := agmasync.PutParty(context.Background(), api, actingEndpointID, actingTenantID, party, false, &revision); err != nil {
 		t.Fatalf("Put: %v", err)
 	}
 
@@ -121,7 +121,7 @@ func TestPutSendsTheEntityAsTheParticipantBuiltIt(t *testing.T) {
 		},
 	}
 
-	if _, err := agmasync.PutFarm(context.Background(), api, actingEndpointID, actingTenantID, farm, true, nil); err != nil {
+	if _, err := agmasync.PutFarm(context.Background(), api, actingEndpointID, actingTenantID, farm, false, nil); err != nil {
 		t.Fatalf("Put: %v", err)
 	}
 
@@ -164,20 +164,20 @@ func TestPutSetsTheTypeFromTheModel(t *testing.T) {
 	ctx, id, endpointID, tenantID := context.Background(), agmasync.LocalID("x-1"), uuid.New(), uuid.New()
 	calls := map[agmasync.EntityType]func() error{
 		agmasync.TypeParty: func() error {
-			_, err := agmasync.PutParty(ctx, api, endpointID, tenantID, oapi.Party{Content: oapi.PartyContent{Id: id}}, true, nil)
+			_, err := agmasync.PutParty(ctx, api, endpointID, tenantID, oapi.Party{Content: oapi.PartyContent{Id: id}}, false, nil)
 			return err
 		},
 		agmasync.TypeFarm: func() error {
-			_, err := agmasync.PutFarm(ctx, api, endpointID, tenantID, oapi.Farm{Content: oapi.FarmContent{Id: id}}, true, nil)
+			_, err := agmasync.PutFarm(ctx, api, endpointID, tenantID, oapi.Farm{Content: oapi.FarmContent{Id: id}}, false, nil)
 			return err
 		},
 		agmasync.TypeField: func() error {
-			_, err := agmasync.PutField(ctx, api, endpointID, tenantID, oapi.Field{Content: oapi.FieldContent{Id: id}}, true, nil)
+			_, err := agmasync.PutField(ctx, api, endpointID, tenantID, oapi.Field{Content: oapi.FieldContent{Id: id}}, false, nil)
 			return err
 		},
 		agmasync.TypeFieldBoundary: func() error {
 			_, err := agmasync.PutFieldBoundary(ctx, api, endpointID, tenantID,
-				oapi.FieldBoundary{Content: oapi.FieldBoundaryContent{Id: id}}, true, nil)
+				oapi.FieldBoundary{Content: oapi.FieldBoundaryContent{Id: id}}, false, nil)
 			return err
 		},
 	}

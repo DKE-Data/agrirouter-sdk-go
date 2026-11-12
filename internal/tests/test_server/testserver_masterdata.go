@@ -24,12 +24,12 @@ func (s *Server) CorrectPartyMappings(_ context.Context, _ CorrectPartyMappingsR
 	return CorrectPartyMappings204Response{}, nil
 }
 
-func (s *Server) DeactivateParty(_ context.Context, _ DeactivatePartyRequestObject) (DeactivatePartyResponseObject, error) {
-	return DeactivateParty200JSONResponse{}, nil
+func (s *Server) ArchiveParty(_ context.Context, _ ArchivePartyRequestObject) (ArchivePartyResponseObject, error) {
+	return ArchiveParty200JSONResponse{}, nil
 }
 
-func (s *Server) ReactivateParty(_ context.Context, _ ReactivatePartyRequestObject) (ReactivatePartyResponseObject, error) {
-	return ReactivateParty200JSONResponse{}, nil
+func (s *Server) UnarchiveParty(_ context.Context, _ UnarchivePartyRequestObject) (UnarchivePartyResponseObject, error) {
+	return UnarchiveParty200JSONResponse{}, nil
 }
 
 func (s *Server) RequestParty(_ context.Context, _ RequestPartyRequestObject) (RequestPartyResponseObject, error) {
@@ -50,12 +50,12 @@ func (s *Server) CorrectFarmMappings(_ context.Context, _ CorrectFarmMappingsReq
 	return CorrectFarmMappings204Response{}, nil
 }
 
-func (s *Server) DeactivateFarm(_ context.Context, _ DeactivateFarmRequestObject) (DeactivateFarmResponseObject, error) {
-	return DeactivateFarm200JSONResponse{}, nil
+func (s *Server) ArchiveFarm(_ context.Context, _ ArchiveFarmRequestObject) (ArchiveFarmResponseObject, error) {
+	return ArchiveFarm200JSONResponse{}, nil
 }
 
-func (s *Server) ReactivateFarm(_ context.Context, _ ReactivateFarmRequestObject) (ReactivateFarmResponseObject, error) {
-	return ReactivateFarm200JSONResponse{}, nil
+func (s *Server) UnarchiveFarm(_ context.Context, _ UnarchiveFarmRequestObject) (UnarchiveFarmResponseObject, error) {
+	return UnarchiveFarm200JSONResponse{}, nil
 }
 
 func (s *Server) RequestFarm(_ context.Context, _ RequestFarmRequestObject) (RequestFarmResponseObject, error) {
@@ -76,12 +76,12 @@ func (s *Server) CorrectFieldMappings(_ context.Context, _ CorrectFieldMappingsR
 	return CorrectFieldMappings204Response{}, nil
 }
 
-func (s *Server) DeactivateField(_ context.Context, _ DeactivateFieldRequestObject) (DeactivateFieldResponseObject, error) {
-	return DeactivateField200JSONResponse{}, nil
+func (s *Server) ArchiveField(_ context.Context, _ ArchiveFieldRequestObject) (ArchiveFieldResponseObject, error) {
+	return ArchiveField200JSONResponse{}, nil
 }
 
-func (s *Server) ReactivateField(_ context.Context, _ ReactivateFieldRequestObject) (ReactivateFieldResponseObject, error) {
-	return ReactivateField200JSONResponse{}, nil
+func (s *Server) UnarchiveField(_ context.Context, _ UnarchiveFieldRequestObject) (UnarchiveFieldResponseObject, error) {
+	return UnarchiveField200JSONResponse{}, nil
 }
 
 func (s *Server) RequestField(_ context.Context, _ RequestFieldRequestObject) (RequestFieldResponseObject, error) {
@@ -102,12 +102,12 @@ func (s *Server) CorrectFieldBoundaryMappings(_ context.Context, _ CorrectFieldB
 	return CorrectFieldBoundaryMappings204Response{}, nil
 }
 
-func (s *Server) DeactivateFieldBoundary(_ context.Context, _ DeactivateFieldBoundaryRequestObject) (DeactivateFieldBoundaryResponseObject, error) {
-	return DeactivateFieldBoundary200JSONResponse{}, nil
+func (s *Server) ArchiveFieldBoundary(_ context.Context, _ ArchiveFieldBoundaryRequestObject) (ArchiveFieldBoundaryResponseObject, error) {
+	return ArchiveFieldBoundary200JSONResponse{}, nil
 }
 
-func (s *Server) ReactivateFieldBoundary(_ context.Context, _ ReactivateFieldBoundaryRequestObject) (ReactivateFieldBoundaryResponseObject, error) {
-	return ReactivateFieldBoundary200JSONResponse{}, nil
+func (s *Server) UnarchiveFieldBoundary(_ context.Context, _ UnarchiveFieldBoundaryRequestObject) (UnarchiveFieldBoundaryResponseObject, error) {
+	return UnarchiveFieldBoundary200JSONResponse{}, nil
 }
 
 func (s *Server) RequestFieldBoundary(_ context.Context, _ RequestFieldBoundaryRequestObject) (RequestFieldBoundaryResponseObject, error) {

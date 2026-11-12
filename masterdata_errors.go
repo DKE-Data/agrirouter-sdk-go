@@ -28,9 +28,9 @@ var (
 	// and why.
 	ErrMappingConflict = agmasync.ErrMappingConflict
 
-	// ErrLifecycleConflict is a 409 on a Put whose active differs from the
-	// object's current state. LifecycleConflict.CurrentActive carries it; the
-	// state changes only through DeactivateEntity and ReactivateEntity.
+	// ErrLifecycleConflict is a 409 on a Put whose archived differs from the
+	// object's current state. LifecycleConflict.CurrentArchived carries it; the
+	// state changes only through ArchiveEntity and UnarchiveEntity.
 	ErrLifecycleConflict = agmasync.ErrLifecycleConflict
 
 	// ErrMasterdataValidation is a 400: the payload was rejected, not repaired.
@@ -82,10 +82,10 @@ type RevisionConflict = agmasync.RevisionConflict
 // recorded, and why.
 type MappingConflict = agmasync.MappingConflict
 
-// LifecycleConflict is the error of a lifecycle 409: a Put whose active
-// contradicts the object's current state, CurrentActive. Deactivate or
-// reactivate the object if that is what was meant, or write again with
-// CurrentActive to edit it in its current state.
+// LifecycleConflict is the error of a lifecycle 409: a Put whose archived
+// contradicts the object's current state, CurrentArchived. Archive or unarchive
+// the object if that is what was meant, or write again with CurrentArchived to
+// edit it in its current state.
 type LifecycleConflict = agmasync.LifecycleConflict
 
 // MasterdataAPIError is any other non-success master-data response.

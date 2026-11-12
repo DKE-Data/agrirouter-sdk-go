@@ -10,8 +10,8 @@ import (
 func init() {
 	rootCmd.AddCommand(mdPutCmd("field-boundary",
 		func(fb *agrirouter.FieldBoundary, id string) { fb.Content.Id.ReferenceId = &id },
-		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, active bool, br *int, body *agrirouter.FieldBoundary) (*agrirouter.FieldBoundary, error) {
-			return c.PutFieldBoundary(ctx, localID, ep, tn, active, br, body)
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, archived bool, br *int, body *agrirouter.FieldBoundary) (*agrirouter.FieldBoundary, error) {
+			return c.PutFieldBoundary(ctx, localID, ep, tn, archived, br, body)
 		}))
 
 	rootCmd.AddCommand(mdMappingCmd("bind-field-boundary-mapping",
@@ -28,18 +28,18 @@ func init() {
 			return c.UnbindMapping(ctx, agrirouter.EntityTypeFieldBoundary, localID, ar, ep, tn)
 		}))
 
-	rootCmd.AddCommand(mdDeactivateCmd("field-boundary",
+	rootCmd.AddCommand(mdArchiveCmd("field-boundary",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.FieldBoundary, error) {
-			obj, err := c.DeactivateEntity(ctx, agrirouter.EntityTypeFieldBoundary, localID, ep, tn, br)
+			obj, err := c.ArchiveEntity(ctx, agrirouter.EntityTypeFieldBoundary, localID, ep, tn, br)
 			if err != nil {
 				return nil, err
 			}
 			return obj.FieldBoundary, nil
 		}))
 
-	rootCmd.AddCommand(mdReactivateCmd("field-boundary",
+	rootCmd.AddCommand(mdUnarchiveCmd("field-boundary",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.FieldBoundary, error) {
-			obj, err := c.ReactivateEntity(ctx, agrirouter.EntityTypeFieldBoundary, localID, ep, tn, br)
+			obj, err := c.UnarchiveEntity(ctx, agrirouter.EntityTypeFieldBoundary, localID, ep, tn, br)
 			if err != nil {
 				return nil, err
 			}

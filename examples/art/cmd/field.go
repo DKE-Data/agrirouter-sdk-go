@@ -10,8 +10,8 @@ import (
 func init() {
 	rootCmd.AddCommand(mdPutCmd("field",
 		func(f *agrirouter.Field, id string) { f.Content.Id.ReferenceId = &id },
-		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, active bool, br *int, body *agrirouter.Field) (*agrirouter.Field, error) {
-			return c.PutField(ctx, localID, ep, tn, active, br, body)
+		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, archived bool, br *int, body *agrirouter.Field) (*agrirouter.Field, error) {
+			return c.PutField(ctx, localID, ep, tn, archived, br, body)
 		}))
 
 	rootCmd.AddCommand(mdMappingCmd("bind-field-mapping",
@@ -28,18 +28,18 @@ func init() {
 			return c.UnbindMapping(ctx, agrirouter.EntityTypeField, localID, ar, ep, tn)
 		}))
 
-	rootCmd.AddCommand(mdDeactivateCmd("field",
+	rootCmd.AddCommand(mdArchiveCmd("field",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Field, error) {
-			obj, err := c.DeactivateEntity(ctx, agrirouter.EntityTypeField, localID, ep, tn, br)
+			obj, err := c.ArchiveEntity(ctx, agrirouter.EntityTypeField, localID, ep, tn, br)
 			if err != nil {
 				return nil, err
 			}
 			return obj.Field, nil
 		}))
 
-	rootCmd.AddCommand(mdReactivateCmd("field",
+	rootCmd.AddCommand(mdUnarchiveCmd("field",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Field, error) {
-			obj, err := c.ReactivateEntity(ctx, agrirouter.EntityTypeField, localID, ep, tn, br)
+			obj, err := c.UnarchiveEntity(ctx, agrirouter.EntityTypeField, localID, ep, tn, br)
 			if err != nil {
 				return nil, err
 			}

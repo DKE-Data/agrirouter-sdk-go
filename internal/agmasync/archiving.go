@@ -1,4 +1,4 @@
-//nolint:dupl // Deactivate and Reactivate are mirror images, each kept as one readable switch per entity type.
+//nolint:dupl // Archive and Unarchive are mirror images, each kept as one readable switch per entity type.
 package agmasync
 
 import (
@@ -10,23 +10,24 @@ import (
 	"github.com/google/uuid"
 )
 
-// Deactivate signals that an entity was deactivated in its source system.
+// Archive signals that an entity was archived in its source system.
 //
-// Deactivation covers archival, deletion, or any state in which the source no
-// longer considers the entity active. The object and its identifier mapping
-// are retained, so references and synchronization stay intact.
+// Archiving covers a record archived or deleted in the source, or any other
+// state in which the source no longer keeps the entity in use. The object and
+// its identifier mapping are retained, so references and synchronization stay
+// intact.
 //
-// Deactivating an active entity is an ordinary write under concurrency
-// control: agrirouter rejects it if base cannot be reconciled with the
-// current revision. Deactivating an inactive entity ignores base, creates no
+// Archiving an entity that is not archived is an ordinary write under
+// concurrency control: agrirouter rejects it if base cannot be reconciled with
+// the current revision. Archiving an archived entity ignores base, creates no
 // revision, and forwards nothing, so retrying a call with an unknown outcome
 // is safe.
 //
-// [Reactivate] is the way back. A Put never changes the state: it must carry
-// the object's current `active`.
+// [Unarchive] is the way back. A Put never changes the state: it must carry
+// the object's current `archived`.
 //
 // The result is the canonical object as it now stands.
-func Deactivate(
+func Archive(
 	ctx context.Context, api *oapiclient.ClientWithResponses,
 	endpointID, tenantID uuid.UUID,
 	t EntityType, localID string, base *int,
@@ -34,7 +35,7 @@ func Deactivate(
 	var res writeResult
 	switch t {
 	case TypeParty:
-		r, err := api.DeactivatePartyWithResponse(ctx, localID, &oapi.DeactivatePartyParams{
+		r, err := api.ArchivePartyWithResponse(ctx, localID, &oapi.ArchivePartyParams{
 			XAgrirouterEndpointId: endpointID, XAgrirouterTenantId: tenantID, XAgrirouterBaseRevision: base,
 		})
 		if err != nil {
@@ -45,7 +46,7 @@ func Deactivate(
 			precond: r.JSON412, required: r.JSON428, body: r.Body,
 		}
 	case TypeFarm:
-		r, err := api.DeactivateFarmWithResponse(ctx, localID, &oapi.DeactivateFarmParams{
+		r, err := api.ArchiveFarmWithResponse(ctx, localID, &oapi.ArchiveFarmParams{
 			XAgrirouterEndpointId: endpointID, XAgrirouterTenantId: tenantID, XAgrirouterBaseRevision: base,
 		})
 		if err != nil {
@@ -56,7 +57,7 @@ func Deactivate(
 			precond: r.JSON412, required: r.JSON428, body: r.Body,
 		}
 	case TypeField:
-		r, err := api.DeactivateFieldWithResponse(ctx, localID, &oapi.DeactivateFieldParams{
+		r, err := api.ArchiveFieldWithResponse(ctx, localID, &oapi.ArchiveFieldParams{
 			XAgrirouterEndpointId: endpointID, XAgrirouterTenantId: tenantID, XAgrirouterBaseRevision: base,
 		})
 		if err != nil {
@@ -67,7 +68,7 @@ func Deactivate(
 			precond: r.JSON412, required: r.JSON428, body: r.Body,
 		}
 	case TypeFieldBoundary:
-		r, err := api.DeactivateFieldBoundaryWithResponse(ctx, localID, &oapi.DeactivateFieldBoundaryParams{
+		r, err := api.ArchiveFieldBoundaryWithResponse(ctx, localID, &oapi.ArchiveFieldBoundaryParams{
 			XAgrirouterEndpointId: endpointID, XAgrirouterTenantId: tenantID, XAgrirouterBaseRevision: base,
 		})
 		if err != nil {

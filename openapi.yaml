@@ -543,13 +543,13 @@ paths:
         resulting object.
 
 
-        `active` is required. On a create it sets the initial state: `false`
-        creates the object inactive in one write, which is how a record held as
+        `archived` is required. On a create it sets the initial state: `true`
+        creates the object archived in one write, which is how a record held as
         archived is sent. On an update it must equal the object's current state,
-        or the write is rejected with `409` and `current_active`: a write never
-        changes the state, which only deactivation and reactivation do. A missing
-        `active` is a `400`. Edits to an inactive object are accepted and keep it
-        inactive.
+        or the write is rejected with `409` and `current_archived`: a write
+        never changes the state, which only archiving and unarchiving do. A
+        missing `archived` is a `400`. Edits to an archived object are accepted
+        and keep it archived.
 
 
         `_agmasync_details` carries its `partyTypeCode` on every write that
@@ -651,7 +651,7 @@ paths:
         is one call, applied whole or not at all. A party bound to a
         local_id the request does not list is not taken from it: that is the
         409. Creates no revision and is delivered to nobody; it is not for a
-        local deletion, which is a deactivation.
+        local deletion, for which use the archiving operation.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -684,15 +684,15 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/parties/{local_id}/deactivation:
+  /masterdata/parties/{local_id}/archiving:
     post:
-      operationId: deactivateParty
+      operationId: archiveParty
       tags: [Masterdata]
-      summary: Deactivate a party
+      summary: Archive a party
       description: >
-        Signals that the party was deactivated in the source system. The
-        canonical object is kept but marked inactive. Deactivating an
-        already-inactive party is a no-op.
+        Signals that the party was archived in the source system. The canonical
+        object is kept but marked archived. Archiving an already-archived party
+        is a no-op.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -703,7 +703,7 @@ paths:
         - $ref: '#/components/parameters/BaseRevision'
       responses:
         '200':
-          description: Party is inactive (either newly deactivated or already inactive).
+          description: Party is archived (either newly archived or already archived).
           content:
             application/json:
               schema:
@@ -725,21 +725,21 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/parties/{local_id}/reactivation:
+  /masterdata/parties/{local_id}/unarchiving:
     post:
-      operationId: reactivateParty
+      operationId: unarchiveParty
       tags: [Masterdata]
-      summary: Reactivate a party
+      summary: Unarchive a party
       description: >
-        Signals that the party is active again in the source system after a
-        deactivation. The canonical object is set active again with its content
-        unchanged. A new party never needs this: the write that creates it sets
-        its state. The operation is idempotent: reactivating a party that is
-        already active succeeds without creating a new revision or notification.
-        The first reactivation of an inactive object is a write like any other
-        and carries the revision it was made from in `x-agrirouter-base-revision`;
-        a concurrent edit to the object is a conflict, and only one of the two
-        succeeds. On an object that is already active the header is ignored.
+        Signals that the party is no longer archived in the source system. The
+        canonical object is no longer marked archived; its content is unchanged.
+        A new party never needs this: the write that creates it sets its state.
+        The operation is idempotent: unarchiving a party that is not archived
+        succeeds without creating a new revision or notification. The first
+        unarchiving of an archived object is a write like any other and carries
+        the revision it was made from in `x-agrirouter-base-revision`; a
+        concurrent edit to the object is a conflict, and only one of the two
+        succeeds. On an object that is not archived the header is ignored.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -750,7 +750,7 @@ paths:
         - $ref: '#/components/parameters/BaseRevision'
       responses:
         '200':
-          description: Party is active (either newly reactivated or already active).
+          description: Party is not archived (either newly unarchived or already not archived).
           content:
             application/json:
               schema:
@@ -828,13 +828,13 @@ paths:
         response is always the whole resulting object.
 
 
-        `active` is required. On a create it sets the initial state: `false`
-        creates the object inactive in one write, which is how a record held as
+        `archived` is required. On a create it sets the initial state: `true`
+        creates the object archived in one write, which is how a record held as
         archived is sent. On an update it must equal the object's current state,
-        or the write is rejected with `409` and `current_active`: a write never
-        changes the state, which only deactivation and reactivation do. A missing
-        `active` is a `400`. Edits to an inactive object are accepted and keep it
-        inactive.
+        or the write is rejected with `409` and `current_archived`: a write
+        never changes the state, which only archiving and unarchiving do. A
+        missing `archived` is a `400`. Edits to an archived object are accepted
+        and keep it archived.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -928,7 +928,7 @@ paths:
         is one call, applied whole or not at all. A farm bound to a
         local_id the request does not list is not taken from it: that is the
         409. Creates no revision and is delivered to nobody; it is not for a
-        local deletion, which is a deactivation.
+        local deletion, for which use the archiving operation.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -961,15 +961,15 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/farms/{local_id}/deactivation:
+  /masterdata/farms/{local_id}/archiving:
     post:
-      operationId: deactivateFarm
+      operationId: archiveFarm
       tags: [Masterdata]
-      summary: Deactivate a farm
+      summary: Archive a farm
       description: >
-        Signals that the farm was deactivated in the source system. The
-        canonical object is kept but marked inactive. Deactivating an
-        already-inactive farm is a no-op.
+        Signals that the farm was archived in the source system. The canonical
+        object is kept but marked archived. Archiving an already-archived farm
+        is a no-op.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -980,7 +980,7 @@ paths:
         - $ref: '#/components/parameters/BaseRevision'
       responses:
         '200':
-          description: Farm is inactive (either newly deactivated or already inactive).
+          description: Farm is archived (either newly archived or already archived).
           content:
             application/json:
               schema:
@@ -1002,21 +1002,21 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/farms/{local_id}/reactivation:
+  /masterdata/farms/{local_id}/unarchiving:
     post:
-      operationId: reactivateFarm
+      operationId: unarchiveFarm
       tags: [Masterdata]
-      summary: Reactivate a farm
+      summary: Unarchive a farm
       description: >
-        Signals that the farm is active again in the source system after a
-        deactivation. The canonical object is set active again with its content
-        unchanged. A new farm never needs this: the write that creates it sets
-        its state. The operation is idempotent: reactivating a farm that is
-        already active succeeds without creating a new revision or notification.
-        The first reactivation of an inactive object is a write like any other
-        and carries the revision it was made from in `x-agrirouter-base-revision`;
-        a concurrent edit to the object is a conflict, and only one of the two
-        succeeds. On an object that is already active the header is ignored.
+        Signals that the farm is no longer archived in the source system. The
+        canonical object is no longer marked archived; its content is unchanged.
+        A new farm never needs this: the write that creates it sets its state.
+        The operation is idempotent: unarchiving a farm that is not archived
+        succeeds without creating a new revision or notification. The first
+        unarchiving of an archived object is a write like any other and carries
+        the revision it was made from in `x-agrirouter-base-revision`; a
+        concurrent edit to the object is a conflict, and only one of the two
+        succeeds. On an object that is not archived the header is ignored.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1027,7 +1027,7 @@ paths:
         - $ref: '#/components/parameters/BaseRevision'
       responses:
         '200':
-          description: Farm is active (either newly reactivated or already active).
+          description: Farm is not archived (either newly unarchived or already not archived).
           content:
             application/json:
               schema:
@@ -1105,13 +1105,13 @@ paths:
         the whole resulting object.
 
 
-        `active` is required. On a create it sets the initial state: `false`
-        creates the object inactive in one write, which is how a record held as
+        `archived` is required. On a create it sets the initial state: `true`
+        creates the object archived in one write, which is how a record held as
         archived is sent. On an update it must equal the object's current state,
-        or the write is rejected with `409` and `current_active`: a write never
-        changes the state, which only deactivation and reactivation do. A missing
-        `active` is a `400`. Edits to an inactive object are accepted and keep it
-        inactive.
+        or the write is rejected with `409` and `current_archived`: a write
+        never changes the state, which only archiving and unarchiving do. A
+        missing `archived` is a `400`. Edits to an archived object are accepted
+        and keep it archived.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1205,7 +1205,7 @@ paths:
         is one call, applied whole or not at all. A field bound to a
         local_id the request does not list is not taken from it: that is the
         409. Creates no revision and is delivered to nobody; it is not for a
-        local deletion, which is a deactivation.
+        local deletion, for which use the archiving operation.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1238,15 +1238,15 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/fields/{local_id}/deactivation:
+  /masterdata/fields/{local_id}/archiving:
     post:
-      operationId: deactivateField
+      operationId: archiveField
       tags: [Masterdata]
-      summary: Deactivate a field
+      summary: Archive a field
       description: >
-        Signals that the field was deactivated in the source system. The
-        canonical object is kept but marked inactive. Deactivating an
-        already-inactive field is a no-op.
+        Signals that the field was archived in the source system. The canonical
+        object is kept but marked archived. Archiving an already-archived field
+        is a no-op.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1257,7 +1257,7 @@ paths:
         - $ref: '#/components/parameters/BaseRevision'
       responses:
         '200':
-          description: Field is inactive (either newly deactivated or already inactive).
+          description: Field is archived (either newly archived or already archived).
           content:
             application/json:
               schema:
@@ -1279,21 +1279,21 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/fields/{local_id}/reactivation:
+  /masterdata/fields/{local_id}/unarchiving:
     post:
-      operationId: reactivateField
+      operationId: unarchiveField
       tags: [Masterdata]
-      summary: Reactivate a field
+      summary: Unarchive a field
       description: >
-        Signals that the field is active again in the source system after a
-        deactivation. The canonical object is set active again with its content
-        unchanged. A new field never needs this: the write that creates it sets
-        its state. The operation is idempotent: reactivating a field that is
-        already active succeeds without creating a new revision or notification.
-        The first reactivation of an inactive object is a write like any other
-        and carries the revision it was made from in `x-agrirouter-base-revision`;
-        a concurrent edit to the object is a conflict, and only one of the two
-        succeeds. On an object that is already active the header is ignored.
+        Signals that the field is no longer archived in the source system. The
+        canonical object is no longer marked archived; its content is unchanged.
+        A new field never needs this: the write that creates it sets its state.
+        The operation is idempotent: unarchiving a field that is not archived
+        succeeds without creating a new revision or notification. The first
+        unarchiving of an archived object is a write like any other and carries
+        the revision it was made from in `x-agrirouter-base-revision`; a
+        concurrent edit to the object is a conflict, and only one of the two
+        succeeds. On an object that is not archived the header is ignored.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1304,7 +1304,7 @@ paths:
         - $ref: '#/components/parameters/BaseRevision'
       responses:
         '200':
-          description: Field is active (either newly reactivated or already active).
+          description: Field is not archived (either newly unarchived or already not archived).
           content:
             application/json:
               schema:
@@ -1383,13 +1383,13 @@ paths:
         the whole resulting object.
 
 
-        `active` is required. On a create it sets the initial state: `false`
-        creates the object inactive in one write, which is how a record held as
+        `archived` is required. On a create it sets the initial state: `true`
+        creates the object archived in one write, which is how a record held as
         archived is sent. On an update it must equal the object's current state,
-        or the write is rejected with `409` and `current_active`: a write never
-        changes the state, which only deactivation and reactivation do. A missing
-        `active` is a `400`. Edits to an inactive object are accepted and keep it
-        inactive.
+        or the write is rejected with `409` and `current_archived`: a write
+        never changes the state, which only archiving and unarchiving do. A
+        missing `archived` is a `400`. Edits to an archived object are accepted
+        and keep it archived.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1483,7 +1483,7 @@ paths:
         is one call, applied whole or not at all. A field boundary bound to a
         local_id the request does not list is not taken from it: that is the
         409. Creates no revision and is delivered to nobody; it is not for a
-        local deletion, which is a deactivation.
+        local deletion, for which use the archiving operation.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1516,15 +1516,15 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/field-boundaries/{local_id}/deactivation:
+  /masterdata/field-boundaries/{local_id}/archiving:
     post:
-      operationId: deactivateFieldBoundary
+      operationId: archiveFieldBoundary
       tags: [Masterdata]
-      summary: Deactivate a field boundary
+      summary: Archive a field boundary
       description: >
-        Signals that the field boundary was deactivated in the source
-        system. The canonical object is kept but marked inactive.
-        Deactivating an already-inactive field boundary is a no-op.
+        Signals that the field boundary was archived in the source system. The
+        canonical object is kept but marked archived. Archiving an
+        already-archived field boundary is a no-op.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1535,7 +1535,7 @@ paths:
         - $ref: '#/components/parameters/BaseRevision'
       responses:
         '200':
-          description: Field boundary is inactive (either newly deactivated or already inactive).
+          description: Field boundary is archived (either newly archived or already archived).
           content:
             application/json:
               schema:
@@ -1557,22 +1557,22 @@ paths:
         '500':
           description: Server Side Error
 
-  /masterdata/field-boundaries/{local_id}/reactivation:
+  /masterdata/field-boundaries/{local_id}/unarchiving:
     post:
-      operationId: reactivateFieldBoundary
+      operationId: unarchiveFieldBoundary
       tags: [Masterdata]
-      summary: Reactivate a field boundary
+      summary: Unarchive a field boundary
       description: >
-        Signals that the field boundary is active again in the source system
-        after a deactivation. The canonical object is set active again with its
-        content unchanged. A new field boundary never needs this: the write that
-        creates it sets its state. The operation is idempotent: reactivating a
-        field boundary that is already active succeeds without creating a new
-        revision or notification. The first reactivation of an inactive object
-        is a write like any other and carries the revision it was made from in
+        Signals that the field boundary is no longer archived in the source
+        system. The canonical object is no longer marked archived; its content
+        is unchanged. A new field boundary never needs this: the write that
+        creates it sets its state. The operation is idempotent: unarchiving a
+        field boundary that is not archived succeeds without creating a new
+        revision or notification. The first unarchiving of an archived object is
+        a write like any other and carries the revision it was made from in
         `x-agrirouter-base-revision`; a concurrent edit to the object is a
-        conflict, and only one of the two succeeds. On an object that is already
-        active the header is ignored.
+        conflict, and only one of the two succeeds. On an object that is not
+        archived the header is ignored.
       security:
         - agrirouterOauthQA: ["endpoints:manage"]
         - agrirouterOauthPROD: ["endpoints:manage"]
@@ -1583,7 +1583,7 @@ paths:
         - $ref: '#/components/parameters/BaseRevision'
       responses:
         '200':
-          description: Field boundary is active (either newly reactivated or already active).
+          description: Field boundary is not archived (either newly unarchived or already not archived).
           content:
             application/json:
               schema:
@@ -1657,7 +1657,7 @@ paths:
 
         Every canonical object arrives as `MASTERDATA_CHANGED`, discriminated
         by its `type` property: the state of the object at that revision,
-        active or inactive as its `active` says, which is the only signal of
+        archived or not as its `archived` says, which is the only signal of
         its lifecycle state.
 
         The stream also carries `ROUTE_CHANGED`, which states which entity
@@ -2091,9 +2091,9 @@ components:
         The write conflicts with what agrirouter holds. Either the supplied
         local identifier is already mapped to a different canonical object
         (`MappingConflictError`, as described for `MappingConflict`), or the
-        write's `active` differs from the object's current state
+        write's `archived` differs from the object's current state
         (`LifecycleConflictError`). The two are told apart by their required
-        field: `rejection` or `current_active`.
+        field: `rejection` or `current_archived`.
       content:
         application/json:
           schema:
@@ -2858,26 +2858,26 @@ components:
       description: >
         The `409` of a PUT: a `MappingConflictError` or a
         `LifecycleConflictError`, told apart by their required field,
-        `rejection` or `current_active`.
+        `rejection` or `current_archived`.
       oneOf:
         - $ref: '#/components/schemas/MappingConflictError'
         - $ref: '#/components/schemas/LifecycleConflictError'
 
     LifecycleConflictError:
       description: >
-        The `409` of a write whose `active` differs from the object's current
+        The `409` of a write whose `archived` differs from the object's current
         state: an `Error` carrying that state. The state changes only through
-        deactivation and reactivation; the client decides which, if either, it
+        archiving and unarchiving; the client decides which, if either, it
         means, and writes again. The `message` of the `Error` is diagnostic and
         MUST NOT be branched on.
       allOf:
         - $ref: '#/components/schemas/MasterdataError'
         - type: object
           properties:
-            current_active:
+            current_archived:
               type: boolean
-              description: The canonical object's current `active`.
-          required: [current_active]
+              description: The canonical object's current `archived`.
+          required: [current_archived]
 
     IdMappingRejectionReason:
       type: string
@@ -3113,10 +3113,10 @@ components:
         be sent back as it was delivered, these included: `revision`,
         `modified_at`, `source_endpoint_id`, and `recipient_endpoint_id` are
         read-only, ignored on send and always present on delivery; `tenant_id`
-        and `type` are optional on
-        send and must match the object written, or the write is a 400.
-        `active` is required on send: it sets the state of a new object and
-        must equal the state of an existing one (see `active`).
+        and `type` are optional on send and must match the object written, or
+        the write is a 400. `archived` is required on send: it sets the state of
+        a new object and must equal the state of an existing one (see
+        `archived`).
 
 
         `content` is based on the corresponding ADAPT 2.0.2 type. Properties
@@ -3127,15 +3127,15 @@ components:
         agrirouter never delivers `null`: an attribute absent from a delivered
         object is unset.
       properties:
-        active:
+        archived:
           type: boolean
           description: >
-            Whether the object is active. Required on send. On a create it sets
-            the initial state; on an update it must equal the current state, or
-            the write is rejected with `409` and a `LifecycleConflictError`.
-            The state of an existing object changes only through deactivation
-            and reactivation. Always present on delivery, where it is the only
-            signal of the object's lifecycle state.
+            Whether the object is archived. Required on send. On a create it
+            sets the initial state; on an update it must equal the current
+            state, or the write is rejected with `409` and a
+            `LifecycleConflictError`. The state of an existing object changes
+            only through archiving and unarchiving. Always present on delivery,
+            where it is the only signal of the object's lifecycle state.
         revision:
           type: integer
           readOnly: true
@@ -3180,7 +3180,7 @@ components:
             endpoint, so an object entitled to several of an application's
             endpoints is delivered once for each. On a write response it is the
             calling endpoint. Ignored on send.
-      required: [active]
+      required: [archived]
 
     AddressContactMethod:
       # Generated by tools/adapt from adapt/deviations.yaml. Do not edit.
@@ -3523,7 +3523,7 @@ components:
           description: >
             The field's active boundary, in place of ADAPT's `activeBoundaryId`.
             A weak reference: the boundary may arrive after the field. A
-            receiver treats a deactivated boundary, or one naming another
+            receiver treats an archived boundary, or one naming another
             field, as no active boundary.
         _agmasync_soil:
           oneOf:
@@ -3788,7 +3788,7 @@ components:
         application MUST discard every binding and stored revision it holds in
         the tenant, and every correspondence table it retained for a removed
         endpoint there, and treat the listed endpoints as opted into nothing. It
-        MUST NOT delete or deactivate its local records. No `ROUTE_CHANGED` is
+        MUST NOT delete or archive its local records. No `ROUTE_CHANGED` is
         issued for the listed endpoints.
 
 
