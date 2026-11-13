@@ -410,9 +410,10 @@ type Boundary struct {
 	//
 	//
 	// Examples: MOBILE_BASE, PROFESSIONAL, VIRTUAL
-	GNSSBaseSurveyTypeCode     nullable.Nullable[string] `json:"gNSSBaseSurveyTypeCode,omitempty"`
-	GNSSCorrectionNetworkBrand nullable.Nullable[string] `json:"gNSSCorrectionNetworkBrand,omitempty"`
-	GNSSCorrectionNetworkName  nullable.Nullable[string] `json:"gNSSCorrectionNetworkName,omitempty"`
+	GNSSBaseSurveyTypeCode     nullable.Nullable[string]                  `json:"gNSSBaseSurveyTypeCode,omitempty"`
+	GNSSCorrectionNetworkBrand nullable.Nullable[string]                  `json:"gNSSCorrectionNetworkBrand,omitempty"`
+	GNSSCorrectionNetworkName  nullable.Nullable[string]                  `json:"gNSSCorrectionNetworkName,omitempty"`
+	GNSSDataQualityMetrics     nullable.Nullable[[]GNSSDataQualityMetric] `json:"gNSSDataQualityMetrics,omitempty"`
 
 	// Geometry A POLYGON or MULTIPOLYGON as Well-Known Text in WGS84. A polygon's first ring is its exterior, every further ring a hole, and it must be valid as in OGC Simple Features. Any valid WKT is accepted and delivered in the canonical form of "Encoding" in specification.md.
 	//
@@ -870,6 +871,12 @@ type FileReceivedEventData struct {
 
 // FileReceivedEventDataEventType defines model for FileReceivedEventData.EventType.
 type FileReceivedEventDataEventType string
+
+// GNSSDataQualityMetric A metric documenting the quality of the GNSS data a boundary was recorded with, the ADAPT `GNSSDataQualityMetric` unchanged. Its `definitionCode` is a Data Type Definition of the ADAPT `GNSS_DATA_QUALITY_METRICS` scope, which also defines how to read `valueText`.
+type GNSSDataQualityMetric struct {
+	DefinitionCode string `json:"definitionCode"`
+	ValueText      string `json:"valueText"`
+}
 
 // GenericEventData defines model for GenericEventData.
 type GenericEventData struct {

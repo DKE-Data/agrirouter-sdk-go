@@ -371,7 +371,7 @@ type ClientInterface interface {
 	//
 	// Submits a field boundary from the calling endpoint, identified by the endpoint's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
 	//
-	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. A write whose `boundary.geometry` differs from the current geometry replaces `boundary` whole: what the write leaves out of it, such as the creation method, the GNSS fields and `gNSSDataQualityMetrics`, is removed, because it described the previous geometry. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
 	//
 	// `archived` is required. On a create it sets the initial state: `true` creates the object archived in one write, which is how a record held as archived is sent. On an update it must equal the object's current state, or the write is rejected with `409` and `current_archived`: a write never changes the state, which only archiving and unarchiving do. A missing `archived` is a `400`. Edits to an archived object are accepted and keep it archived.
 	//
@@ -384,7 +384,7 @@ type ClientInterface interface {
 	//
 	// Submits a field boundary from the calling endpoint, identified by the endpoint's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
 	//
-	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. A write whose `boundary.geometry` differs from the current geometry replaces `boundary` whole: what the write leaves out of it, such as the creation method, the GNSS fields and `gNSSDataQualityMetrics`, is removed, because it described the previous geometry. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
 	//
 	// `archived` is required. On a create it sets the initial state: `true` creates the object archived in one write, which is how a record held as archived is sent. On an update it must equal the object's current state, or the write is rejected with `409` and `current_archived`: a write never changes the state, which only archiving and unarchiving do. A missing `archived` is a `400`. Edits to an archived object are accepted and keep it archived.
 	//
@@ -1173,7 +1173,7 @@ func (c *Client) RequestFieldBoundary(ctx context.Context, params *RequestFieldB
 //
 // Submits a field boundary from the calling endpoint, identified by the endpoint's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
 //
-// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. A write whose `boundary.geometry` differs from the current geometry replaces `boundary` whole: what the write leaves out of it, such as the creation method, the GNSS fields and `gNSSDataQualityMetrics`, is removed, because it described the previous geometry. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
 //
 // `archived` is required. On a create it sets the initial state: `true` creates the object archived in one write, which is how a record held as archived is sent. On an update it must equal the object's current state, or the write is rejected with `409` and `current_archived`: a write never changes the state, which only archiving and unarchiving do. A missing `archived` is a `400`. Edits to an archived object are accepted and keep it archived.
 //
@@ -1196,7 +1196,7 @@ func (c *Client) PutFieldBoundaryWithBody(ctx context.Context, localId LocalId, 
 //
 // Submits a field boundary from the calling endpoint, identified by the endpoint's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
 //
-// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. A write whose `boundary.geometry` differs from the current geometry replaces `boundary` whole: what the write leaves out of it, such as the creation method, the GNSS fields and `gNSSDataQualityMetrics`, is removed, because it described the previous geometry. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
 //
 // `archived` is required. On a create it sets the initial state: `true` creates the object archived in one write, which is how a record held as archived is sent. On an update it must equal the object's current state, or the write is rejected with `409` and `current_archived`: a write never changes the state, which only archiving and unarchiving do. A missing `archived` is a `400`. Edits to an archived object are accepted and keep it archived.
 //
@@ -4330,7 +4330,7 @@ type ClientWithResponsesInterface interface {
 	//
 	// Submits a field boundary from the calling endpoint, identified by the endpoint's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
 	//
-	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. A write whose `boundary.geometry` differs from the current geometry replaces `boundary` whole: what the write leaves out of it, such as the creation method, the GNSS fields and `gNSSDataQualityMetrics`, is removed, because it described the previous geometry. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
 	//
 	// `archived` is required. On a create it sets the initial state: `true` creates the object archived in one write, which is how a record held as archived is sent. On an update it must equal the object's current state, or the write is rejected with `409` and `current_archived`: a write never changes the state, which only archiving and unarchiving do. A missing `archived` is a `400`. Edits to an archived object are accepted and keep it archived.
 	//
@@ -4343,7 +4343,7 @@ type ClientWithResponsesInterface interface {
 	//
 	// Submits a field boundary from the calling endpoint, identified by the endpoint's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
 	//
-	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
+	// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. A write whose `boundary.geometry` differs from the current geometry replaces `boundary` whole: what the write leaves out of it, such as the creation method, the GNSS fields and `gNSSDataQualityMetrics`, is removed, because it described the previous geometry. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
 	//
 	// `archived` is required. On a create it sets the initial state: `true` creates the object archived in one write, which is how a record held as archived is sent. On an update it must equal the object's current state, or the write is rejected with `409` and `current_archived`: a write never changes the state, which only archiving and unarchiving do. A missing `archived` is a `400`. Edits to an archived object are accepted and keep it archived.
 	//
@@ -7343,7 +7343,7 @@ func (c *ClientWithResponses) RequestFieldBoundaryWithResponse(ctx context.Conte
 //
 // Submits a field boundary from the calling endpoint, identified by the endpoint's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
 //
-// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. A write whose `boundary.geometry` differs from the current geometry replaces `boundary` whole: what the write leaves out of it, such as the creation method, the GNSS fields and `gNSSDataQualityMetrics`, is removed, because it described the previous geometry. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
 //
 // `archived` is required. On a create it sets the initial state: `true` creates the object archived in one write, which is how a record held as archived is sent. On an update it must equal the object's current state, or the write is rejected with `409` and `current_archived`: a write never changes the state, which only archiving and unarchiving do. A missing `archived` is a `400`. Edits to an archived object are accepted and keep it archived.
 //
@@ -7362,7 +7362,7 @@ func (c *ClientWithResponses) PutFieldBoundaryWithBodyWithResponse(ctx context.C
 //
 // Submits a field boundary from the calling endpoint, identified by the endpoint's own local_id, which `content.id.referenceId` repeats. An update to an existing field boundary must carry the revision it was edited from in x-agrirouter-base-revision.
 //
-// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
+// `content` is applied as a JSON Merge Patch (RFC 7396): an attribute with a value replaces the current one, `null` removes it, and an attribute left out is unchanged. Nested objects merge the same way; arrays and references are replaced whole. A write whose `boundary.geometry` differs from the current geometry replaces `boundary` whole: what the write leaves out of it, such as the creation method, the GNSS fields and `gNSSDataQualityMetrics`, is removed, because it described the previous geometry. Required attributes are required on every write and are never `null`. The response is always the whole resulting object.
 //
 // `archived` is required. On a create it sets the initial state: `true` creates the object archived in one write, which is how a record held as archived is sent. On an update it must equal the object's current state, or the write is rejected with `409` and `current_archived`: a write never changes the state, which only archiving and unarchiving do. A missing `archived` is a `400`. Edits to an archived object are accepted and keep it archived.
 //
