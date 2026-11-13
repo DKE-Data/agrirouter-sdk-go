@@ -74,7 +74,8 @@ Run `art <command> --help` for full flag listings. At a glance:
 - `put-endpoint` — create or update an endpoint by external ID.
 - `delete-endpoint` — delete an endpoint by external ID.
 - `list-authorized-tenants` (alias `lat`) — list all tenants the application
-  is authorized for, together with their visible endpoints.
+  is authorized for, with the state of their most recent authorization grant
+  when present, together with their visible endpoints.
 - `list-tenant-endpoints` (alias `lte`) — list endpoints of a single tenant,
   including capabilities and route-derived send/receive maps for
   application-owned endpoints.
