@@ -21,12 +21,7 @@ func init() {
 			return c.BindMapping(ctx, agrirouter.EntityTypeParty, localID, ar, ep, tn)
 		}))
 
-	rootCmd.AddCommand(mdMappingCmd("unbind-party-mapping",
-		"Declare that this endpoint no longer holds a party",
-		"Declares that the endpoint no longer holds the canonical party under --local-id. The canonical object itself is untouched.",
-		func(ctx context.Context, c *agrirouter.Client, localID string, ar, ep, tn uuid.UUID) error {
-			return c.UnbindMapping(ctx, agrirouter.EntityTypeParty, localID, ar, ep, tn)
-		}))
+	rootCmd.AddCommand(mdCorrectMappingsCmd("party", agrirouter.EntityTypeParty))
 
 	rootCmd.AddCommand(mdArchiveCmd("party",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Party, error) {

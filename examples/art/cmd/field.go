@@ -21,12 +21,7 @@ func init() {
 			return c.BindMapping(ctx, agrirouter.EntityTypeField, localID, ar, ep, tn)
 		}))
 
-	rootCmd.AddCommand(mdMappingCmd("unbind-field-mapping",
-		"Declare that this endpoint no longer holds a field",
-		"Declares that the endpoint no longer holds the canonical field under --local-id. The canonical object itself is untouched.",
-		func(ctx context.Context, c *agrirouter.Client, localID string, ar, ep, tn uuid.UUID) error {
-			return c.UnbindMapping(ctx, agrirouter.EntityTypeField, localID, ar, ep, tn)
-		}))
+	rootCmd.AddCommand(mdCorrectMappingsCmd("field", agrirouter.EntityTypeField))
 
 	rootCmd.AddCommand(mdArchiveCmd("field",
 		func(ctx context.Context, c *agrirouter.Client, localID string, ep, tn uuid.UUID, br *int) (*agrirouter.Field, error) {

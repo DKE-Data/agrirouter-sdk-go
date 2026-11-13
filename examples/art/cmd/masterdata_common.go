@@ -25,6 +25,7 @@ const (
 	stateOpt              = "state"
 	lastEventIDOpt        = "last-event-id"
 	idMappingsOpt         = "id-mappings"
+	entryOpt              = "entry"
 )
 
 // humanize turns a kebab-case entity name into a space-separated label.
@@ -251,7 +252,7 @@ it.`,
 	return cmd
 }
 
-// mdMappingCmd builds a bind/unbind mapping command (both share the same shape).
+// mdMappingCmd builds a "bind-<entity>-mapping" command.
 func mdMappingCmd(
 	use, short, long string,
 	fn func(ctx context.Context, c *agrirouter.Client, localID string, agrirouterID, endpointID, tenantID uuid.UUID) error,
@@ -298,6 +299,83 @@ func mdMappingCmd(
 	addEndpointIDFlag(cmd)
 	addTenantIDFlag(cmd)
 	return cmd
+}
+
+// mdCorrectMappingsCmd builds a "correct-<entity>-mappings" command.
+func mdCorrectMappingsCmd(entity string, entityType agrirouter.EntityType) *cobra.Command {
+	use := "correct-" + entity + "-mappings"
+	cmd := &cobra.Command{
+		Use:   use,
+		Short: fmt.Sprintf("Correct this endpoint's %s mappings", humanize(entity)),
+		Long: fmt.Sprintf(`Replaces %[1]s bindings this endpoint's user found wrong. Each --%[2]s is
+local-id=agrirouter-id, or local-id= to leave that local identifier mapped to
+nothing. The entries are applied whole or not at all, so a crosswise swap is one
+call. It creates no revision and is delivered to nobody; it is not a deletion.`,
+			humanize(entity), entryOpt),
+		Example: fmt.Sprintf("  art %s --%s a=<agrirouter-id-of-b> --%s b=<agrirouter-id-of-a>", use, entryOpt, entryOpt),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := cmd.Context()
+			raw, err := cmd.Flags().GetStringArray(entryOpt)
+			if err != nil {
+				return fmt.Errorf("failed to get %s flag: %w", entryOpt, err)
+			}
+			entries, err := parseMappingCorrections(raw)
+			if err != nil {
+				return err
+			}
+			endpointID, err := resolveEndpointID(cmd)
+			if err != nil {
+				return err
+			}
+			tenantID, err := resolveTenantID(cmd)
+			if err != nil {
+				return err
+			}
+
+			client, err := getClient(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to create agrirouter client: %w", err)
+			}
+
+			slog.Info(use, "entries", len(entries), "endpointID", endpointID, "tenantID", tenantID)
+
+			if err := client.CorrectMappings(ctx, entityType, entries, endpointID, tenantID); err != nil {
+				return fmt.Errorf("%s failed: %w", use, err)
+			}
+			fmt.Printf("%s: ok (%d entries)\n", use, len(entries))
+			return nil
+		},
+	}
+	cmd.Flags().StringArray(entryOpt, nil, "local-id=agrirouter-id, or local-id= for no mapping (repeat for several)")
+	_ = cmd.MarkFlagRequired(entryOpt)
+	addEndpointIDFlag(cmd)
+	addTenantIDFlag(cmd)
+	return cmd
+}
+
+// parseMappingCorrections turns "local-id=agrirouter-id" or "local-id=" values
+// into CorrectMappings entries.
+func parseMappingCorrections(raw []string) ([]agrirouter.IDMappingCorrectionEntry, error) {
+	if len(raw) == 0 {
+		return nil, fmt.Errorf("at least one --%s is required", entryOpt)
+	}
+	entries := make([]agrirouter.IDMappingCorrectionEntry, 0, len(raw))
+	for _, r := range raw {
+		localID, target, ok := strings.Cut(r, "=")
+		if !ok || localID == "" {
+			return nil, fmt.Errorf("invalid --%s %q: want local-id=agrirouter-id or local-id=", entryOpt, r)
+		}
+		if target == "" {
+			entries = append(entries, agrirouter.MappingCorrection(localID, nil))
+			continue
+		}
+		agrirouterID, err := uuid.Parse(target)
+		if err != nil {
+			return nil, fmt.Errorf("invalid --%s %q: agrirouter id: %w", entryOpt, r, err)
+		}
+		entries = append(entries, agrirouter.MappingCorrection(localID, &agrirouterID))
+	}
+	return entries, nil
 }
 
 // lifecycleFn changes the lifecycle state of the entity under localID and
