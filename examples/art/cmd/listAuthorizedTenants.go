@@ -10,8 +10,9 @@ var listAuthorizedTenantsCmd = &cobra.Command{
 	Use:     "list-authorized-tenants",
 	Aliases: []string{"lat"},
 	Short:   "lists all tenants the application is authorized for, with their visible endpoints",
-	Long: `Calls GET /tenants and prints all authorized tenants together with the
-endpoints visible to the application in each tenant.
+	Long: `Calls GET /tenants and prints all authorized tenants, with their company
+name when known, together with the endpoints visible to the application in
+each tenant.
 
 This is intended as the primary global synchronization endpoint after
 application startup or recovery.`,
@@ -31,6 +32,9 @@ application startup or recovery.`,
 		fmt.Printf("Authorized tenants (%d):\n", len(tenants))
 		for _, tenant := range tenants {
 			fmt.Printf("- Tenant %s (%d endpoints):\n", tenant.TenantId, len(tenant.Endpoints))
+			if tenant.CompanyName != nil {
+				fmt.Printf("    Company: %s\n", *tenant.CompanyName)
+			}
 			for _, ep := range tenant.Endpoints {
 				printTenantEndpoint(ep, "    ")
 			}

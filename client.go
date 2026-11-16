@@ -197,13 +197,30 @@ func (c *Client) ListAuthorizedTenants(ctx context.Context) ([]TenantInfo, error
 // For endpoints owned by the authorized application, the result also includes
 // route-derived maps describing which endpoints they can send to and receive
 // from for each message type.
+//
+// Use GetTenantEndpoints to also receive tenant-level information such as
+// the tenant's company name.
 func (c *Client) ListTenantEndpoints(ctx context.Context, tenantID uuid.UUID) ([]TenantEndpointInfo, error) {
+	res, err := c.GetTenantEndpoints(ctx, tenantID)
+	if err != nil {
+		return nil, err
+	}
+	return res.Endpoints, nil
+}
+
+// GetTenantEndpoints returns the complete endpoints list response for a single
+// tenant: the same endpoints as ListTenantEndpoints together with tenant-level
+// information, such as the tenant's company name.
+//
+// CompanyName is nil when agrirouter does not know the tenant's company name
+// or it is empty.
+func (c *Client) GetTenantEndpoints(ctx context.Context, tenantID uuid.UUID) (*EndpointsListResponse, error) {
 	res, err := c.oapiClient.ListTenantEndpointsWithResponse(ctx, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrAPICallFailed, err)
 	}
 	if res.JSON200 != nil {
-		return res.JSON200.Endpoints, nil
+		return res.JSON200, nil
 	}
 	return nil, fmt.Errorf("%w: %w", ErrAPICallFailed, httpResponseToErr(res.HTTPResponse, res.Body))
 }
